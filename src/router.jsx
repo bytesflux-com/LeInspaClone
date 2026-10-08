@@ -5,6 +5,7 @@ import AdminLogin from './pages/auth/AdminLogin.jsx'
 import TwoFactor from './pages/auth/TwoFactor.jsx'
 import ForgotPassword from './pages/auth/ForgotPassword.jsx'
 import GlobalDashboard from './pages/dashboard/GlobalDashboard.jsx'
+import MarketDashboard from './pages/dashboard/MarketDashboard.jsx'
 import OperationsCenter from './pages/operations/OperationsCenter.jsx'
 import Placeholder from './pages/Placeholder.jsx'
 import NotFound from './pages/NotFound.jsx'
@@ -71,7 +72,7 @@ export const router = createBrowserRouter([
 
           // INTELLIGENCE
           { path: 'analytics', element: <Placeholder title="Cross-Market Analytics" /> },
-          { path: 'markets', element: <Placeholder title="Market Operations" /> },
+          { path: 'markets', element: <MarketDashboard /> },
 
           // PLATFORM
           { path: 'settings', element: <Placeholder title="Platform Settings" /> },
