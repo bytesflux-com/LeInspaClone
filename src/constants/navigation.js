@@ -1,6 +1,7 @@
 import {
   LayoutDashboard,
   Activity,
+  Search,
   Users,
   BriefcaseBusiness,
   BadgeCheck,
@@ -40,6 +41,14 @@ export const NAVIGATION_SECTIONS = [
         path: '/operations',
         badge: 'Live',
         badgeColor: 'bg-emerald-500/20 text-emerald-300',
+        permission: PERMISSIONS.DASHBOARD_VIEW,
+      },
+      {
+        label: 'Global Search',
+        icon: Search,
+        path: '/search',
+        badge: '⌘K',
+        badgeColor: 'bg-royal-800 text-royal-200 text-[10px]',
         permission: PERMISSIONS.DASHBOARD_VIEW,
       },
     ],

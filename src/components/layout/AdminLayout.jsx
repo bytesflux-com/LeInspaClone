@@ -28,7 +28,7 @@ export default function AdminLayout() {
         <main
           inert={lock.locked || undefined}
           aria-hidden={lock.locked || undefined}
-          className={`flex-1 overflow-y-auto p-6 md:p-8 lg:p-10 scrollbar-thin scrollbar-thumb-gray-200 transition-[filter] duration-300 ${
+          className={`flex-1 overflow-y-auto p-4 md:p-6 lg:p-7 scrollbar-thin scrollbar-thumb-gray-200 transition-[filter] duration-300 ${
             lock.locked ? 'pointer-events-none blur-[6px] select-none' : ''
           }`}
         >
