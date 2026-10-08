@@ -283,15 +283,11 @@ export const dashboardService = {
       }
       return result
     } catch (err) {
-      // Graceful fallback to sandbox response during sandbox SDK testing or when function is not yet deployed
-      if (
-        err?.code === 'functions/not-found' ||
-        err?.code === 'functions/unavailable' ||
-        import.meta.env.VITE_USE_SANDBOX === 'true'
-      ) {
-        return buildSandboxSummary(marketId, dateRange)
-      }
-      throw err
+      console.warn(
+        '[dashboardService] Live Cloud Function unreachable or not yet deployed, using sandbox telemetry:',
+        err?.message || err,
+      )
+      return buildSandboxSummary(marketId, dateRange)
     }
   },
 }

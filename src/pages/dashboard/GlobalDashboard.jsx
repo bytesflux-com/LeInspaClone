@@ -48,7 +48,7 @@ export default function GlobalDashboard() {
   const { data, loading, error, refetch } = useDashboard()
 
   return (
-    <PageContainer>
+    <PageContainer wide={true}>
       <DashboardHeader
         onRefresh={refetch}
         refreshing={loading}
@@ -71,20 +71,21 @@ export default function GlobalDashboard() {
           <MetricGrid
             metrics={data.metrics}
             reportingCurrency={data.context?.reportingCurrency}
+            className="text-[10px] sm:text-xs"
           />
 
           {/* Tier 2: Operational Attention, Platform Performance & Financial Position */}
           <div className="grid gap-6 grid-cols-1 lg:grid-cols-12">
-            <div className="lg:col-span-4 flex flex-col">
+            <div className="lg:col-span-5 flex flex-col min-w-0">
               <AttentionSection
                 attention={data.attention}
                 marketName={data.context?.marketName}
               />
             </div>
-            <div className="lg:col-span-5 flex flex-col">
+            <div className="lg:col-span-4 flex flex-col min-w-0">
               <PlatformPerformance performance={data.performance} />
             </div>
-            <div className="lg:col-span-3 flex flex-col">
+            <div className="lg:col-span-3 flex flex-col min-w-0">
               <FinancialPosition financial={data.financial} />
             </div>
           </div>

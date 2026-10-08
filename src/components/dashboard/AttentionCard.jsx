@@ -20,7 +20,7 @@ export default function AttentionCard({
               <BadgeIcon className="size-3.5" />
             </span>
           )}
-          <span className="text-xs font-bold text-gray-800">{title}</span>
+          <span className="text-[9px] font-bold text-gray-800">{title}</span>
         </div>
 
         <p className="mt-3 text-2xl font-extrabold text-royal-950 tabular-nums leading-none">
