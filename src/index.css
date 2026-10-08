@@ -1,0 +1,52 @@
+@import 'tailwindcss';
+
+/* Lé Inspa Admin design tokens (ADM-001 → ADM-151) */
+@theme {
+  --font-sans: 'Poppins', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Cormorant Garamond', ui-serif, Georgia, serif;
+
+  /* Royal Purple — primary actions and brand identity */
+  --color-royal-50: #f5f2fc;
+  --color-royal-100: #ebe5f8;
+  --color-royal-200: #d6caf1;
+  --color-royal-300: #b5a0e4;
+  --color-royal-400: #8f6fd2;
+  --color-royal-500: #6f4bbd;
+  --color-royal-600: #5b37a6;
+  --color-royal-700: #4a2b8a;
+  --color-royal-800: #352066;
+  --color-royal-900: #241547;
+  --color-royal-950: #170c30;
+
+  /* Soft Lavender — secondary surfaces / security information */
+  --color-lavender-50: #faf8fe;
+  --color-lavender-100: #f3effc;
+  --color-lavender-200: #e8e1f8;
+
+  /* Gold — restrained premium highlights */
+  --color-gold-300: #e6c88a;
+  --color-gold-400: #d9b26a;
+  --color-gold-500: #c79a4b;
+
+  /* Status — green success, amber attention, red errors/threats only */
+  --color-success-50: #ecfdf3;
+  --color-success-600: #15803d;
+  --color-attention-50: #fffbeb;
+  --color-attention-600: #b45309;
+  --color-danger-50: #fef2f2;
+  --color-danger-200: #fecaca;
+  --color-danger-600: #dc2626;
+  --color-danger-700: #b91c1c;
+
+  --shadow-card: 0 1px 2px rgb(36 21 71 / 0.04), 0 12px 32px -8px rgb(36 21 71 / 0.12);
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  @apply bg-white font-sans text-gray-900 antialiased;
+}
