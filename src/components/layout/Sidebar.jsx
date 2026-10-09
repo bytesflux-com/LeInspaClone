@@ -16,15 +16,15 @@ export default function Sidebar({ isOpen, onClose }) {
 
       {/* Sidebar Container */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-64 shrink-0 flex-col bg-[#13072e] text-white transition-transform duration-300 ease-in-out md:static md:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 flex w-56 shrink-0 flex-col bg-linear-to-b from-[#2b1175] via-[#260f6a] to-[#1c0a52] text-white transition-transform duration-300 ease-in-out md:static md:translate-x-0 ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
-        } border-r border-[#261352] shadow-2xl md:shadow-none select-none`}
+        } shadow-2xl md:shadow-none select-none`}
       >
         {/* Top Header: Logo + • ADMINISTRATION • */}
-        <div className="flex h-20 shrink-0 items-center justify-between border-b border-[#24124e] px-5">
+        <div className="flex h-[70px] shrink-0 items-center justify-between px-5">
           <div className="flex items-center gap-3">
-            <div className="flex size-10 items-center justify-center rounded-full bg-linear-to-br from-royal-700 to-royal-950 ring-1 ring-gold-400/40">
-              <svg viewBox="0 0 64 40" fill="none" className="size-6 text-gold-400" aria-hidden="true">
+            <div className="flex size-10 items-center justify-center">
+              <svg viewBox="0 0 64 40" fill="none" className="size-9 text-gold-400" aria-hidden="true">
                 <g fill="currentColor">
                   <path d="M32 2c5 6 7.5 13 7.5 19S36.5 33 32 38c-4.5-5-7.5-11-7.5-17S27 8 32 2z" />
                   <path d="M30 38C22 36 16 30 14 21c-.8-3.5-.8-7 .2-10.5 6 3.5 10.5 9 13 16 1.4 3.8 2.3 7.6 2.8 11.5z" opacity=".9" />
@@ -36,8 +36,8 @@ export default function Sidebar({ isOpen, onClose }) {
             </div>
             <div>
               <span className="font-display text-lg font-medium tracking-wide text-white">Lé Inspa</span>
-              <p className="text-[9px] font-semibold tracking-[0.2em] text-royal-300 uppercase">
-                • ADMINISTRATION •
+              <p className="text-[9px] font-semibold tracking-[0.2em] text-gold-400 uppercase">
+                ADMINISTRATION
               </p>
             </div>
           </div>
@@ -53,7 +53,7 @@ export default function Sidebar({ isOpen, onClose }) {
         </div>
 
         {/* Scrollable Navigation */}
-        <div className="flex-1 overflow-y-auto px-3.5 py-4 scrollbar-thin scrollbar-thumb-royal-900">
+        <div className="flex-1 overflow-y-auto px-3 py-2 scrollbar-thin scrollbar-thumb-royal-900">
           <NavigationMenu
             onNavigate={() => {
               if (window.innerWidth < 768 && onClose) onClose()
@@ -62,14 +62,14 @@ export default function Sidebar({ isOpen, onClose }) {
         </div>
 
         {/* Bottom Card: Need Help? Contact Admin Support */}
-        <div className="shrink-0 p-3.5 border-t border-[#24124e]">
-          <div className="flex items-center gap-3 rounded-2xl bg-[#1b0d3d] border border-[#2d185e] p-3 text-left">
-            <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-royal-800/80 text-royal-200">
+        <div className="shrink-0 p-3.5">
+          <div className="flex items-center gap-3 rounded-2xl border border-white/30 p-2.5 text-left">
+            <div className="flex size-8 shrink-0 items-center justify-center rounded-full border border-white/60 text-white">
               <Headphones className="size-4" />
             </div>
             <div className="min-w-0">
-              <p className="text-xs font-semibold text-white leading-tight">Need Help?</p>
-              <p className="text-[10px] text-royal-300 truncate leading-tight mt-0.5">Contact Admin Support</p>
+              <p className="text-[13px] font-semibold text-white leading-tight">Need Help?</p>
+              <p className="text-[10.5px] text-white/80 whitespace-nowrap leading-tight mt-0.5">Contact Admin Support</p>
             </div>
           </div>
         </div>

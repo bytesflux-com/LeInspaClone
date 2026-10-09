@@ -7,7 +7,7 @@ import AdminProfileMenu from '../navigation/AdminProfileMenu'
 
 export default function TopBar({ onToggleSidebar, sidebarOpen }) {
   return (
-    <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between border-b border-gray-200/90 bg-white/95 px-4 backdrop-blur-md sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between border-b border-[#ebe7f5] bg-white shadow-[0_1px_8px_rgba(36,21,71,0.06)] px-4 backdrop-blur-md sm:px-6 lg:px-8">
       {/* Left: Mobile Toggle & Global Search */}
       <div className="flex flex-1 items-center gap-3 md:gap-4">
         <button

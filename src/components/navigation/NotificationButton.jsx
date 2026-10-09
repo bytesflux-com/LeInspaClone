@@ -9,10 +9,10 @@ export default function NotificationButton() {
         <button
           type="button"
           aria-label="Notifications"
-          className="relative flex size-9 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-700 shadow-xs transition hover:bg-gray-50 hover:text-gray-900"
+          className="relative flex size-9 items-center justify-center rounded-xl text-[#2a1b57] transition hover:bg-gray-100"
         >
-          <Bell className="size-4" />
-          <span className="absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full bg-rose-600 text-[10px] font-bold text-white shadow-xs">
+          <Bell className="size-[22px]" />
+          <span className="absolute top-0 right-0 flex size-4 items-center justify-center rounded-full bg-rose-600 text-[10px] font-bold text-white shadow-xs">
             3
           </span>
         </button>

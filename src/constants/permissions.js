@@ -3,6 +3,7 @@ export const PERMISSIONS = {
   DASHBOARD_VIEW: 'dashboard.view',
   USERS_VIEW: 'users.view',
   USERS_SUSPEND: 'users.suspend',
+  USERS_EXPORT: 'users.export',
   PROVIDERS_VIEW: 'providers.view',
   PROVIDERS_VERIFY: 'providers.verify',
   BOOKINGS_VIEW: 'bookings.view',

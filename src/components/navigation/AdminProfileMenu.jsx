@@ -2,6 +2,7 @@ import { ChevronDown, Lock, LogOut, Shield } from 'lucide-react'
 import { useAdminSession } from '../../hooks/useAdminSession'
 import { useAuth } from '../../hooks/useAuth'
 import Dropdown from '../ui/Dropdown'
+import PersonAvatar from '../ui/PersonAvatar'
 
 export default function AdminProfileMenu() {
   const { admin, role, lockSession } = useAdminSession()
@@ -9,13 +10,6 @@ export default function AdminProfileMenu() {
 
   const adminName = admin?.fullName || 'Wallen Nyaberi'
   const adminRole = admin?.roleName || (role === 'super_admin' ? 'Super Admin' : role)
-
-  const initials = adminName
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((p) => p[0].toUpperCase())
-    .join('')
 
   return (
     <Dropdown
@@ -26,12 +20,10 @@ export default function AdminProfileMenu() {
           aria-label="Admin Profile Menu"
           className="flex items-center gap-2.5 rounded-xl border border-transparent p-1 pl-1.5 transition hover:bg-gray-100/70 focus:outline-none"
         >
-          <div className="flex size-9 items-center justify-center rounded-xl bg-royal-900 text-xs font-bold text-gold-400 shadow-xs ring-1 ring-royal-800">
-            {initials}
-          </div>
+          <PersonAvatar name={adminName} src={admin?.photoURL} gender="m" size={40} />
           <div className="hidden text-left sm:block">
-            <p className="text-xs font-semibold leading-tight text-gray-900">{adminName}</p>
-            <p className="text-[11px] leading-tight text-gray-500">{adminRole}</p>
+            <p className="text-[14px] font-bold leading-tight text-[#1b1140]">{adminName}</p>
+            <p className="text-[12px] leading-tight text-[#6b6785]">{adminRole}</p>
           </div>
           <ChevronDown className={`size-3.5 text-gray-500 transition-transform ${open ? 'rotate-180' : ''}`} />
         </button>

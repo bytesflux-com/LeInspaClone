@@ -78,5 +78,5 @@ export const DATE_RANGES = [
   { id: 'custom', label: 'Custom Range', shortLabel: 'Custom' },
 ]
 
-export const DEFAULT_DATE_RANGE = DATE_RANGES[0].id
+export const DEFAULT_DATE_RANGE = '30d' // ADM-010/011 mockups open on Last 30 Days
 
