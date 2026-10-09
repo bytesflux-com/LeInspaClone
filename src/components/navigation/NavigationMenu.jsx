@@ -1,4 +1,5 @@
-import { NavLink, useLocation } from 'react-router'
+import { NavLink, matchPath, useLocation } from 'react-router'
+import { Users } from 'lucide-react'
 import { usePermissions } from '../../hooks/usePermissions'
 import { NAVIGATION_SECTIONS } from '../../constants/navigation'
 import { cn } from '../../lib/utils'
@@ -29,6 +30,7 @@ export default function NavigationMenu({ onNavigate }) {
                   <div key={item.path + item.label} className="space-y-0.5">
                     <NavLink
                       to={item.path}
+                      end={Boolean(item.children)}
                       onClick={onNavigate}
                       className={({ isActive }) =>
                         cn(ROW, isActive ? 'bg-[#5c2dd5] font-semibold text-white shadow-md' : 'text-white/90 hover:bg-white/10 hover:text-white')
@@ -54,8 +56,12 @@ export default function NavigationMenu({ onNavigate }) {
 }
 
 function NavLinkChildren({ item, onNavigate }) {
+  const { pathname } = useLocation()
+  // ADM-012: while a client profile is open, a "Client Profile" row appears under
+  // Client Management (the profile lives at /clients/:clientId, not /clients/all).
+  const onProfile = Boolean(item.path === '/clients' && matchPath({ path: '/clients/:clientId/*' }, pathname) && !matchPath({ path: '/clients/all/*' }, pathname))
   return (
-    <ParentActive paths={item.children.map((c) => c.path)}>
+    <ParentActive paths={item.children.map((c) => c.path)} force={onProfile}>
       {item.children.map((child) => {
         const ChildIcon = child.icon
         return (
@@ -72,12 +78,18 @@ function NavLinkChildren({ item, onNavigate }) {
           </NavLink>
         )
       })}
+      {onProfile && (
+        <span aria-current="page" className={cn(ROW, 'pl-[18px] bg-[#6a4bc4] font-semibold text-white')}>
+          <Users className="size-[18px] shrink-0" aria-hidden="true" />
+          <span>Client Profile</span>
+        </span>
+      )}
     </ParentActive>
   )
 }
 
-function ParentActive({ paths, children }) {
+function ParentActive({ paths, force = false, children }) {
   const { pathname } = useLocation()
-  const open = paths.some((path) => pathname === path || pathname.startsWith(`${path}/`))
+  const open = force || paths.some((path) => pathname === path || pathname.startsWith(`${path}/`))
   return open ? <div className="space-y-0.5">{children}</div> : null
 }

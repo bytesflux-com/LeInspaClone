@@ -6,9 +6,11 @@
 // service answers from a deterministic demo dataset. Set
 // VITE_USE_MOCK_CLIENTS=false to call the real admin Cloud Functions instead:
 //
+//   adminGetClientDashboard, adminGetClientGrowth,
 //   adminListClients, adminGetClientPreview, adminGetClientActivity,
 //   adminGetClientNotes, adminExportClients, adminBulkNotifyClients,
-//   adminBulkTagClients, adminAddClientNote
+//   adminBulkTagClients, adminAddClientNote,
+//   adminGetClientProfile, adminRevealClientContact   (ADM-012)
 //
 // Country scope MUST be enforced by those functions (never trust `market`).
 import { callAdmin } from '../lib/adminCall'
@@ -25,9 +27,13 @@ import {
   fullEmail,
   fullPhone,
 } from './mock/clientDirectoryMock'
+import { buildDashboard, buildGrowth } from './mock/clientDashboardMock'
+import { buildClientProfile } from './mock/clientProfileMock'
 
 const USE_MOCK = import.meta.env.VITE_USE_MOCK_CLIENTS !== 'false'
 const delay = (ms = 160) => new Promise((r) => setTimeout(r, ms))
+// Mock lifetime values are stored in KES-equivalent; show in the client's market currency.
+const FX = { KE: 1, UG: 28, TZ: 19, RW: 10, ZA: 0.14 }
 const countryName = (code) => MARKETS.find((m) => m.id === code)?.name || code
 
 // ---------- helpers (mock backend) ----------
@@ -114,6 +120,9 @@ function toListItem(r) {
     membership: r.membership,
     status: r.status,
     bookings: r.bookings,
+    lifetimeValue: Math.round(r.lifetimeValue * (FX[r.country] || 1)),
+    currency: MOCK_CURRENCY[r.country] || 'USD',
+    guestConverted: r.guestConverted,
     joinedAt: new Date(r.joinedAt).toISOString(),
   }
 }
@@ -134,6 +143,19 @@ function mockActivity(r) {
 // ---------- public API ----------
 
 export const clientService = {
+  // ADM-010 — aggregate dashboard for the selected market + reporting period.
+  async getClientDashboard({ market, range }) {
+    if (!USE_MOCK) return callAdmin('adminGetClientDashboard', { market, range })
+    await delay(240)
+    return buildDashboard({ market, range })
+  },
+
+  async getClientGrowth({ market, window }) {
+    if (!USE_MOCK) return callAdmin('adminGetClientGrowth', { market, window })
+    await delay(160)
+    return buildGrowth({ market, window })
+  },
+
   async listClients(params) {
     if (!USE_MOCK) return callAdmin('adminListClients', params)
     await delay()
@@ -216,6 +238,31 @@ export const clientService = {
     const entry = { id: `n${Date.now()}`, note, author: 'You', createdAt: new Date().toISOString() }
     notesStore.set(clientId, [entry, ...(notesStore.get(clientId) || [])])
     return entry
+  },
+
+  // ADM-012 — one aggregate payload for the Overview tab: identity, summary
+  // counts and the latest 3–5 records per module. Full histories belong to the
+  // dedicated screens (ADM-013 → ADM-018). Contact details arrive MASKED.
+  // The server must enforce country scope and omit financial / safety blocks
+  // the admin is not permitted to see.
+  async getClientProfile(clientId, { market } = {}) {
+    if (!USE_MOCK) return callAdmin('adminGetClientProfile', { clientId, market })
+    await delay(260)
+    const r = MOCK_CLIENTS.find((c) => c.id === clientId)
+    if (!r || (market && market !== 'ALL' && r.country !== market)) {
+      throw new Error('Client not found or outside your authorised markets.')
+    }
+    return buildClientProfile(r)
+  },
+
+  // Unmasks email + phone. The callable must record an audit event.
+  async revealClientContact(clientId) {
+    if (!USE_MOCK) return callAdmin('adminRevealClientContact', { clientId })
+    await delay(200)
+    const r = MOCK_CLIENTS.find((c) => c.id === clientId)
+    if (!r) throw new Error('Client not found or outside your authorised markets.')
+    const d = `7${r.phoneTail}${r.phoneTail.slice(1, 3)}`
+    return { email: fullEmail(r), phone: `${r.phonePrefix} ${d.slice(0, 3)} ${d.slice(3, 6)} ${d.slice(6)}` }
   },
 
   getCities(country) {
