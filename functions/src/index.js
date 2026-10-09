@@ -23,3 +23,4 @@ export { adminGetSession, adminVerifySession, adminEndSession } from './sessionV
 export { adminGetDashboardSummary } from './dashboard.js'
 export { adminGetOperationsSummary } from './operations.js'
 export { adminGlobalSearch } from './search.js'
+export { adminGetNeedsAttention } from './needsAttention.js'
