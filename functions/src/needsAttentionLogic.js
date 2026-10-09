@@ -117,3 +117,91 @@ export function summarizeQueue(items) {
 export function capQueue(items, cap = QUEUE_CAP) {
   return items.slice(0, cap)
 }
+
+export function canAccessItemScope(access, itemCountryCode) {
+  const markets = Array.isArray(access?.markets) ? access.markets : []
+  if (markets.includes(ALL_MARKETS)) return true
+  return Boolean(itemCountryCode) && markets.includes(itemCountryCode)
+}
+
+export function validateReviewPermission(permissionList, sourceType, action = 'view') {
+  const permissions = new Set(permissionList || [])
+  if (sourceType === 'user_verification') {
+    if (action === 'view') {
+      return permissions.has('providers.view') || permissions.has('providers.verify')
+    }
+    if (action === 'approve' || action === 'reject') {
+      return permissions.has('providers.verify')
+    }
+  }
+  if (sourceType === 'withdrawal_request') {
+    if (action === 'view') {
+      return permissions.has('payments.view') || permissions.has('withdrawals.approve')
+    }
+    if (action === 'approve' || action === 'reject') {
+      return permissions.has('withdrawals.approve')
+    }
+  }
+  if (sourceType === 'dispute') {
+    return permissions.has('safety.manage')
+  }
+  if (sourceType === 'support_ticket') {
+    if (action === 'view') {
+      return permissions.has('support.view') || permissions.has('support.respond')
+    }
+    if (action === 'respond') {
+      return permissions.has('support.respond')
+    }
+  }
+  return false
+}
+
+export function validateVerificationTransition(currentStatus, action, reason) {
+  if (currentStatus !== VERIFICATION_PENDING_STATUS) {
+    return {
+      valid: false,
+      error: 'already-processed',
+      message: `Verification is currently '${currentStatus || 'unknown'}'. Only pending records can be reviewed.`,
+    }
+  }
+
+  if (action !== 'approve' && action !== 'reject') {
+    return {
+      valid: false,
+      error: 'invalid-action',
+      message: `Action '${action}' is not supported. Must be 'approve' or 'reject'.`,
+    }
+  }
+
+  if (action === 'reject') {
+    const trimmed = typeof reason === 'string' ? reason.trim() : ''
+    if (!trimmed || trimmed.length < 3) {
+      return {
+        valid: false,
+        error: 'missing-reason',
+        message: 'A detailed rejection reason (at least 3 characters) is required when rejecting verification.',
+      }
+    }
+  }
+
+  return {
+    valid: true,
+    nextStatus: action === 'approve' ? 'verified' : 'rejected',
+  }
+}
+
+export function determineSupportedActions({ sourceType, status, permissions }) {
+  const perms = new Set(permissions || [])
+  if (sourceType === 'user_verification') {
+    if (status === VERIFICATION_PENDING_STATUS && perms.has('providers.verify')) {
+      return [
+        { id: 'approve', label: 'Approve Verification', variant: 'primary' },
+        { id: 'reject', label: 'Reject Verification', variant: 'danger', requiresReason: true },
+      ]
+    }
+    return []
+  }
+
+  // Financial, dispute, and support workflows do not have connected execution/rail backends in this repo
+  return []
+}

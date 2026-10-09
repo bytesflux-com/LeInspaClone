@@ -8,6 +8,10 @@ import GlobalDashboard from './pages/dashboard/GlobalDashboard.jsx'
 import MarketDashboard from './pages/dashboard/MarketDashboard.jsx'
 import OperationsCenter from './pages/operations/OperationsCenter.jsx'
 import NeedsAttention from './pages/attention/NeedsAttention.jsx'
+import VerificationDetail from './pages/verifications/VerificationDetail.jsx'
+import WithdrawalDetail from './pages/withdrawals/WithdrawalDetail.jsx'
+import DisputeDetail from './pages/disputes/DisputeDetail.jsx'
+import SupportTicketDetail from './pages/support/SupportTicketDetail.jsx'
 import Placeholder from './pages/Placeholder.jsx'
 import NotFound from './pages/NotFound.jsx'
 import RouteErrorElement from './components/ui/RouteErrorElement.jsx'
@@ -55,17 +59,21 @@ export const router = createBrowserRouter([
           { path: 'clients', element: <Placeholder title="Clients CRM" /> },
           { path: 'providers', element: <Placeholder title="Providers & Spas" /> },
           { path: 'verifications', element: <Placeholder title="Verification & Approvals" /> },
+          { path: 'verifications/:id', element: <VerificationDetail /> },
           { path: 'bookings', element: <Placeholder title="Bookings Telemetry" /> },
 
           // FINANCE
           { path: 'finance', element: <Placeholder title="Finance & Wallets" /> },
           { path: 'escrow', element: <Placeholder title="Escrow Custody" /> },
           { path: 'withdrawals', element: <Placeholder title="Withdrawal Authorizations" /> },
+          { path: 'withdrawals/:id', element: <WithdrawalDetail /> },
 
           // TRUST & SAFETY
           { path: 'disputes', element: <Placeholder title="Disputes & Holds" /> },
+          { path: 'disputes/:id', element: <DisputeDetail /> },
           { path: 'safety', element: <Placeholder title="Safety Incidents" /> },
           { path: 'support', element: <Placeholder title="Support Concierge" /> },
+          { path: 'support/:id', element: <SupportTicketDetail /> },
 
           // GROWTH
           { path: 'memberships', element: <Placeholder title="Memberships" /> },
