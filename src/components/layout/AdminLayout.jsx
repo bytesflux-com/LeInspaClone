@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Outlet } from 'react-router'
+import { Outlet, useMatches } from 'react-router'
 import Sidebar from './Sidebar'
 import TopBar from './TopBar'
 import { useAdminSession } from '../../hooks/useAdminSession'
@@ -10,6 +10,8 @@ export default function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const { lock, admin, unlockSession } = useAdminSession()
   const { logout } = useAuth()
+  // Routes can opt out of the default page padding with `handle: { fullBleed: true }`
+  const fullBleed = useMatches().some((m) => m.handle?.fullBleed)
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-gray-50/50">
@@ -28,7 +30,9 @@ export default function AdminLayout() {
         <main
           inert={lock.locked || undefined}
           aria-hidden={lock.locked || undefined}
-          className={`flex-1 overflow-y-auto p-4 md:p-6 lg:p-7 scrollbar-thin scrollbar-thumb-gray-200 transition-[filter] duration-300 ${
+          className={`flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200 transition-[filter] duration-300 ${
+            fullBleed ? 'bg-[#f7f6fc]' : 'p-6 md:p-8 lg:p-10'
+          } ${
             lock.locked ? 'pointer-events-none blur-[6px] select-none' : ''
           }`}
         >
