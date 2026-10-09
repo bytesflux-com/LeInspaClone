@@ -74,15 +74,31 @@ export function AdminProvider({ children }) {
     }
   }, [])
 
-  // Resolve current market object
-  const selectedMarket = useMemo(() => {
-    return marketService.getMarketById(selectedMarketId)
-  }, [selectedMarketId])
-
-  // Resolve available markets according to admin permissions
+  // Resolve available markets according to the fresh admin session access model.
   const availableMarkets = useMemo(() => {
     return marketService.getAvailableMarkets(permittedMarkets)
   }, [permittedMarkets])
+
+  const authorizedMarketIds = useMemo(() => {
+    return availableMarkets.filter((market) => !market.isGlobal).map((market) => market.id)
+  }, [availableMarkets])
+
+  // Resolve current market object, falling back to ALL if localStorage has a stale unauthorized value.
+  const selectedMarket = useMemo(() => {
+    const candidate = marketService.getMarketById(selectedMarketId)
+    return availableMarkets.some((market) => market.id === candidate.id) ? candidate : DEFAULT_MARKET
+  }, [availableMarkets, selectedMarketId])
+
+  const selectedMarketScope = useMemo(() => {
+    if (selectedMarket.isGlobal) return authorizedMarketIds
+    return [selectedMarket.id]
+  }, [authorizedMarketIds, selectedMarket])
+
+  useEffect(() => {
+    if (!availableMarkets.some((market) => market.id === selectedMarketId)) {
+      setSelectedMarket(DEFAULT_MARKET.id)
+    }
+  }, [availableMarkets, selectedMarketId, setSelectedMarket])
 
   // Fetch admin session from server
   const loadSession = useCallback(async () => {
@@ -124,6 +140,10 @@ export function AdminProvider({ children }) {
       selectedMarket,
       setSelectedMarket,
       availableMarkets,
+      authorizedMarketIds,
+      selectedMarketScope,
+      authorizedMarketIds,
+      selectedMarketScope,
       dateRange,
       setDateRange,
       customRange,
@@ -143,6 +163,10 @@ export function AdminProvider({ children }) {
       selectedMarket,
       setSelectedMarket,
       availableMarkets,
+      authorizedMarketIds,
+      selectedMarketScope,
+      authorizedMarketIds,
+      selectedMarketScope,
       dateRange,
       setDateRange,
       customRange,

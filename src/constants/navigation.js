@@ -1,6 +1,7 @@
 import {
   LayoutDashboard,
   Activity,
+  AlertCircle,
   Users,
   BriefcaseBusiness,
   BadgeCheck,
@@ -40,6 +41,14 @@ export const NAVIGATION_SECTIONS = [
         path: '/operations',
         badge: 'Live',
         badgeColor: 'bg-emerald-500/20 text-emerald-300',
+        permission: PERMISSIONS.DASHBOARD_VIEW,
+      },
+      {
+        label: 'Needs Attention',
+        icon: AlertCircle,
+        path: '/attention',
+        badge: '27',
+        badgeColor: 'bg-rose-500/20 text-rose-200',
         permission: PERMISSIONS.DASHBOARD_VIEW,
       },
     ],

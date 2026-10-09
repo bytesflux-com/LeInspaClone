@@ -7,6 +7,7 @@ import ForgotPassword from './pages/auth/ForgotPassword.jsx'
 import GlobalDashboard from './pages/dashboard/GlobalDashboard.jsx'
 import MarketDashboard from './pages/dashboard/MarketDashboard.jsx'
 import OperationsCenter from './pages/operations/OperationsCenter.jsx'
+import NeedsAttention from './pages/attention/NeedsAttention.jsx'
 import Placeholder from './pages/Placeholder.jsx'
 import NotFound from './pages/NotFound.jsx'
 import RouteErrorElement from './components/ui/RouteErrorElement.jsx'
@@ -48,6 +49,7 @@ export const router = createBrowserRouter([
           // CONTROL
           { path: 'dashboard', element: <GlobalDashboard /> },
           { path: 'operations', element: <OperationsCenter /> },
+          { path: 'attention', element: <NeedsAttention /> },
 
           // MANAGEMENT
           { path: 'clients', element: <Placeholder title="Clients CRM" /> },

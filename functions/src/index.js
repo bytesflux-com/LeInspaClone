@@ -21,3 +21,4 @@ export {
 } from './passwordRecovery.js'
 export { adminGetSession, adminVerifySession, adminEndSession } from './sessionVerification.js'
 export { adminGetDashboardSummary } from './dashboard.js'
+export { adminGetNeedsAttention } from './needsAttention.js'

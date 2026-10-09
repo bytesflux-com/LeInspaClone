@@ -10,6 +10,7 @@ export function useMarketContext() {
     selectedMarket: context.selectedMarket,
     setSelectedMarket: context.setSelectedMarket,
     availableMarkets: context.availableMarkets,
+    permittedMarkets: context.permittedMarkets,
   }
 }
 
