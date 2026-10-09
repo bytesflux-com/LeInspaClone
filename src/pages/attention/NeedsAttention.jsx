@@ -1,3 +1,345 @@
+// import { Link } from 'react-router'
+// import { AlertCircle, Banknote, Camera, Clock, FileCheck, LifeBuoy, ShieldAlert, AlertTriangle } from 'lucide-react'
+// import PageContainer from '../../components/layout/PageContainer'
+// import Card from '../../components/ui/Card'
+// import Badge from '../../components/ui/Badge'
+// import CountryFlag from '../../components/ui/CountryFlag'
+// import LoadingState from '../../components/ui/LoadingState'
+// import ErrorState from '../../components/ui/ErrorState'
+// import EmptyState from '../../components/ui/EmptyState'
+// import { useMarketContext } from '../../hooks/useMarketContext'
+// import { useNeedsAttention } from '../../hooks/useNeedsAttention'
+// import { MARKETS } from '../../constants/markets'
+
+// // ---------------------------------------------------------------------------
+// // ADM-009 — Needs Your Attention (Phase 2: Country / Market Context Layer)
+// //
+// // Market authorization is sourced exclusively from AdminContext → adminGetSession
+// // (Cloud Function). The frontend never decides which markets an Admin may access.
+// // The selectedMarket is only a UI filter — backend calls must enforce access.
+// // ---------------------------------------------------------------------------
+
+// /**
+//  * Returns a human-readable description of what "All Markets" means for this Admin.
+//  * "All Markets" always means ONLY the markets this Admin is authorized for —
+//  * never every country in the platform.
+//  */
+// function resolveAllMarketsLabel(permittedMarkets, availableMarkets) {
+//   // permittedMarkets comes from the server session (adminGetSession).
+//   // If the Admin has ['ALL'], they see every enabled market; otherwise only their list.
+//   if (!permittedMarkets || permittedMarkets.includes('ALL')) {
+//     // Super-admin or global: list all enabled non-global markets
+//     const names = availableMarkets
+//       .filter((m) => !m.isGlobal)
+//       .map((m) => m.name)
+//     return names.length > 0 ? names.join(', ') : 'All enabled markets'
+//   }
+//   // Country-admin: only their authorized codes
+//   const authorized = MARKETS.filter(
+//     (m) => !m.isGlobal && permittedMarkets.includes(m.code),
+//   )
+//   return authorized.length > 0 ? authorized.map((m) => m.name).join(', ') : 'No markets authorized'
+// }
+
+// // ---------------------------------------------------------------------------
+// // Queue category definitions (Phase 3+ will replace counts with live Firestore)
+// // ---------------------------------------------------------------------------
+// const QUEUE_CATEGORIES = [
+//   {
+//     id: 'verification',
+//     title: 'Provider Verifications',
+//     icon: FileCheck,
+//     badgeVariant: 'warning',
+//     route: '/verifications',
+//     description: 'Applications pending document verification',
+//   },
+//   {
+//     id: 'withdrawal',
+//     title: 'Pending Withdrawals',
+//     icon: Banknote,
+//     badgeVariant: 'warning',
+//     route: '/withdrawals',
+//     description: 'Provider payout batches awaiting authorization',
+//   },
+//   {
+//     id: 'dispute',
+//     title: 'Disputes & Refunds',
+//     icon: AlertTriangle,
+//     badgeVariant: 'danger',
+//     route: '/disputes',
+//     description: 'Booking disputes awaiting resolution',
+//   },
+//   {
+//     id: 'support',
+//     title: 'Open Support Tickets',
+//     icon: LifeBuoy,
+//     badgeVariant: 'default',
+//     route: '/support',
+//     description: 'Unassigned customer & partner tickets',
+//   },
+// ]
+
+// // ---------------------------------------------------------------------------
+// // Dev-mode market indicator (Step 8)
+// // Renders a small pill showing the current resolved market state.
+// // Visible only in development builds; removed automatically in production.
+// // ---------------------------------------------------------------------------
+// function DevMarketIndicator({ selectedMarket, allMarketsLabel }) {
+//   if (import.meta.env.PROD) return null
+//   const label =
+//     selectedMarket.isGlobal
+//       ? `All Markets → ${allMarketsLabel}`
+//       : selectedMarket.name
+
+//   return (
+//     <div
+//       aria-label="Development market context indicator"
+//       className="flex items-center gap-2 rounded-lg border border-dashed border-amber-300 bg-amber-50/70 px-3 py-1.5 text-[11px] font-mono text-amber-800"
+//     >
+//       <span className="font-bold">DEV</span>
+//       <span className="text-amber-600">|</span>
+//       <span>
+//         selectedMarket ={' '}
+//         <span className="font-semibold">{selectedMarket.code}</span>
+//       </span>
+//       <span className="text-amber-600">|</span>
+//       <span className="truncate max-w-xs">{label}</span>
+//     </div>
+//   )
+// }
+
+// // ---------------------------------------------------------------------------
+// // Queue category card (live counts)
+// // ---------------------------------------------------------------------------
+// function QueueCategoryCard({ category, data }) {
+//   const Icon = category.icon
+//   const catData = data?.categories?.[category.id]
+//   const isOk = catData?.state === 'ok'
+//   const isPermitted = catData?.permitted ?? true
+
+//   let countDisplay = '—'
+//   if (!isPermitted) countDisplay = '🔒'
+//   else if (catData?.state === 'restricted') countDisplay = '—'
+//   else if (catData?.state === 'error') countDisplay = '⚠️'
+//   else if (isOk && catData.total !== null) countDisplay = catData.total
+
+//   return (
+//     <Link to={category.route} className="group flex flex-col justify-between rounded-xl border border-gray-100 bg-gray-50/60 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-royal-300 hover:bg-white hover:shadow-md">
+//       <div>
+//         <div className="flex items-center justify-between">
+//           <div className="flex size-8 items-center justify-center rounded-lg border border-gray-100 bg-white text-royal-700 shadow-2xs group-hover:bg-royal-50 group-hover:text-royal-900">
+//             <Icon className="size-4" />
+//           </div>
+//           {isOk && catData.total > 0 && (
+//             <Badge variant={category.badgeVariant} size="sm">
+//               Needs Action
+//             </Badge>
+//           )}
+//         </div>
+//         <div className="mt-3">
+//           <div className="text-2xl font-extrabold text-royal-950">{countDisplay}</div>
+//           <div className="mt-0.5 text-xs font-semibold text-gray-800">{category.title}</div>
+//         </div>
+//       </div>
+//       <div className="mt-3 border-t border-gray-200/60 pt-2 text-[11px] text-gray-500 line-clamp-1">
+//         {category.description}
+//       </div>
+//     </Link>
+//   )
+// }
+
+// // ---------------------------------------------------------------------------
+// // Market scope banner — shows the Admin which market scope is active
+// // ---------------------------------------------------------------------------
+// function MarketScopeBanner({ selectedMarket, availableMarkets, permittedMarkets }) {
+//   const allMarketsLabel = resolveAllMarketsLabel(permittedMarkets, availableMarkets)
+//   const isAll = selectedMarket.isGlobal
+
+//   return (
+//     <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-gray-200/80 bg-white px-5 py-3 shadow-xs">
+//       <div className="flex items-center gap-3">
+//         <CountryFlag code={selectedMarket.code} className="w-6 h-4" />
+//         <div>
+//           <p className="text-xs font-semibold text-gray-700">
+//             {isAll ? 'Viewing all authorized markets' : `Scoped to ${selectedMarket.name}`}
+//           </p>
+//           {isAll && (
+//             <p className="mt-0.5 text-[11px] text-gray-500">
+//               Authorized scope: {allMarketsLabel}
+//             </p>
+//           )}
+//         </div>
+//       </div>
+
+//       {/* Authorized market chips */}
+//       <div className="flex flex-wrap items-center gap-1.5">
+//         {availableMarkets
+//           .filter((m) => !m.isGlobal)
+//           .map((m) => {
+//             const isActive = isAll || selectedMarket.code === m.code
+//             return (
+//               <span
+//                 key={m.id}
+//                 className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset transition ${
+//                   isActive
+//                     ? 'bg-royal-50 text-royal-700 ring-royal-300'
+//                     : 'bg-gray-100 text-gray-400 ring-gray-200'
+//                 }`}
+//               >
+//                 <CountryFlag code={m.code} className="w-3.5 h-2.5" />
+//                 {m.name}
+//               </span>
+//             )
+//           })}
+//       </div>
+
+//       {/* Dev indicator */}
+//       <DevMarketIndicator
+//         selectedMarket={selectedMarket}
+//         allMarketsLabel={allMarketsLabel}
+//       />
+//     </div>
+//   )
+// }
+
+// // ---------------------------------------------------------------------------
+// // Queue Item List
+// // ---------------------------------------------------------------------------
+// function QueueItemList({ items }) {
+//   if (!items || items.length === 0) {
+//     return <EmptyState title="Queue is empty" description="There are no actionable items in the selected scope." />
+//   }
+
+//   return (
+//     <div className="divide-y divide-gray-100">
+//       {items.map((item) => (
+//         <div key={item.id} className="flex flex-wrap items-center justify-between gap-4 p-5 hover:bg-gray-50/50 transition-colors">
+//           <div className="flex items-start gap-4">
+//             <div className="mt-1">
+//               <CountryFlag code={item.marketCode} className="w-6 h-4" />
+//             </div>
+//             <div>
+//               <div className="flex items-center gap-2">
+//                 <span className="font-semibold text-gray-900">{item.title}</span>
+//                 {item.priority === 'critical' && <Badge variant="danger" size="sm">Critical</Badge>}
+//                 {item.priority === 'high' && <Badge variant="warning" size="sm">High</Badge>}
+//                 {item.status && (
+//                   <span className="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
+//                     {item.status}
+//                   </span>
+//                 )}
+//               </div>
+//               {item.description && <p className="mt-1 text-sm text-gray-600">{item.description}</p>}
+//               <div className="mt-1.5 flex items-center gap-3 text-[11px] text-gray-500">
+//                 <span className="font-mono">{item.sourceType} • {item.sourceId}</span>
+//                 {item.waitingMinutes !== null && (
+//                   <span className="flex items-center gap-1">
+//                     <Clock className="size-3" />
+//                     Waiting {item.waitingMinutes > 60 ? `${Math.floor(item.waitingMinutes / 60)}h` : `${item.waitingMinutes}m`}
+//                   </span>
+//                 )}
+//               </div>
+//             </div>
+//           </div>
+//           <Link
+//             to={item.actionRoute}
+//             className="inline-flex items-center justify-center rounded-lg bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-2xs ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+//           >
+//             {item.actionLabel}
+//           </Link>
+//         </div>
+//       ))}
+//     </div>
+//   )
+// }
+
+// // ---------------------------------------------------------------------------
+// // ADM-009 — Needs Your Attention (main export)
+// // ---------------------------------------------------------------------------
+// export default function NeedsAttention() {
+//   const { selectedMarket, availableMarkets, permittedMarkets } = useMarketContext()
+//   const { data, loading, error, refetch } = useNeedsAttention()
+
+//   return (
+//     <PageContainer>
+//       {/* Page Header */}
+//       <div className="flex flex-wrap items-start justify-between gap-4 border-b border-gray-200/80 pb-5">
+//         <div>
+//           <div className="flex items-center gap-2">
+//             <span className="flex size-8 items-center justify-center rounded-full bg-rose-50 text-rose-600">
+//               <AlertCircle className="size-5" />
+//             </span>
+//             <h1 className="text-2xl font-extrabold tracking-tight text-royal-950 sm:text-3xl">
+//               Needs Your Attention
+//             </h1>
+//           </div>
+//           <p className="mt-1.5 text-sm text-gray-600">
+//             Operational queue scoped to{' '}
+//             <span className="font-semibold text-royal-800">
+//               {selectedMarket.isGlobal
+//                 ? 'all authorized markets'
+//                 : selectedMarket.name}
+//             </span>
+//             . Use the market selector in the top bar to switch scope.
+//           </p>
+//         </div>
+
+//         <Badge variant="success" size="md" dot dotColor="bg-emerald-500">
+//           Phase 3 — Audit & Hardening
+//         </Badge>
+//       </div>
+
+//       {/* Market Scope Banner */}
+//       <MarketScopeBanner
+//         selectedMarket={selectedMarket}
+//         availableMarkets={availableMarkets}
+//         permittedMarkets={permittedMarkets}
+//       />
+
+//       {/* Loading & Error States */}
+//       {loading && <LoadingState message="Loading attention queue..." className="mt-6" />}
+//       {error && !loading && <ErrorState title="Failed to load queue" description={error} onRetry={refetch} className="mt-6" />}
+
+//       {/* Content */}
+//       {!loading && !error && (
+//         <div className="mt-6 space-y-6">
+//           {/* Queue Categories */}
+//           <Card
+//             title="Attention Queue"
+//             subtitle={`Items requiring Admin review — scoped to ${selectedMarket.isGlobal ? 'all authorized markets' : selectedMarket.name}`}
+//           >
+//             <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
+//               {QUEUE_CATEGORIES.map((cat) => (
+//                 <QueueCategoryCard key={cat.id} category={cat} data={data} />
+//               ))}
+//             </div>
+//             {data?.summary?.complete === false && (
+//               <div className="mt-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-800 border border-amber-200/60">
+//                 <strong>Notice:</strong> Some categories could not be loaded or are restricted. Totals may be incomplete.
+//               </div>
+//             )}
+//           </Card>
+
+//           {/* Actionable Items */}
+//           <Card title="Actionable Items" subtitle={data?.summary?.truncated ? `Showing oldest ${data.items.length} of ${data.summary.total} items` : `Showing all ${data?.summary?.total ?? 0} items`} noPadding>
+//             <QueueItemList items={data?.items} />
+//           </Card>
+//         </div>
+//       )}
+
+//       {/* Phase notice */}
+//       <div className="mt-8 rounded-xl border border-dashed border-gray-300 bg-gray-50/60 px-5 py-4 text-sm text-gray-500">
+//         <span className="font-semibold text-gray-700">Phase 3 complete.</span>{' '}
+//         Queue aggregation, Firestore queries, priority calculations, safe limits, deduplication, and market authorization are integrated. Action workflows will be added in Phase 4.
+//       </div>
+//     </PageContainer>
+//   )
+// }
+
+
+
+//pasted code
+
 import { useMemo, useState } from 'react'
 import {
   AlertCircle,

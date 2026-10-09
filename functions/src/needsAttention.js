@@ -1,5 +1,108 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https'
 import { logger } from 'firebase-functions/v2'
+<<<<<<< HEAD
+import { getFirestore } from 'firebase-admin/firestore'
+import { requireAdmin } from './auth.js'
+import { adminAccess } from './accessModel.js'
+import {
+  CATEGORIES,
+  ITEM_LIMIT,
+  MarketScopeError,
+  PAGE_PERMISSION,
+  PER_CATEGORY_LIMIT,
+  buildQueue,
+  isActionable,
+  isInScope,
+  normalizeItem,
+  planCategories,
+  resolveMarketScope,
+} from './needsAttentionLogic.js'
+
+// ---------------------------------------------------------------------------
+// ADM-009 — Needs Your Attention Queue (read-only aggregation)
+//
+// Authorization flow:
+//  1. requireAdmin()        — admin, account/profile status, 2FA, active session,
+//                             PAGE_PERMISSION ('dashboard.view')
+//  2. adminAccess()         — fresh role permissions + markets from admin_profiles
+//  3. resolveMarketScope()  — validates request.data.market (untrusted filter)
+//                             against the permitted markets (canAccessMarket)
+//  4. planCategories()      — per-category permission + market-attribution gate
+//  5. Firestore queries     — every scoped query filters on countryCode
+//
+// Indexes (managed with the project's rules in the mobile repo, not here):
+// each list query filters on <statusField> (+ countryCode when scoped) and
+// orders by createdAt asc, so composite indexes on
+// (statusField, countryCode, createdAt) and (statusField, createdAt) — and for
+// support_tickets a collection-group index on (status, createdAt) — are
+// required. A missing index surfaces as a category error, never as zero.
+// ---------------------------------------------------------------------------
+
+function baseQuery(db, category, codes) {
+  const def = CATEGORIES[category]
+  let q = def.collectionGroup ? db.collectionGroup(def.collection) : db.collection(def.collection)
+  q = def.statuses.length === 1 ? q.where(def.statusField, '==', def.statuses[0]) : q.where(def.statusField, 'in', def.statuses)
+  if (codes !== null) {
+    // planCategories() never lets a category without a market field reach here
+    // with a country scope; guard anyway.
+    if (!def.marketField) throw new Error(`Category ${category} cannot be market-scoped`)
+    q = codes.length === 1 ? q.where(def.marketField, '==', codes[0]) : q.where(def.marketField, 'in', codes)
+  }
+  return q
+}
+
+async function loadCategory(db, plan, scope, nowMs) {
+  if (plan.state !== 'query') return { ...plan, total: null, items: [] }
+  const { category } = plan
+  try {
+    const q = baseQuery(db, category, scope.codes)
+    // Full count with the same filters as the list; the list itself is bounded.
+    const [countSnap, listSnap] = await Promise.all([
+      q.count().get(),
+      q.orderBy('createdAt', 'asc').limit(PER_CATEGORY_LIMIT).get(),
+    ])
+    const items = listSnap.docs
+      .map((doc) => normalizeItem({ category, id: doc.id, path: doc.ref.path, data: doc.data(), nowMs }))
+      .filter((item) => isActionable(item) && isInScope(item, scope))
+    return { category, state: 'ok', total: countSnap.data().count, items }
+  } catch (err) {
+    logger.error('ADM-009 category query failed', { category, code: err?.code, message: err?.message })
+    return { category, state: 'error', reason: 'query-failed', total: null, items: [] }
+  }
+}
+
+export const adminGetNeedsAttention = onCall(async (request) => {
+  const uid = await requireAdmin(request, { permission: PAGE_PERMISSION })
+  const access = await adminAccess(uid)
+
+  let scope
+  try {
+    scope = resolveMarketScope(request.data?.market, access)
+  } catch (err) {
+    if (err instanceof MarketScopeError) throw new HttpsError(err.code, err.message, { reason: err.reason })
+    throw err
+  }
+
+  const plan = planCategories(access.permissions, scope)
+  const db = getFirestore()
+  const nowMs = Date.now()
+  const results = await Promise.all(plan.map((p) => loadCategory(db, p, scope, nowMs)))
+
+  const queried = results.filter((r) => r.state === 'ok' || r.state === 'error')
+  if (queried.length > 0 && queried.every((r) => r.state === 'error')) {
+    throw new HttpsError('unavailable', 'The attention queue could not be loaded. Please try again.', {
+      reason: 'queue-unavailable',
+    })
+  }
+
+  const queue = buildQueue(results, { itemLimit: ITEM_LIMIT })
+  return {
+    market: scope.requested,
+    scope: { global: scope.global, marketCodes: scope.codes },
+    ...queue,
+    limits: { perCategory: PER_CATEGORY_LIMIT, items: ITEM_LIMIT },
+    fetchedAt: new Date(nowMs).toISOString(),
+=======
 import { Timestamp, getFirestore } from 'firebase-admin/firestore'
 import { requireAdmin } from './auth.js'
 import { adminAccess, canAccessMarket } from './accessModel.js'
@@ -253,5 +356,6 @@ export const adminGetNeedsAttention = onCall(async (request) => {
     },
     summary,
     items,
+>>>>>>> 34d6fc54f70a52ab6bda0e4055cb0e1c9840e2e7
   }
 })

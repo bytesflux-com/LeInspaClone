@@ -44,11 +44,18 @@ export const NAVIGATION_SECTIONS = [
         permission: PERMISSIONS.DASHBOARD_VIEW,
       },
       {
+<<<<<<< HEAD
+        label: 'Needs Your Attention',
+        icon: AlertCircle,
+        path: '/attention',
+        badgeKey: 'attention',
+=======
         label: 'Needs Attention',
         icon: AlertCircle,
         path: '/attention',
         badge: '27',
         badgeColor: 'bg-rose-500/20 text-rose-200',
+>>>>>>> 34d6fc54f70a52ab6bda0e4055cb0e1c9840e2e7
         permission: PERMISSIONS.DASHBOARD_VIEW,
       },
     ],
