@@ -9,6 +9,7 @@ import MarketDashboard from './pages/dashboard/MarketDashboard.jsx'
 import OperationsCenter from './pages/operations/OperationsCenter.jsx'
 import GlobalSearchPage from './pages/search/GlobalSearchPage.jsx'
 import NeedsAttention from './pages/attention/NeedsAttention.jsx'
+import AllClients from './pages/clients/AllClients.jsx'
 import Placeholder from './pages/Placeholder.jsx'
 import NotFound from './pages/NotFound.jsx'
 import RouteErrorElement from './components/ui/RouteErrorElement.jsx'
@@ -54,7 +55,8 @@ export const router = createBrowserRouter([
           { path: 'attention', element: <NeedsAttention /> },
 
           // MANAGEMENT
-          { path: 'clients', element: <Placeholder title="Clients CRM" /> },
+          { path: 'clients', element: <AllClients /> },
+          { path: 'clients/:clientId/*', element: <Placeholder title="Client Profile" /> },
           { path: 'providers', element: <Placeholder title="Providers & Spas" /> },
           { path: 'verifications', element: <Placeholder title="Verification & Approvals" /> },
           { path: 'bookings', element: <Placeholder title="Bookings Telemetry" /> },
