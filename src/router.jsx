@@ -9,6 +9,7 @@ import OperationsCenter from './pages/operations/OperationsCenter.jsx'
 import ClientManagement from './pages/clients/ClientManagement.jsx'
 import AllClients from './pages/clients/AllClients.jsx'
 import ClientProfile from './pages/clients/ClientProfile.jsx'
+import ClientBookings from './pages/clients/ClientBookings.jsx'
 import Placeholder from './pages/Placeholder.jsx'
 import NotFound from './pages/NotFound.jsx'
 import RouteErrorElement from './components/ui/RouteErrorElement.jsx'
@@ -60,6 +61,8 @@ export const router = createBrowserRouter([
           // ADM-012 — Client Profile. Tabs/sections keep the profile shell (header +
           // control panel); ADM-013 → ADM-019 replace the placeholders inside it.
           { path: 'clients/:clientId', element: <ClientProfile />, handle: { fullBleed: true } },
+          // ADM-013 — Client Bookings (admin view of the shared bookings collection)
+          { path: 'clients/:clientId/bookings', element: <ClientBookings />, handle: { fullBleed: true } },
           { path: 'clients/:clientId/:section', element: <ClientProfile />, handle: { fullBleed: true } },
           { path: 'attention', element: <Placeholder title="Needs Your Attention" /> },
           { path: 'spas', element: <Placeholder title="Spas & Wellness Centers" /> },
@@ -70,6 +73,8 @@ export const router = createBrowserRouter([
           { path: 'reports', element: <Placeholder title="Reports" /> },
           { path: 'market-insights', element: <Placeholder title="Market Insights" /> },
           { path: 'providers', element: <Placeholder title="Providers & Spas" /> },
+          { path: 'providers/:providerId', element: <Placeholder title="Provider Admin Profile" /> },
+          { path: 'services/:serviceId', element: <Placeholder title="Service Details" /> },
           { path: 'verifications', element: <Placeholder title="Verification & Approvals" /> },
           { path: 'bookings', element: <Placeholder title="Bookings Telemetry" /> },
           { path: 'bookings/:bookingId', element: <Placeholder title="Booking Details" /> }, // ADM-051

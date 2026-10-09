@@ -1,5 +1,5 @@
-import { NavLink, matchPath, useLocation } from 'react-router'
-import { Users } from 'lucide-react'
+import { Link, NavLink, matchPath, useLocation } from 'react-router'
+import { User, Users } from 'lucide-react'
 import { usePermissions } from '../../hooks/usePermissions'
 import { NAVIGATION_SECTIONS } from '../../constants/navigation'
 import { cn } from '../../lib/utils'
@@ -60,6 +60,9 @@ function NavLinkChildren({ item, onNavigate }) {
   // ADM-012: while a client profile is open, a "Client Profile" row appears under
   // Client Management (the profile lives at /clients/:clientId, not /clients/all).
   const onProfile = Boolean(item.path === '/clients' && matchPath({ path: '/clients/:clientId/*' }, pathname) && !matchPath({ path: '/clients/all/*' }, pathname))
+  // ADM-013: on a client's bookings the sidebar shows Client Profile (link) → Client Bookings (active).
+  const bookingsMatch = item.path === '/clients' ? matchPath({ path: '/clients/:clientId/bookings' }, pathname) : null
+  const onBookings = Boolean(bookingsMatch && bookingsMatch.params.clientId !== 'all')
   return (
     <ParentActive paths={item.children.map((c) => c.path)} force={onProfile}>
       {item.children.map((child) => {
@@ -78,11 +81,23 @@ function NavLinkChildren({ item, onNavigate }) {
           </NavLink>
         )
       })}
-      {onProfile && (
+      {onProfile && !onBookings && (
         <span aria-current="page" className={cn(ROW, 'pl-[18px] bg-[#6a4bc4] font-semibold text-white')}>
           <Users className="size-[18px] shrink-0" aria-hidden="true" />
           <span>Client Profile</span>
         </span>
+      )}
+      {onBookings && (
+        <>
+          <Link to={`/clients/${bookingsMatch.params.clientId}`} onClick={onNavigate} className={cn(ROW, 'pl-[18px] text-white/85 hover:bg-white/10 hover:text-white')}>
+            <User className="size-[18px] shrink-0" aria-hidden="true" />
+            <span>Client Profile</span>
+          </Link>
+          <span aria-current="page" className={cn(ROW, 'pl-[18px] bg-[#5c2dd5] font-semibold text-white shadow-md')}>
+            <User className="size-[18px] shrink-0" aria-hidden="true" />
+            <span>Client Bookings</span>
+          </span>
+        </>
       )}
     </ParentActive>
   )
