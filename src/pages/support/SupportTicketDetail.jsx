@@ -108,7 +108,7 @@ export default function SupportTicketDetail() {
       {!loading && record ? (
         <div className="space-y-6">
           {record.isMock && (
-            <Notice tone="neutral" title="Development Simulation Mode Active">
+            <Notice tone="attention" title="Development Simulation Mode Active">
               This record is loaded from the development mock fixture dataset. Real backend operations are simulated in memory.
             </Notice>
           )}

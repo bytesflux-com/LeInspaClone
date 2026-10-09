@@ -6,10 +6,13 @@ import {
   capQueue,
   dedupeItems,
   determineSupportedActions,
+  isActionableStatus,
   resolveMarketScope,
   resolvePriority,
   sortQueueItems,
+  startOfLocalDay,
   summarizeQueue,
+  validateAssignment,
   validateReviewPermission,
   validateVerificationTransition,
 } from '../src/needsAttentionLogic.js'
@@ -59,7 +62,7 @@ test('dedupes by sourceType + sourceId', () => {
   assert.equal(unique.length, 2)
 })
 
-test('summary is derived from the same item list', () => {
+test('summary is derived from the same item list without fabricating counts for unavailable categories', () => {
   const items = capQueue([
     { category: 'verification', priority: 'normal' },
     { category: 'finance', priority: 'high' },
@@ -72,12 +75,12 @@ test('summary is derived from the same item list', () => {
     normal: 1,
     resolvedToday: 0,
     verification: 1,
-    content: 0,
+    content: null,
     finance: 1,
     disputes: 1,
-    safety: 0,
+    safety: null,
     support: 0,
-    bookingIssues: 0,
+    bookingIssues: null,
   })
 })
 
@@ -187,5 +190,97 @@ test('determineSupportedActions returns actions only when permitted and actionab
     permissions: ['withdrawals.approve'],
   })
   assert.equal(financeActions.length, 0)
+})
+
+test('validateAssignment enforces sovereign markets, role permissions, and active status', () => {
+  const caller = {
+    uid: 'adm-caller',
+    permissions: ['providers.view', 'providers.verify'],
+    markets: ['KE'],
+  }
+
+  // Assign to me (same market)
+  const selfAssign = validateAssignment({
+    caller,
+    assignee: { uid: 'adm-caller', status: 'ACTIVE', permissions: ['providers.view'], markets: ['KE'] },
+    sourceType: 'user_verification',
+    countryCode: 'KE',
+  })
+  assert.equal(selfAssign.valid, true)
+
+  // Cross-market assignment rejected
+  const crossMarket = validateAssignment({
+    caller,
+    assignee: { uid: 'adm-caller', status: 'ACTIVE', permissions: ['providers.view'], markets: ['KE'] },
+    sourceType: 'user_verification',
+    countryCode: 'UG',
+  })
+  assert.equal(crossMarket.valid, false)
+  assert.equal(crossMarket.error, 'market-denied')
+
+  // Assign another admin by someone with action permission
+  const otherAssign = validateAssignment({
+    caller,
+    assignee: { uid: 'adm-other', status: 'ACTIVE', permissions: ['providers.view'], markets: ['KE'] },
+    sourceType: 'user_verification',
+    countryCode: 'KE',
+  })
+  assert.equal(otherAssign.valid, true)
+
+  // Assign another admin by someone who only has view permission fails
+  const viewOnlyCaller = {
+    uid: 'adm-viewer',
+    permissions: ['providers.view'],
+    markets: ['KE'],
+  }
+  const deniedAssign = validateAssignment({
+    caller: viewOnlyCaller,
+    assignee: { uid: 'adm-other', status: 'ACTIVE', permissions: ['providers.view'], markets: ['KE'] },
+    sourceType: 'user_verification',
+    countryCode: 'KE',
+  })
+  assert.equal(deniedAssign.valid, false)
+  assert.equal(deniedAssign.error, 'cannot-assign-others')
+
+  // Inactive assignee fails
+  const inactiveAssign = validateAssignment({
+    caller,
+    assignee: { uid: 'adm-other', status: 'SUSPENDED', permissions: ['providers.view'], markets: ['KE'] },
+    sourceType: 'user_verification',
+    countryCode: 'KE',
+  })
+  assert.equal(inactiveAssign.valid, false)
+  assert.equal(inactiveAssign.error, 'assignee-inactive')
+
+  // Unassigning succeeds for authorized caller
+  const unassign = validateAssignment({
+    caller,
+    assignee: null,
+    sourceType: 'user_verification',
+    countryCode: 'KE',
+  })
+  assert.equal(unassign.valid, true)
+})
+
+test('isActionableStatus correctly identifies pending and completed states', () => {
+  assert.equal(isActionableStatus('user_verification', 'pending'), true)
+  assert.equal(isActionableStatus('user_verification', 'verified'), false)
+  assert.equal(isActionableStatus('user_verification', 'rejected'), false)
+
+  assert.equal(isActionableStatus('withdrawal_request', 'submitted'), true)
+  assert.equal(isActionableStatus('withdrawal_request', 'manual_review'), true)
+  assert.equal(isActionableStatus('withdrawal_request', 'completed'), false)
+
+  assert.equal(isActionableStatus('dispute', 'open'), true)
+  assert.equal(isActionableStatus('dispute', 'resolved'), false)
+
+  assert.equal(isActionableStatus('support_ticket', 'open'), true)
+  assert.equal(isActionableStatus('support_ticket', 'closed'), false)
+})
+
+test('startOfLocalDay computes midnight in local timezone without drift', () => {
+  const d = startOfLocalDay(new Date('2026-10-09T14:30:00.000Z'))
+  assert.ok(d instanceof Date)
+  assert.ok(d.getTime() <= new Date('2026-10-09T14:30:00.000Z').getTime())
 })
 

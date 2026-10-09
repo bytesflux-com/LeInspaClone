@@ -81,20 +81,70 @@ export function sortQueueItems(items) {
   })
 }
 
-export function summarizeQueue(items) {
+// Summary category key for each queue category.
+const SUMMARY_KEY = {
+  verification: 'verification',
+  content: 'content',
+  finance: 'finance',
+  disputes: 'disputes',
+  safety: 'safety',
+  support: 'support',
+  booking: 'bookingIssues',
+}
+
+// The seven ADM-009 categories and whether this repository has a source of
+// truth for them. 'connected' = queue + supported decisions, 'read_only' =
+// queue + review screen but no decision integration, 'unavailable' = no
+// source collection or business rule exists in this codebase.
+export const CATEGORY_AVAILABILITY = {
+  verification: { state: 'connected' },
+  content: {
+    state: 'unavailable',
+    reason: 'No gallery/media moderation collection or status schema exists in this repository.',
+  },
+  finance: {
+    state: 'read_only',
+    reason: 'No payout rail or ledger integration is connected; withdrawals can be reviewed but not approved here.',
+  },
+  disputes: {
+    state: 'read_only',
+    reason: 'No escrow-release or refund workflow is connected; disputes can be reviewed but not decided here.',
+  },
+  safety: {
+    state: 'unavailable',
+    reason: 'No safety-report collection or safety action model exists in this repository.',
+  },
+  support: {
+    state: 'read_only',
+    reason: 'No support messaging integration is connected; replies cannot be sent from the Admin panel.',
+  },
+  booking: {
+    state: 'unavailable',
+    reason: 'No booking status is defined as requiring Admin action (bookingStatus values are operational only).',
+  },
+}
+
+// Counts are null (unknown) when a category is not visible to the admin, has
+// no source of truth, or its query failed — never a fabricated 0.
+// `resolvedToday` must come from recorded resolution timestamps (or null).
+export function summarizeQueue(items, { visible = null, failed = [], resolvedToday = 0 } = {}) {
+  const failedSet = new Set(failed)
+  const known = (category) => {
+    if (failedSet.has(category)) return false
+    if (CATEGORY_AVAILABILITY[category]?.state === 'unavailable') return false
+    if (visible && !visible[category]) return false
+    return true
+  }
+
   const summary = {
     total: items.length,
     critical: 0,
     high: 0,
     normal: 0,
-    resolvedToday: 0,
-    verification: 0,
-    content: 0,
-    finance: 0,
-    disputes: 0,
-    safety: 0,
-    support: 0,
-    bookingIssues: 0,
+    resolvedToday,
+  }
+  for (const [category, key] of Object.entries(SUMMARY_KEY)) {
+    summary[key] = known(category) ? 0 : null
   }
 
   for (const item of items) {
@@ -102,13 +152,8 @@ export function summarizeQueue(items) {
     else if (item.priority === 'high') summary.high += 1
     else summary.normal += 1
 
-    if (item.category === 'verification') summary.verification += 1
-    else if (item.category === 'content') summary.content += 1
-    else if (item.category === 'finance') summary.finance += 1
-    else if (item.category === 'disputes') summary.disputes += 1
-    else if (item.category === 'safety') summary.safety += 1
-    else if (item.category === 'support') summary.support += 1
-    else if (item.category === 'booking') summary.bookingIssues += 1
+    const key = SUMMARY_KEY[item.category]
+    if (key && summary[key] !== null) summary[key] += 1
   }
 
   return summary
@@ -116,6 +161,94 @@ export function summarizeQueue(items) {
 
 export function capQueue(items, cap = QUEUE_CAP) {
   return items.slice(0, cap)
+}
+
+// ---------------------------------------------------------------------------
+// Actionable state — the single definition of "still needs Admin action".
+// ---------------------------------------------------------------------------
+export function isActionableStatus(sourceType, status) {
+  if (sourceType === 'user_verification') return status === VERIFICATION_PENDING_STATUS
+  if (sourceType === 'withdrawal_request') return WITHDRAWAL_ACTION_STATUSES.includes(status)
+  if (sourceType === 'dispute') return status === DISPUTE_OPEN_STATUS
+  if (sourceType === 'support_ticket') return status === SUPPORT_OPEN_STATUS
+  return false
+}
+
+export const SOURCE_CATEGORY = {
+  user_verification: 'verification',
+  withdrawal_request: 'finance',
+  dispute: 'disputes',
+  support_ticket: 'support',
+}
+
+// Support tickets may live in a top-level collection or as a subcollection
+// (the dashboard reads them with a collection-group query). Nested tickets are
+// addressed by their full path; only paths that end in a support_tickets
+// document are accepted so this cannot be used to read arbitrary documents.
+export function isValidSupportTicketRef(sourceId) {
+  if (typeof sourceId !== 'string' || !sourceId || sourceId.length > 700) return false
+  if (!sourceId.includes('/')) return !sourceId.includes('..')
+  const segments = sourceId.split('/')
+  if (segments.length % 2 !== 0) return false
+  if (segments.some((s) => !s || s === '.' || s === '..')) return false
+  return segments[segments.length - 2] === 'support_tickets'
+}
+
+// ---------------------------------------------------------------------------
+// Assignment (stored in admin_queue_assignments, never on the source record).
+// ---------------------------------------------------------------------------
+export const ASSIGNMENT_COLLECTION = 'admin_queue_assignments'
+
+// Permission that authorises acting on (and so assigning others to) a category.
+export function actionPermissionFor(sourceType) {
+  if (sourceType === 'user_verification') return 'providers.verify'
+  if (sourceType === 'withdrawal_request') return 'withdrawals.approve'
+  if (sourceType === 'dispute') return 'safety.manage'
+  if (sourceType === 'support_ticket') return 'support.respond'
+  return null
+}
+
+export function assignmentDocId(sourceType, sourceId) {
+  // Firestore IDs cannot contain '/', so nested ticket paths are encoded.
+  return `${sourceType}:${encodeURIComponent(sourceId)}`
+}
+
+// Rules (documented in the handover; product owner may refine):
+// - Assign to me: caller can view the category and the item's market.
+// - Assign another admin: caller additionally holds the category's action
+//   permission or admins.manage.
+// - Assignee: ACTIVE admin who can view the category and the item's market.
+export function validateAssignment({ caller, assignee, sourceType, countryCode }) {
+  if (!validateReviewPermission(caller.permissions, sourceType, 'view')) {
+    return { valid: false, error: 'missing-category-permission' }
+  }
+  if (!canAccessItemScope(caller, countryCode)) return { valid: false, error: 'market-denied' }
+
+  if (assignee === null) return { valid: true } // unassign: same rule as viewing
+
+  const isSelf = assignee.uid === caller.uid
+  if (!isSelf) {
+    const perms = new Set(caller.permissions || [])
+    const actionPermission = actionPermissionFor(sourceType)
+    if (!perms.has('admins.manage') && !(actionPermission && perms.has(actionPermission))) {
+      return { valid: false, error: 'cannot-assign-others' }
+    }
+  }
+  if (assignee.status !== 'ACTIVE') return { valid: false, error: 'assignee-inactive' }
+  if (!validateReviewPermission(assignee.permissions, sourceType, 'view')) {
+    return { valid: false, error: 'assignee-missing-permission' }
+  }
+  if (!canAccessItemScope(assignee, countryCode)) return { valid: false, error: 'assignee-market-denied' }
+  return { valid: true }
+}
+
+// Start of the current local day as a Date, for "Resolved Today".
+// East African Time has no DST, so a fixed offset is exact for KE/UG.
+export const RESOLUTION_DAY_UTC_OFFSET_HOURS = 3
+export function startOfLocalDay(now = new Date(), offsetHours = RESOLUTION_DAY_UTC_OFFSET_HOURS) {
+  const shifted = new Date(now.getTime() + offsetHours * 3600000)
+  shifted.setUTCHours(0, 0, 0, 0)
+  return new Date(shifted.getTime() - offsetHours * 3600000)
 }
 
 export function canAccessItemScope(access, itemCountryCode) {

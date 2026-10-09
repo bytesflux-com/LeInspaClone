@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
-import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
+import { Link, useParams, useSearchParams } from 'react-router'
 import {
   ArrowLeft,
   BadgeCheck,
@@ -29,7 +29,6 @@ import { attentionService } from '../../services/attentionService'
 export default function VerificationDetail() {
   const { id } = useParams()
   const [searchParams] = useSearchParams()
-  const navigate = useNavigate()
   const { can } = usePermissions()
 
   const canVerify = can(PERMISSIONS.PROVIDERS_VERIFY)
@@ -182,7 +181,7 @@ export default function VerificationDetail() {
           )}
 
           {record.isMock && (
-            <Notice tone="neutral" title="Development Simulation Mode Active">
+            <Notice tone="attention" title="Development Simulation Mode Active">
               This record is loaded from the development mock fixture dataset. Real backend operations are simulated in memory.
             </Notice>
           )}

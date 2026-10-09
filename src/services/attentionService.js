@@ -42,6 +42,19 @@ export const attentionService = {
     }
     return callAdmin('adminProcessReviewAction', { sourceType, sourceId, action, reason })
   },
+
+  async assignQueueItem({ sourceType, sourceId, assigneeId, assigneeName, assigneeEmail }) {
+    if (isAttentionMockMode()) {
+      return attentionMockService.assignQueueItem({
+        sourceType,
+        sourceId,
+        assigneeId,
+        assigneeName,
+        assigneeEmail,
+      })
+    }
+    return callAdmin('adminAssignQueueItem', { sourceType, sourceId, assigneeId })
+  },
 }
 
 

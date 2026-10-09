@@ -1,4 +1,4 @@
-import { MOCK_QUEUE_ITEMS, MOCK_REVIEW_DETAILS } from './needsAttentionFixtures'
+import { MOCK_QUEUE_ITEMS, MOCK_REVIEW_DETAILS } from './needsAttentionFixtures.js'
 
 // In-memory clones for development testing state persistence during session
 let inMemoryQueue = JSON.parse(JSON.stringify(MOCK_QUEUE_ITEMS))
@@ -160,6 +160,37 @@ export const attentionMockService = {
         action === 'approve'
           ? '[SIMULATED] Provider verification approved successfully in mock mode.'
           : '[SIMULATED] Provider verification rejected in mock mode.',
+    }
+  },
+
+  async assignQueueItem({ sourceType, sourceId, assigneeId, assigneeName, assigneeEmail }) {
+    await new Promise((resolve) => setTimeout(resolve, 60))
+    const key = `${sourceType}:${sourceId}`
+    const queueItem = inMemoryQueue.find((item) => item.id === key)
+    const detailItem = inMemoryDetails[key]
+
+    const assignedTo =
+      assigneeId && assigneeId !== 'unassigned'
+        ? {
+            uid: assigneeId,
+            name: assigneeName || assigneeEmail || 'Assigned Admin',
+            email: assigneeEmail || 'admin@le-inspa.com',
+          }
+        : null
+
+    if (queueItem) {
+      queueItem.assignedTo = assignedTo
+    }
+    if (detailItem) {
+      detailItem.assignedTo = assignedTo
+    }
+
+    return {
+      ok: true,
+      sourceType,
+      sourceId,
+      assignedTo,
+      isMock: true,
     }
   },
 }
