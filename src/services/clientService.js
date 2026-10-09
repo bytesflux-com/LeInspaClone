@@ -11,6 +11,7 @@
 //   adminGetClientNotes, adminExportClients, adminBulkNotifyClients,
 //   adminBulkTagClients, adminAddClientNote,
 //   adminGetClientProfile, adminRevealClientContact   (ADM-012)
+//   adminGetClientBookings, adminGetBookingPreview     (ADM-013)
 //
 // Country scope MUST be enforced by those functions (never trust `market`).
 import { callAdmin } from '../lib/adminCall'
@@ -29,6 +30,7 @@ import {
 } from './mock/clientDirectoryMock'
 import { buildDashboard, buildGrowth } from './mock/clientDashboardMock'
 import { buildClientProfile } from './mock/clientProfileMock'
+import { queryClientBookings, buildBookingPreview } from './mock/clientBookingsMock'
 
 const USE_MOCK = import.meta.env.VITE_USE_MOCK_CLIENTS !== 'false'
 const delay = (ms = 160) => new Promise((r) => setTimeout(r, ms))
@@ -263,6 +265,31 @@ export const clientService = {
     if (!r) throw new Error('Client not found or outside your authorised markets.')
     const d = `7${r.phoneTail}${r.phoneTail.slice(1, 3)}`
     return { email: fullEmail(r), phone: `${r.phonePrefix} ${d.slice(0, 3)} ${d.slice(3, 6)} ${d.slice(6)}` }
+  },
+
+  // ADM-013 — a client's bookings, read from the central `bookings` collection
+  // (no admin copy). Filtering, sorting, paging and status counts run on the
+  // server; payment / escrow fields are omitted when `finance` is false. The
+  // server must validate admin, permission, country and client access.
+  async getClientBookings(clientId, params = {}) {
+    if (!USE_MOCK) return callAdmin('adminGetClientBookings', { clientId, ...params })
+    await delay(220)
+    const r = MOCK_CLIENTS.find((c) => c.id === clientId)
+    if (!r || (params.market && params.market !== 'ALL' && r.country !== params.market)) {
+      throw new Error('Client not found or outside your authorised markets.')
+    }
+    return queryClientBookings(r, params)
+  },
+
+  // ADM-013 — quick preview for the drawer; access is revalidated on every open.
+  async getBookingPreview(bookingId, { clientId, market, finance } = {}) {
+    if (!USE_MOCK) return callAdmin('adminGetBookingPreview', { bookingId, clientId, market })
+    await delay(140)
+    const r = MOCK_CLIENTS.find((c) => c.id === clientId)
+    if (!r || (market && market !== 'ALL' && r.country !== market)) {
+      throw new Error('Client not found or outside your authorised markets.')
+    }
+    return buildBookingPreview(r, bookingId, { finance })
   },
 
   getCities(country) {
