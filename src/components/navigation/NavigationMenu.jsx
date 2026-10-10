@@ -107,6 +107,36 @@ function GroupChildren({ item, onNavigate }) {
   // ADM-013: on a client's bookings the sidebar shows Client Profile (link) → Client Bookings (active).
   const bookingsMatch = item.path === '/clients' ? matchPath({ path: '/clients/:clientId/bookings' }, pathname) : null
   const onBookings = Boolean(bookingsMatch && bookingsMatch.params.clientId !== 'all')
+  // ADM-022, ADM-023, ADM-024: while viewing a provider, contextual sub-pages appear under
+  // Provider Management, matching screenshots.
+  const providerServicesMatch = item.path === '/providers' ? matchPath({ path: '/providers/:providerId/services' }, pathname) : null
+  const onProviderServices = Boolean(
+    providerServicesMatch || (item.path === '/providers' && pathname === '/providers/services')
+  )
+
+  const providerBookingsMatch = item.path === '/providers' ? matchPath({ path: '/providers/:providerId/bookings' }, pathname) : null
+  const onProviderBookings = Boolean(
+    providerBookingsMatch || (item.path === '/providers' && pathname === '/providers/bookings')
+  )
+
+  const currentProviderId =
+    providerBookingsMatch?.params?.providerId ||
+    providerServicesMatch?.params?.providerId ||
+    (matchPath({ path: '/providers/:providerId/*' }, pathname)?.params?.providerId) ||
+    'PR-82941'
+
+  const onProviderProfile = Boolean(
+    item.path === '/providers' &&
+    matchPath({ path: '/providers/:providerId/*' }, pathname) &&
+    !matchPath({ path: '/providers/all/*' }, pathname) &&
+    !matchPath({ path: '/providers/directory/*' }, pathname) &&
+    !matchPath({ path: '/providers/subscriptions/*' }, pathname) &&
+    !onProviderServices &&
+    !onProviderBookings
+  )
+
+  const inProviderContext = onProviderProfile || onProviderServices || onProviderBookings
+
   const activeCls = 'bg-[#5c2dd5] font-semibold text-white shadow-md'
   const idleCls = 'text-white/80 hover:bg-white/10 hover:text-white'
 
@@ -114,21 +144,69 @@ function GroupChildren({ item, onNavigate }) {
 
   return (
     <>
-      {validChildren.map((child) =>
-        child.children ? (
-          <NestedGroup key={child.path + child.label} item={child} onNavigate={onNavigate} activeCls={activeCls} idleCls={idleCls} />
-        ) : (
-          <NavLink
-            key={child.path}
-            to={child.path}
-            end
-            onClick={onNavigate}
-            className={({ isActive }) => cn(CHILD, isActive ? activeCls : idleCls)}
-          >
-            {child.label}
-          </NavLink>
-        ),
-      )}
+      {validChildren.map((child) => {
+        // Nested group (e.g. Content Moderation inside Provider Management).
+        if (child.children) return <NestedGroup key={child.path + child.label} item={child} onNavigate={onNavigate} activeCls={activeCls} idleCls={idleCls} />
+        // Insert Provider Profile, Services, Bookings right after "All Providers"
+        const isAllProviders = item.path === '/providers' && child.path === '/providers/all'
+        return (
+          <div key={child.path}>
+            <NavLink
+              to={child.path}
+              end
+              onClick={onNavigate}
+              className={({ isActive }) => cn(CHILD, isActive ? activeCls : idleCls)}
+            >
+              {child.label}
+            </NavLink>
+            {isAllProviders && inProviderContext && (
+              <>
+                {onProviderProfile ? (
+                  <span aria-current="page" className={cn(CHILD, activeCls)}>
+                    Provider Profile
+                  </span>
+                ) : (
+                  <Link
+                    to={`/providers/${currentProviderId}`}
+                    onClick={onNavigate}
+                    className={cn(CHILD, idleCls)}
+                  >
+                    Provider Profile
+                  </Link>
+                )}
+
+                {onProviderServices ? (
+                  <span aria-current="page" className={cn(CHILD, activeCls)}>
+                    Provider Services & Pricing
+                  </span>
+                ) : (
+                  <Link
+                    to={`/providers/${currentProviderId}/services`}
+                    onClick={onNavigate}
+                    className={cn(CHILD, idleCls)}
+                  >
+                    Provider Services & Pricing
+                  </Link>
+                )}
+
+                {onProviderBookings ? (
+                  <span aria-current="page" className={cn(CHILD, activeCls)}>
+                    Provider Bookings & Earnings
+                  </span>
+                ) : (
+                  <Link
+                    to={`/providers/${currentProviderId}/bookings`}
+                    onClick={onNavigate}
+                    className={cn(CHILD, idleCls)}
+                  >
+                    Provider Bookings & Earnings
+                  </Link>
+                )}
+              </>
+            )}
+          </div>
+        )
+      })}
       {onProfile && !onBookings && (
         <span aria-current="page" className={cn(CHILD, activeCls)}>Client Profile</span>
       )}
