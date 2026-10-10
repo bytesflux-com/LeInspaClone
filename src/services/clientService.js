@@ -19,6 +19,8 @@
 //   adminAddWalletTransactionNote                      (ADM-015)
 //   adminGetClientMembership, adminChangeClientMembership,
 //   adminAddMembershipNote                             (ADM-016)
+//   adminGetClientLoyalty, adminGetClientReferrals,
+//   adminGetReferralPreview, adminAddLoyaltyNote       (ADM-017)
 //
 // Country scope MUST be enforced by those functions (never trust `market`).
 import { callAdmin } from '../lib/adminCall'
@@ -41,6 +43,7 @@ import { queryClientBookings, buildBookingPreview } from './mock/clientBookingsM
 import { queryClientPayments, buildPaymentPreview, addMockPaymentNote } from './mock/clientPaymentsMock'
 import { queryClientWallet, buildWalletHistory, buildWalletTransactionPreview, addMockWalletNote } from './mock/clientWalletMock'
 import { buildClientMembership, applyMockMembershipChange, addMockMembershipNote } from './mock/clientMembershipMock'
+import { buildClientLoyalty, queryClientReferrals, buildReferralPreview, addMockLoyaltyNote } from './mock/clientLoyaltyMock'
 
 const USE_MOCK = import.meta.env.VITE_USE_MOCK_CLIENTS !== 'false'
 const delay = (ms = 160) => new Promise((r) => setTimeout(r, ms))
@@ -417,6 +420,56 @@ export const clientService = {
     const r = MOCK_CLIENTS.find((c) => c.id === clientId)
     if (!r) throw new Error('Client not found or outside your authorised markets.')
     return addMockMembershipNote(r, text)
+  },
+
+  // ADM-017 — one client's referral identity, referral funnel, loyalty account, loyalty
+  // activity and rewards, read from the existing `users` / `customer_profiles`,
+  // `referrals`, `loyalty_accounts`, `loyalty_transactions` and reward records (no admin
+  // copy, no `admin_referrals` / `admin_loyalty`). Referral success is resolved by the
+  // configured referral rule and the loyalty progress by the configured loyalty rule —
+  // both server-side. The server must validate admin, country and client access, keep
+  // referral and loyalty balances separate, and omit monetary values / transaction links
+  // when the admin lacks payment-viewing permission.
+  async getClientLoyalty(clientId, { market } = {}) {
+    if (!USE_MOCK) return callAdmin('adminGetClientLoyalty', { clientId, market })
+    await delay(240)
+    const r = MOCK_CLIENTS.find((c) => c.id === clientId)
+    if (!r || (market && market !== 'ALL' && r.country !== market)) {
+      throw new Error('Client not found or outside your authorised markets.')
+    }
+    return buildClientLoyalty(r)
+  },
+
+  // ADM-017 — one page of the referral list (tab / search / date / sort / paging are
+  // applied server-side, so the browser only ever holds one page).
+  async getClientReferrals(clientId, params = {}) {
+    if (!USE_MOCK) return callAdmin('adminGetClientReferrals', { clientId, ...params })
+    await delay(200)
+    const r = MOCK_CLIENTS.find((c) => c.id === clientId)
+    if (!r || (params.market && params.market !== 'ALL' && r.country !== params.market)) {
+      throw new Error('Client not found or outside your authorised markets.')
+    }
+    return queryClientReferrals(r, params)
+  },
+
+  // ADM-017 — referral drawer details; permission is revalidated on every open.
+  async getReferralPreview(referralId, { clientId, market } = {}) {
+    if (!USE_MOCK) return callAdmin('adminGetReferralPreview', { referralId, clientId, market })
+    await delay(140)
+    const r = MOCK_CLIENTS.find((c) => c.id === clientId)
+    if (!r || (market && market !== 'ALL' && r.country !== market)) {
+      throw new Error('Client not found or outside your authorised markets.')
+    }
+    return buildReferralPreview(r, referralId)
+  },
+
+  // ADM-017 — internal note only; it never creates, edits or reverses a reward.
+  async addLoyaltyNote({ clientId, text }) {
+    if (!USE_MOCK) return callAdmin('adminAddLoyaltyNote', { clientId, text })
+    await delay(220)
+    const r = MOCK_CLIENTS.find((c) => c.id === clientId)
+    if (!r) throw new Error('Client not found or outside your authorised markets.')
+    return addMockLoyaltyNote(r, text)
   },
 
   getCities(country) {
