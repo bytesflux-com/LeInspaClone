@@ -13,6 +13,7 @@ import ClientBookings from './pages/clients/ClientBookings.jsx'
 
 import ClientPayments from './pages/clients/ClientPayments.jsx'
 import NeedsAttention from './pages/attention/NeedsAttention.jsx'
+import VerificationCenterPage from './pages/VerificationCenterPage.jsx'
 import VerificationDetail from './pages/verifications/VerificationDetail.jsx'
 import WithdrawalDetail from './pages/withdrawals/WithdrawalDetail.jsx'
 import DisputeDetail from './pages/disputes/DisputeDetail.jsx'
@@ -102,7 +103,7 @@ export const router = createBrowserRouter([
           { path: 'providers/subscriptions', element: <Placeholder title="Provider Subscriptions" /> },
           { path: 'providers/:providerId', element: <Placeholder title="Provider Admin Profile" /> },
           { path: 'services/:serviceId', element: <Placeholder title="Service Details" /> },
-          { path: 'verifications', element: <Placeholder title="Verification & Approvals" /> },
+          { path: 'verifications', element: <VerificationCenterPage />, handle: { fullBleed: true } },
           { path: 'verifications/:id', element: <VerificationDetail /> },
           // ADM-044 → ADM-048 — Booking Operations (views over the shared bookings collection)
           { path: 'bookings', element: <BookingManagement />, handle: { fullBleed: true } },

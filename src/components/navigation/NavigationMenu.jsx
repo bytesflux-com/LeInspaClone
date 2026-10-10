@@ -114,17 +114,28 @@ function GroupChildren({ item, onNavigate }) {
 
   return (
     <>
-      {validChildren.map((child) => (
-        <NavLink
-          key={child.path}
-          to={child.path}
-          end
-          onClick={onNavigate}
-          className={({ isActive }) => cn(CHILD, isActive ? activeCls : idleCls)}
-        >
-          {child.label}
-        </NavLink>
-      ))}
+      {validChildren.map((child) => {
+        const ChildIcon = child.icon
+        return (
+          <NavLink
+            key={child.path}
+            to={child.path}
+            end
+            onClick={onNavigate}
+            className={({ isActive }) => cn(CHILD, 'justify-between', isActive ? activeCls : idleCls)}
+          >
+            <div className="flex items-center gap-2 min-w-0">
+              {ChildIcon && <ChildIcon className="size-3.5 shrink-0 opacity-80" aria-hidden="true" />}
+              <span className="truncate">{child.label}</span>
+            </div>
+            {child.badge && (
+              <span className="ml-1.5 rounded-full bg-amber-500/90 px-1.5 py-0.2 text-[9.5px] font-bold text-white shadow-xs">
+                {child.badge}
+              </span>
+            )}
+          </NavLink>
+        )
+      })}
       {onProfile && !onBookings && (
         <span aria-current="page" className={cn(CHILD, activeCls)}>Client Profile</span>
       )}
