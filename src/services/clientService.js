@@ -17,6 +17,8 @@
 //   adminGetClientWallet, adminGetWalletBalanceHistory,
 //   adminGetWalletTransactionPreview,
 //   adminAddWalletTransactionNote                      (ADM-015)
+//   adminGetClientMembership, adminChangeClientMembership,
+//   adminAddMembershipNote                             (ADM-016)
 //
 // Country scope MUST be enforced by those functions (never trust `market`).
 import { callAdmin } from '../lib/adminCall'
@@ -38,6 +40,7 @@ import { buildClientProfile } from './mock/clientProfileMock'
 import { queryClientBookings, buildBookingPreview } from './mock/clientBookingsMock'
 import { queryClientPayments, buildPaymentPreview, addMockPaymentNote } from './mock/clientPaymentsMock'
 import { queryClientWallet, buildWalletHistory, buildWalletTransactionPreview, addMockWalletNote } from './mock/clientWalletMock'
+import { buildClientMembership, applyMockMembershipChange, addMockMembershipNote } from './mock/clientMembershipMock'
 
 const USE_MOCK = import.meta.env.VITE_USE_MOCK_CLIENTS !== 'false'
 const delay = (ms = 160) => new Promise((r) => setTimeout(r, ms))
@@ -375,6 +378,45 @@ export const clientService = {
     if (!USE_MOCK) return callAdmin('adminAddWalletTransactionNote', { clientId, txnId, text })
     await delay(220)
     return addMockWalletNote(clientId, txnId, text)
+  },
+
+  // ADM-016 — one client's membership, read from `customer_memberships`, the plan
+  // configuration, membership history/events and membership payments (no admin copy).
+  // Price and benefits come from the record / configuration — never from the UI.
+  // The server must validate admin, permission, country and client access, resolve the
+  // membership status separately from the client-account status, and omit payments
+  // and prices when the admin lacks payment-viewing permission.
+  async getClientMembership(clientId, { market } = {}) {
+    if (!USE_MOCK) return callAdmin('adminGetClientMembership', { clientId, market })
+    await delay(240)
+    const r = MOCK_CLIENTS.find((c) => c.id === clientId)
+    if (!r || (market && market !== 'ALL' && r.country !== market)) {
+      throw new Error('Client not found or outside your authorised markets.')
+    }
+    return buildClientMembership(r)
+  },
+
+  // ADM-016 — controlled manual change. Reason is mandatory. The callable must
+  // re-verify the admin where required (callAdmin handles `reverification-required`),
+  // re-read the latest membership, validate the transition / market / Executive
+  // eligibility, update transactionally, preserve the previous record, write the
+  // history event + audit log, notify the client where appropriate and refresh access.
+  // It can never mark a payment successful.
+  async changeClientMembership({ clientId, action, payload, reason, note }) {
+    if (!USE_MOCK) return callAdmin('adminChangeClientMembership', { clientId, action, payload, reason, note })
+    await delay(420)
+    const r = MOCK_CLIENTS.find((c) => c.id === clientId)
+    if (!r) throw new Error('Client not found or outside your authorised markets.')
+    return applyMockMembershipChange(r, { action, payload, reason, note })
+  },
+
+  // ADM-016 — internal note only; it never alters the membership.
+  async addMembershipNote({ clientId, text }) {
+    if (!USE_MOCK) return callAdmin('adminAddMembershipNote', { clientId, text })
+    await delay(220)
+    const r = MOCK_CLIENTS.find((c) => c.id === clientId)
+    if (!r) throw new Error('Client not found or outside your authorised markets.')
+    return addMockMembershipNote(r, text)
   },
 
   getCities(country) {
