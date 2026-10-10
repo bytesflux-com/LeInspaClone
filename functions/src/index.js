@@ -95,4 +95,9 @@ export {
   adminGetCredentialVerificationDetail,
   adminSubmitCredentialDecision,
   adminAddCredentialInternalNote,
+  adminGetBusinessVerificationDetail,
+  adminRevealBusinessDocumentNumber,
+  adminSubmitBusinessDocumentDecision,
+  adminAddBusinessInternalNote,
 } from "./adminVerification.js";
+

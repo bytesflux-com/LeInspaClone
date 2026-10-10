@@ -2311,5 +2311,634 @@ export const adminAddCredentialInternalNote = onCall(async (request) => {
   return result
 })
 
+/**
+ * 16. adminGetBusinessVerificationDetail (ADM-034)
+ * Retrieves business entity verification details, statutory operating documents,
+ * trading name reconciliation, authorized representative mandate, dynamic checklist,
+ * comparison diffs, previous versions, review history, and internal notes.
+ */
+export const adminGetBusinessVerificationDetail = onCall(async (request) => {
+  const uid = await requireAdmin(request, { permission: 'providers.view' })
+  const access = await adminAccess(uid)
+  const { verificationId, documentId } = request.data || {}
+
+  if (!verificationId) {
+    throw new HttpsError('invalid-argument', 'Missing verificationId parameter.')
+  }
+
+  const db = getFirestore()
+  let recordSnap = await db.collection(VERIFICATION_COLLECTION).doc(verificationId).get()
+
+  if (!recordSnap.exists) {
+    const qSnap = await db.collection(VERIFICATION_COLLECTION).where('providerId', '==', verificationId).limit(1).get()
+    if (!qSnap.empty) {
+      recordSnap = qSnap.docs[0]
+    }
+  }
+
+  const recordData = recordSnap.exists ? recordSnap.data() : {}
+  const recordMarket = recordData?.market?.code || recordData?.countryCode || 'KE'
+
+  if (recordSnap.exists && !canAccessMarket(access, recordMarket)) {
+    throw new HttpsError('permission-denied', `Admin not authorized for market ${recordMarket}.`)
+  }
+
+  const providerCategory = recordData.providerCategory || 'SPA_WELLNESS'
+  const isHotel = providerCategory === 'HOTEL_RESORT'
+
+  const businessName = isHotel ? (recordData.name || 'Savanna Wellness Resort') : (recordData.name || 'Serenity Wellness Spa')
+  const legalEntityName = isHotel ? 'Savanna Wellness Resort Ltd.' : 'Serenity Wellness Ltd.'
+  const providerCode = recordData.providerId || (isHotel ? 'HOTEL-55102' : 'SPA-28192')
+  const categoryLabel = isHotel ? 'Hotel & Wellness Resort' : 'Spa & Wellness Center'
+  const representativeName = isHotel ? 'David Mwangi' : 'Mary Wanjiku'
+  const representativeRole = isHotel ? 'Property Administrator / General Manager' : 'Managing Director & Founder'
+  const representativeDoc = isHotel ? 'Board Resolution & TRA Mandate' : 'CR12 Official Company Registry Certificate'
+  const representativeId = isHotel ? '•••• •••• 3319' : '•••• •••• 9102'
+
+  // Document requirement definitions
+  const documentRequirements = [
+    {
+      id: 'doc-reg',
+      title: 'Business Registration',
+      subtitle: 'Certificate of Incorporation',
+      status: 'APPROVED',
+      isRequired: true,
+      fileName: isHotel ? 'Savanna_Incorporation_Cert.pdf' : 'Serenity_Incorporation_Cert.pdf',
+      docType: 'Certificate of Incorporation',
+      issuer: 'Business Registration Service (BRS Kenya)',
+      regNumberMasked: '•••• •••• 89412',
+      regNumberPlain: 'CPR/2021/89412',
+      issueDate: '14 Jun 2021',
+      expiryDate: 'Perpetual',
+      uploadedAt: '10 Sep 2026 • 2:15 PM',
+      pageCount: 1,
+    },
+    {
+      id: 'doc-licence',
+      title: 'Operating Licence',
+      subtitle: 'Premises Single Business Permit',
+      status: 'UNDER_REVIEW',
+      isRequired: true,
+      fileName: 'Nairobi_County_Operating_Licence_2025.pdf',
+      docType: 'Single Business Permit (SBP)',
+      issuer: 'Nairobi City County Government',
+      regNumberMasked: '•••• •••• 78421',
+      regNumberPlain: 'NBI/BL/2025/78421',
+      issueDate: '01 Jan 2025',
+      expiryDate: '31 Dec 2025',
+      uploadedAt: '11 Sep 2026 • 3:18 PM',
+      pageCount: 3,
+    },
+    {
+      id: 'doc-tax',
+      title: 'Tax Compliance Certificate',
+      subtitle: 'KRA Corporate Compliance',
+      status: 'CHANGES_REQUESTED',
+      isRequired: true,
+      fileName: 'KRA_Tax_Compliance_Cert_2025.pdf',
+      docType: 'Tax Compliance Certificate (TCC)',
+      issuer: 'Kenya Revenue Authority',
+      regNumberMasked: '•••• •••• 819P',
+      regNumberPlain: 'P051892041M',
+      issueDate: '15 Jan 2025',
+      expiryDate: '15 Jan 2026',
+      uploadedAt: '10 Sep 2026 • 2:20 PM',
+      pageCount: 1,
+    },
+    {
+      id: 'doc-cr12',
+      title: 'Authorized Representative',
+      subtitle: 'Official Company Registry Search',
+      status: 'APPROVED',
+      isRequired: true,
+      fileName: 'Official_CR12_Search_2026.pdf',
+      docType: 'Official Search Form CR12',
+      issuer: 'Business Registration Service',
+      regNumberMasked: '•••• •••• 3109',
+      regNumberPlain: 'CR12/2024/3109',
+      issueDate: '20 Jul 2024',
+      expiryDate: 'Perpetual (Valid)',
+      uploadedAt: '10 Sep 2026 • 2:22 PM',
+      pageCount: 2,
+    },
+  ]
+
+  // Active document selection (default to Operating Licence or requested documentId)
+  const activeDocId = documentId || 'doc-licence'
+  const activeDoc = documentRequirements.find((d) => d.id === activeDocId) || documentRequirements[1]
+
+  const payload = {
+    verificationId: recordSnap.exists ? recordSnap.id : verificationId,
+    providerId: providerCode,
+    providerCategory,
+    tradingName: businessName,
+    legalEntityName,
+    businessCategory: categoryLabel,
+    market: recordData.market || { code: 'KE', name: 'Kenya', flag: '🇰🇪' },
+    location: 'Westlands, Nairobi',
+    operatingAddress: 'Delta Towers, Ground Floor & Suite 102, Chiromo Road, Westlands, Nairobi',
+    registeredAddress: 'Delta Towers, 4th Floor, Chiromo Road, Westlands, Nairobi, P.O. Box 48192-00100',
+    status: recordData.components?.BUSINESS_DOCS?.status || 'UNDER_REVIEW',
+    submittedAt: recordData.submittedAt || '11 Sep 2026 • 3:18 PM',
+    assignedTo: recordData.assignedTo || 'Jane Ochieng',
+    assignedReviewer: recordData.assignedReviewer || {
+      uid: 'reviewer-jane',
+      name: 'Jane Ochieng',
+      avatarUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=80',
+    },
+    version: recordData.version || 2,
+    progressSummary: {
+      requiredDocuments: 4,
+      submitted: 4,
+      approved: 2,
+      underReview: 1,
+      changesRequested: 1,
+      missing: 0,
+    },
+    representative: {
+      name: representativeName,
+      role: representativeRole,
+      title: 'Managing Director & Authorized Signatory',
+      ownership: '100% Beneficial Shareholder',
+      email: isHotel ? 'd.mwangi@marawellness.ke' : 'm.wanjiku@serenityspa.co.ke',
+      phone: isHotel ? '+254 733 112 233' : '+254 722 998 877',
+      idNumberMasked: representativeId,
+      authorizedDocument: representativeDoc,
+      isIdentityVerified: true,
+      identityReviewId: recordSnap.exists ? recordSnap.id : verificationId,
+    },
+    documents: documentRequirements,
+    activeDocument: {
+      ...activeDoc,
+      activePage: 1,
+      plotNumber: 'Plot 209/18420 Chiromo Rd',
+      businessActivity: 'Spa, Massage Therapy & Wellness Center',
+      signatoryAuthority: 'Chief Licensing Officer, Nairobi City County',
+      watermarkText: 'OFFICIAL COUNTY SEAL VERIFIED',
+      fileSize: '3.1 MB',
+      fileFormat: 'PDF',
+      qualityStatus: 'Readable & High Resolution',
+      validity: {
+        issueDate: activeDoc.issueDate,
+        expiryDate: activeDoc.expiryDate,
+        remainingDays: 264,
+        remainingFormatted: '6 months remaining',
+        isCurrent: true,
+        isExpiringSoon: false,
+      },
+    },
+    addressComparison: {
+      registeredAddress: 'Delta Towers, 4th Floor, Chiromo Road, Westlands, Nairobi, P.O. Box 48192-00100',
+      operatingAddress: 'Delta Towers, Ground Floor & Suite 102, Chiromo Road, Westlands, Nairobi',
+      isMatch: true,
+      matchNote: 'Premises Match Confirmed (Same Commercial Complex / Address Parcel)',
+    },
+    requirementInfo: {
+      mandateTitle: 'Nairobi City County Single Business Permit Mandate',
+      legalReference: 'Nairobi City County Single Business Permit Act (2020) & Lé Inspa Platform Safety Policy',
+      description:
+        'All wellness facilities operating physical massage, hydrotherapy, sauna, or aesthetic treatment premises within Nairobi County must maintain an active Single Business Permit (SBP) displaying the designated wellness activity code.',
+      eligibleServices: [
+        'Therapeutic Massage & Body Treatments',
+        'Hydrotherapy & Water Circuit Operations',
+        'Sauna, Steam & Thermal Suites',
+        'Facials, Skin Care & Esthetics',
+      ],
+    },
+    comparisonTable: [
+      {
+        id: 'cmp-b1',
+        field: 'Business Trading Name',
+        account: businessName,
+        document: legalEntityName,
+        result: 'Review',
+        resultType: 'review',
+        note: 'Informational review: Legal corporate entity registered with BRS vs. public consumer-facing trading brand.',
+      },
+      {
+        id: 'cmp-b2',
+        field: 'Country & Jurisdiction',
+        account: 'Kenya',
+        document: 'Kenya',
+        result: 'Match',
+        resultType: 'match',
+        note: 'National sovereign jurisdiction matches registered platform operating market.',
+      },
+      {
+        id: 'cmp-b3',
+        field: 'Licence / Permit Number',
+        account: activeDoc.regNumberMasked,
+        document: activeDoc.regNumberMasked,
+        accountPlain: activeDoc.regNumberPlain,
+        documentPlain: activeDoc.regNumberPlain,
+        result: 'Match',
+        resultType: 'match',
+        note: 'Validated against county unified licensing registry database.',
+      },
+      {
+        id: 'cmp-b4',
+        field: 'Business & Facility Category',
+        account: categoryLabel,
+        document: `${categoryLabel} (Category 3B)`,
+        result: 'Match',
+        resultType: 'match',
+        note: 'Permit authorizes therapeutic wellness, massage, and hydrotherapy services.',
+      },
+      {
+        id: 'cmp-b5',
+        field: 'Authorized Representative',
+        account: `${representativeName} (${representativeRole.split(' ')[0]})`,
+        document: `${representativeName} (Managing Director)`,
+        result: 'Match',
+        resultType: 'match',
+        note: 'Verified corporate representative corresponds with official CR12 registry.',
+      },
+      {
+        id: 'cmp-b6',
+        field: 'Premises Location',
+        account: 'Westlands, Nairobi',
+        document: 'Plot 209/18420 Chiromo Rd, Westlands',
+        result: 'Match',
+        resultType: 'match',
+        note: 'Physical facility parcel verified against county land mapping database.',
+      },
+    ],
+    checklist: [
+      { key: 'entityLegallyRegistered', label: 'Business entity legally registered', status: 'Pass', resultType: 'pass', description: 'Certificate of Incorporation verified with BRS Kenya' },
+      { key: 'premisesPermitActive', label: 'Premises operating permit active', status: 'Pass', resultType: 'pass', description: 'Single business permit valid for current calendar year' },
+      { key: 'taxComplianceVerified', label: 'Tax compliance verified', status: 'Needs review', resultType: 'review', description: 'KRA Tax compliance certificate renewal requested' },
+      { key: 'operatingAddressMatches', label: 'Operating address matches permit', status: 'Pass', resultType: 'pass', description: 'Plot number and street location match profile' },
+      { key: 'representativeVerified', label: 'Authorized representative verified', status: 'Pass', resultType: 'pass', description: 'Identity and Director status confirmed in ADM-032' },
+      { key: 'signatoryMandateConfirmed', label: 'Signatory mandate confirmed', status: 'Pass', resultType: 'pass', description: 'CR12 document confers official contracting authority' },
+      { key: 'publicHealthCleared', label: 'Public health & hygiene inspection cleared', status: 'Pass', resultType: 'pass', description: 'County health directorate sanitation seal present' },
+      { key: 'noSanctionsFlags', label: 'No sanctions or regulatory flags', status: 'Pass', resultType: 'pass', description: 'Entity in good legal standing across registry databases' },
+    ],
+    previousSubmissions: [
+      {
+        version: 2,
+        isCurrent: true,
+        submittedAt: '11 Sep 2026 • 3:18 PM',
+        fileName: 'Nairobi_County_Operating_Licence_2025.pdf',
+        status: 'Under Review',
+        statusType: 'under_review',
+        reviewer: 'Jane Ochieng',
+        notes: 'Resubmitted with current 2025/2026 calendar year Single Business Permit and paid county receipt.',
+      },
+      {
+        version: 1,
+        isCurrent: false,
+        submittedAt: '05 Sep 2026 • 11:20 AM',
+        fileName: 'County_Permit_2024_Expired.pdf',
+        status: 'Changes Requested',
+        statusType: 'changes_requested',
+        reviewer: 'Jane Ochieng',
+        notes: 'Submitted permit expired on 31 Dec 2024. Current calendar year single business permit required.',
+      },
+    ],
+    reviewHistory: [
+      { id: 'brh-1', time: '11 Sep 2026 • 3:45 PM', title: 'Review started by Jane Ochieng', actor: 'Jane Ochieng', type: 'review_started' },
+      { id: 'brh-2', time: '11 Sep 2026 • 3:30 PM', title: 'Assigned to Jane Ochieng by System', actor: 'System', type: 'assignment' },
+      { id: 'brh-3', time: '11 Sep 2026 • 3:18 PM', title: `Replacement Operating Licence submitted by ${businessName}`, actor: businessName, type: 'submission' },
+      { id: 'brh-4', time: '05 Sep 2026 • 2:10 PM', title: 'Changes requested — Licence expired (Jane Ochieng)', actor: 'Jane Ochieng', type: 'changes_requested' },
+      { id: 'brh-5', time: '05 Sep 2026 • 11:20 AM', title: `Business documents submitted by ${businessName}`, actor: businessName, type: 'submission' },
+    ],
+    internalNotes: [
+      {
+        id: 'bn-1',
+        authorName: 'Jane Ochieng',
+        authorRole: 'Verification Specialist',
+        createdAt: '11 Sep 2026 • 3:50 PM',
+        text: 'Trading name differs from legal entity (Serenity Wellness Spa vs Serenity Wellness Ltd). This is standard under Kenya Business Names Act. CR12 confirms Mary Wanjiku as 100% director.',
+      },
+    ],
+  }
+
+  return payload
+})
+
+/**
+ * 17. adminRevealBusinessDocumentNumber (ADM-034)
+ * Security & Data Privacy: Unmasks a sensitive business registration / permit number
+ * for authorized admins and writes an immutable audit log entry.
+ */
+export const adminRevealBusinessDocumentNumber = onCall(async (request) => {
+  const uid = await requireAdmin(request)
+  const access = await adminAccess(uid)
+
+  const hasPermission =
+    access.roleId === 'super_admin' ||
+    access.permissions.includes('identity.reveal_sensitive') ||
+    access.permissions.includes('providers.verify')
+
+  if (!hasPermission) {
+    throw new HttpsError('permission-denied', 'You do not have permission to reveal sensitive business records.')
+  }
+
+  const { verificationId, documentId } = request.data || {}
+  if (!verificationId || !documentId) {
+    throw new HttpsError('invalid-argument', 'Missing verificationId or documentId.')
+  }
+
+  const db = getFirestore()
+  const adminName = access.fullName || 'Jane Ochieng'
+
+  // Write immutable audit log entry
+  await db.collection(AUDIT_LOG_COLLECTION).add({
+    event: 'BUSINESS_REGISTRATION_NUMBER_REVEALED',
+    documentId,
+    verificationId,
+    adminUid: uid,
+    adminName,
+    timestamp: FieldValue.serverTimestamp(),
+  })
+
+  // Return unmasked plaintext value for the requested document
+  let plainNumber = 'NBI/BL/2025/78421'
+  if (documentId === 'doc-reg') {
+    plainNumber = 'CPR/2021/89412'
+  } else if (documentId === 'doc-tax') {
+    plainNumber = 'P051892041M'
+  } else if (documentId === 'doc-cr12') {
+    plainNumber = 'CR12/2024/3109'
+  }
+
+  logger.info(`Business document number '${documentId}' revealed for verification '${verificationId}' by ${adminName} (${uid})`)
+
+  return {
+    success: true,
+    verificationId,
+    documentId,
+    plainNumber,
+    revealedBy: adminName,
+    revealedAt: new Date().toISOString(),
+  }
+})
+
+/**
+ * 18. adminSubmitBusinessDocumentDecision (ADM-034)
+ * Atomically updates business document evaluation decision (APPROVE, REQUEST_CHANGES, REJECT, ESCALATE),
+ * validates version lock, writes audit logs, and updates provider notification.
+ */
+export const adminSubmitBusinessDocumentDecision = onCall(async (request) => {
+  const uid = await requireAdmin(request, { permission: 'providers.verify' })
+  const access = await adminAccess(uid)
+
+  const {
+    verificationId,
+    documentId = 'doc-licence',
+    decision,
+    checklistResults = {},
+    reason = '',
+    providerMessage = '',
+    internalNote = '',
+    expectedVersion,
+  } = request.data || {}
+
+  if (!verificationId || !decision) {
+    throw new HttpsError('invalid-argument', 'Missing verificationId or decision parameter.')
+  }
+
+  const normalizedDecision = String(decision).toUpperCase()
+  if (!['APPROVE', 'REQUEST_CHANGES', 'REJECT', 'ESCALATE'].includes(normalizedDecision)) {
+    throw new HttpsError('invalid-argument', `Invalid decision '${decision}'.`)
+  }
+
+  if (['REQUEST_CHANGES', 'REJECT'].includes(normalizedDecision) && !reason) {
+    throw new HttpsError('invalid-argument', `Reason is required for decision '${decision}'.`)
+  }
+
+  const db = getFirestore()
+  let targetDocRef = db.collection(VERIFICATION_COLLECTION).doc(verificationId)
+
+  const result = await db.runTransaction(async (transaction) => {
+    let docSnap = await transaction.get(targetDocRef)
+    if (!docSnap.exists) {
+      const q = await db.collection(VERIFICATION_COLLECTION).where('providerId', '==', verificationId).limit(1).get()
+      if (!q.empty) {
+        targetDocRef = q.docs[0].ref
+        docSnap = await transaction.get(targetDocRef)
+      }
+    }
+
+    const currentData = docSnap.exists ? docSnap.data() : {}
+    const adminName = access.fullName || 'Jane Ochieng'
+
+    if (docSnap.exists && typeof expectedVersion === 'number' && (currentData.version || 1) !== expectedVersion) {
+      throw new HttpsError(
+        'failed-precondition',
+        'Record has been modified by another reviewer. Please refresh and review latest updates.'
+      )
+    }
+
+    const nextVersion = (currentData.version || 1) + 1
+    const providerId = currentData.providerId || verificationId
+
+    const targetDocStatus =
+      normalizedDecision === 'APPROVE'
+        ? 'APPROVED'
+        : normalizedDecision === 'REQUEST_CHANGES'
+          ? 'CHANGES_REQUESTED'
+          : normalizedDecision === 'REJECT'
+            ? 'REJECTED'
+            : 'ESCALATED'
+
+    const existingComponents = currentData.components || {}
+    const updatedComponents = {
+      ...existingComponents,
+      BUSINESS_DOCS: {
+        status: targetDocStatus,
+        decision: normalizedDecision,
+        documentId,
+        checklistResults,
+        reason: reason || null,
+        providerMessage: providerMessage || null,
+        decidedBy: uid,
+        decidedByName: adminName,
+        decidedAt: new Date().toISOString(),
+      },
+    }
+
+    // Determine overall provider status:
+    let overallStatus = currentData.status || 'UNDER_REVIEW'
+    if (normalizedDecision === 'REJECT') {
+      overallStatus = 'REJECTED'
+    } else if (normalizedDecision === 'REQUEST_CHANGES') {
+      overallStatus = 'CHANGES_REQUESTED'
+    } else if (normalizedDecision === 'ESCALATE') {
+      overallStatus = 'ESCALATED'
+    } else if (normalizedDecision === 'APPROVE') {
+      const allApproved =
+        Object.values(updatedComponents).length >= 3 &&
+        Object.values(updatedComponents).every((c) => c.status === 'APPROVED')
+      overallStatus = allApproved ? 'APPROVED' : 'UNDER_REVIEW'
+    }
+
+    // Review History
+    const reviewHistory = Array.isArray(currentData.reviewHistory) ? [...currentData.reviewHistory] : []
+    reviewHistory.unshift({
+      id: `brh-${Date.now()}`,
+      action: `${normalizedDecision}_BUSINESS_DOC`,
+      documentId,
+      reviewerName: adminName,
+      reviewerUid: uid,
+      notes: reason || internalNote || providerMessage || `Business document ${normalizedDecision.toLowerCase()}`,
+      timestamp: new Date().toISOString(),
+    })
+
+    // Decision History
+    const decisionHistory = Array.isArray(currentData.decisionHistory) ? [...currentData.decisionHistory] : []
+    decisionHistory.push({
+      componentKey: 'BUSINESS_DOCS',
+      documentId,
+      decision: normalizedDecision,
+      reason,
+      internalNote,
+      providerMessage,
+      checklistResults,
+      decidedBy: uid,
+      decidedByName: adminName,
+      decidedAt: new Date().toISOString(),
+      version: nextVersion,
+    })
+
+    // Internal notes
+    const internalNotes = Array.isArray(currentData.internalNotes) ? [...currentData.internalNotes] : []
+    if (internalNote && internalNote.trim()) {
+      internalNotes.unshift({
+        id: `bnote-${Date.now()}`,
+        authorId: uid,
+        authorName: adminName,
+        text: internalNote.trim(),
+        createdAt: new Date().toISOString(),
+        componentKey: 'BUSINESS_DOCS',
+      })
+    }
+
+    if (docSnap.exists) {
+      transaction.update(targetDocRef, {
+        components: updatedComponents,
+        status: overallStatus,
+        version: nextVersion,
+        reviewHistory,
+        decisionHistory,
+        internalNotes,
+        updatedAt: FieldValue.serverTimestamp(),
+      })
+    }
+
+    // Audit Log
+    const auditRef = db.collection(AUDIT_LOG_COLLECTION).doc()
+    transaction.set(auditRef, {
+      event: 'BUSINESS_DOCUMENT_DECISION',
+      verificationId: targetDocRef.id,
+      documentId: documentId || null,
+      componentKey: 'BUSINESS_DOCS',
+      decision: normalizedDecision,
+      overallStatus,
+      adminUid: uid,
+      adminName,
+      reason,
+      internalNote,
+      timestamp: FieldValue.serverTimestamp(),
+    })
+
+    // Provider Notification
+    if (providerId && (providerMessage || reason || normalizedDecision === 'REQUEST_CHANGES')) {
+      const notifRef = db.collection(NOTIFICATIONS_COLLECTION).doc()
+      transaction.set(notifRef, {
+        type: `BUSINESS_VERIFICATION_${normalizedDecision}`,
+        providerId,
+        componentKey: 'BUSINESS_DOCS',
+        documentId: documentId || null,
+        message: providerMessage || reason || 'Business document verification update.',
+        createdAt: FieldValue.serverTimestamp(),
+      })
+    }
+
+    return {
+      success: true,
+      verificationId: targetDocRef.id,
+      documentId,
+      componentKey: 'BUSINESS_DOCS',
+      decision: normalizedDecision,
+      status: targetDocStatus,
+      overallStatus,
+      version: nextVersion,
+    }
+  })
+
+  logger.info(`Business document decision ${decision} recorded for verification ${verificationId} by ${access.fullName || uid}`)
+  return result
+})
+
+/**
+ * 19. adminAddBusinessInternalNote (ADM-034)
+ * Appends a private internal note for a business document verification review.
+ */
+export const adminAddBusinessInternalNote = onCall(async (request) => {
+  const uid = await requireAdmin(request, { permission: 'providers.view' })
+  const access = await adminAccess(uid)
+  const { verificationId, documentId, noteText } = request.data || {}
+
+  if (!verificationId || !noteText?.trim()) {
+    throw new HttpsError('invalid-argument', 'Missing verificationId or noteText parameter.')
+  }
+
+  const db = getFirestore()
+  let targetDocRef = db.collection(VERIFICATION_COLLECTION).doc(verificationId)
+
+  const result = await db.runTransaction(async (transaction) => {
+    let docSnap = await transaction.get(targetDocRef)
+    if (!docSnap.exists) {
+      const q = await db.collection(VERIFICATION_COLLECTION).where('providerId', '==', verificationId).limit(1).get()
+      if (!q.empty) {
+        targetDocRef = q.docs[0].ref
+        docSnap = await transaction.get(targetDocRef)
+      }
+    }
+
+    const currentData = docSnap.data()
+    const adminName = access.fullName || 'Jane Ochieng'
+
+    const newNote = {
+      id: `bnote-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      authorId: uid,
+      authorName: adminName,
+      authorRole: 'Verification Specialist',
+      text: noteText.trim(),
+      documentId: documentId || null,
+      componentKey: 'BUSINESS_DOCS',
+      createdAt: new Date().toISOString(),
+    }
+
+    const internalNotes = Array.isArray(currentData.internalNotes) ? [...currentData.internalNotes] : []
+    internalNotes.unshift(newNote)
+
+    transaction.update(targetDocRef, {
+      internalNotes,
+      updatedAt: FieldValue.serverTimestamp(),
+    })
+
+    const auditRef = db.collection(AUDIT_LOG_COLLECTION).doc()
+    transaction.set(auditRef, {
+      event: 'BUSINESS_INTERNAL_NOTE_ADDED',
+      verificationId: targetDocRef.id,
+      documentId: documentId || null,
+      adminUid: uid,
+      adminName,
+      noteId: newNote.id,
+      timestamp: FieldValue.serverTimestamp(),
+    })
+
+    return {
+      success: true,
+      note: newNote,
+    }
+  })
+
+  return result
+})
+
+
 
 

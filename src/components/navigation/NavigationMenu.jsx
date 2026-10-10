@@ -6,12 +6,16 @@ import { Crown, Gift, User, Users, Wallet, WalletCards } from 'lucide-react'
 import { usePermissions } from '../../hooks/usePermissions'
 import { NAVIGATION_SECTIONS } from '../../constants/navigation'
 import { cn } from '../../lib/utils'
+import VerificationCenterAccordion from './VerificationCenterAccordion'
 
 const ROW = 'group flex items-center gap-2.5 whitespace-nowrap rounded-xl px-2.5 py-[3px] text-[12.5px] font-medium leading-5 transition-colors'
 const CHILD = 'flex items-center whitespace-nowrap rounded-lg py-[3px] pr-2.5 pl-[38px] text-[12px] leading-5 transition-colors'
 
 // A route is inside a group when it matches the group prefix or any child path.
-const groupPaths = (item) => [item.path, ...item.children.map((c) => c.path)]
+const groupPaths = (item) => [
+  item.path,
+  ...(item.children || []).flatMap((c) => [c.path, ...(c.children || []).map((gc) => gc.path)]),
+]
 const inside = (paths, pathname) => paths.some((p) => pathname === p || pathname.startsWith(`${p}/`))
 
 export default function NavigationMenu({ onNavigate }) {
@@ -49,6 +53,15 @@ export default function NavigationMenu({ onNavigate }) {
 
             <div className="space-y-0.5">
               {items.map((item) => {
+                if (item.path === '/verifications' || item.label === 'Verification Center' || item.isAccordion) {
+                  return (
+                    <VerificationCenterAccordion
+                      key={item.path + item.label}
+                      onNavigate={onNavigate}
+                    />
+                  )
+                }
+
                 const Icon = item.icon
 
                 if (!item.children) {
@@ -154,6 +167,7 @@ function GroupChildren({ item, onNavigate }) {
     <>
       {validChildren.map((child) => {
 
+
         // Insert Provider Profile, Services, Bookings right after "All Providers"
         const isAllProviders = item.path === '/providers' && child.path === '/providers/all'
         return (
@@ -212,6 +226,19 @@ function GroupChildren({ item, onNavigate }) {
               </>
             )}
           </div>
+
+        if (child.path === '/verifications' || child.label === 'Verification Center' || child.isAccordion) {
+          return (
+            <VerificationCenterAccordion
+              key={child.path + child.label}
+              onNavigate={onNavigate}
+            />
+          )
+        }
+        if (child.path === '/verifications/queue' || child.label === 'Verification Queue') {
+          return null
+        }
+
 
         const ChildIcon = child.icon
         return (

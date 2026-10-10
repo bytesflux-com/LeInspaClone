@@ -110,6 +110,19 @@ export default function VerificationReviewPage() {
   // Handle Tab Selection
   const handleSelectTab = (tabId) => {
 
+    if (tabId === 'IDENTITY') {
+      navigate(`/verifications/identity/${targetId}`)
+      return
+    }
+    if (tabId === 'CREDENTIALS') {
+      navigate(`/verifications/credentials/${targetId}`)
+      return
+    }
+    if (tabId === 'BUSINESS_DOCS' || tabId === 'PREMISES_PERMIT' || tabId === 'BUSINESS_REG' || tabId === 'HOSPITALITY_LIC') {
+      navigate(`/verifications/business/${targetId}`)
+      return
+    }
+
     setActiveTabId(tabId)
     // If switching to identity or other docs, pick corresponding document if available
     if (tabId === 'IDENTITY') {
