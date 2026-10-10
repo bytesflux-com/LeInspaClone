@@ -18,6 +18,8 @@ import ClientMembership from './pages/clients/ClientMembership.jsx'
 import ClientLoyalty from './pages/clients/ClientLoyalty.jsx'
 
 import NeedsAttention from './pages/attention/NeedsAttention.jsx'
+import VerificationCenterPage from './pages/VerificationCenterPage.jsx'
+import VerificationQueuePage from './pages/VerificationQueuePage.jsx'
 import VerificationDetail from './pages/verifications/VerificationDetail.jsx'
 import WithdrawalDetail from './pages/withdrawals/WithdrawalDetail.jsx'
 import DisputeDetail from './pages/disputes/DisputeDetail.jsx'
@@ -126,7 +128,8 @@ export const router = createBrowserRouter([
           { path: 'providers/:providerId', element: <ProviderProfile />, handle: { fullBleed: true } },
           { path: 'providers/:providerId/:section', element: <ProviderProfile />, handle: { fullBleed: true } },
           { path: 'services/:serviceId', element: <Placeholder title="Service Details" /> },
-          { path: 'verifications', element: <Placeholder title="Verification & Approvals" /> },
+          { path: 'verifications', element: <VerificationCenterPage />, handle: { fullBleed: true } },
+          { path: 'verifications/queue', element: <VerificationQueuePage />, handle: { fullBleed: true } },
           { path: 'verifications/:id', element: <VerificationDetail /> },
           // ADM-044 → ADM-048 — Booking Operations (views over the shared bookings collection)
           { path: 'bookings', element: <BookingManagement />, handle: { fullBleed: true } },

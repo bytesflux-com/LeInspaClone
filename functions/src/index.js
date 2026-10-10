@@ -34,6 +34,7 @@ export { adminGetBookingDashboard, adminListBookings, adminGetBookingQuickView, 
 export { adminGetProviderDashboard } from './providerDashboard.js'
 export { adminListProviders, adminGetProviderDetail } from './providerDirectory.js'
 export {
+
   adminGetProviderProfile,
   adminAddProviderInternalNote,
   adminUpdateProviderContentStatus,
@@ -52,5 +53,14 @@ export {
   adminGetProviderEarningsOverview,
   adminGetProviderEarningsChart,
 } from './providerBookings.js'
+=======
+  adminGetVerificationQueue,
+  adminAssignVerificationReviewer,
+  adminSubmitVerificationDecision,
+  adminGetVerificationQueueDetailed,
+  adminClaimVerificationCase,
+  adminEscalateVerificationCase,
+} from './adminVerification.js'
+
 
 
