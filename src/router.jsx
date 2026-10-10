@@ -12,6 +12,7 @@ import ClientProfile from './pages/clients/ClientProfile.jsx'
 import ClientBookings from './pages/clients/ClientBookings.jsx'
 
 import ClientPayments from './pages/clients/ClientPayments.jsx'
+import ClientWallet from './pages/clients/ClientWallet.jsx'
 import NeedsAttention from './pages/attention/NeedsAttention.jsx'
 import VerificationDetail from './pages/verifications/VerificationDetail.jsx'
 import WithdrawalDetail from './pages/withdrawals/WithdrawalDetail.jsx'
@@ -31,6 +32,7 @@ import OngoingBookings from './pages/bookings/OngoingBookings.jsx'
 import CompletedBookings from './pages/bookings/CompletedBookings.jsx'
 import CancelledBookings from './pages/bookings/CancelledBookings.jsx'
 import GuestBookings from './pages/bookings/GuestBookings.jsx'
+
 
 import Placeholder from './pages/Placeholder.jsx'
 import NotFound from './pages/NotFound.jsx'
@@ -89,6 +91,8 @@ export const router = createBrowserRouter([
           { path: 'clients/:clientId/bookings', element: <ClientBookings />, handle: { fullBleed: true } },
           // ADM-014 — Client Payments (admin view of the shared payments collection)
           { path: 'clients/:clientId/payments', element: <ClientPayments />, handle: { fullBleed: true } },
+          // ADM-015 — Client Wallet (admin view of the shared wallets / wallet_transactions)
+          { path: 'clients/:clientId/wallet', element: <ClientWallet />, handle: { fullBleed: true } },
           { path: 'clients/:clientId/:section', element: <ClientProfile />, handle: { fullBleed: true } },
           { path: 'attention', element: <NeedsAttention /> },
           { path: 'spas', element: <Placeholder title="Spas & Wellness Centers" /> },

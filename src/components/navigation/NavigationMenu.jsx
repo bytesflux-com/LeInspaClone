@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, NavLink, matchPath, useLocation } from 'react-router'
-import { ChevronRight } from 'lucide-react'
+import { User, Users, Wallet, WalletCards } from 'lucide-react'
+
 import { usePermissions } from '../../hooks/usePermissions'
 import { NAVIGATION_SECTIONS } from '../../constants/navigation'
 import { cn } from '../../lib/utils'
@@ -104,6 +105,7 @@ function GroupChildren({ item, onNavigate }) {
   // ADM-012: while a client profile is open, a "Client Profile" row appears under
   // Clients (the profile lives at /clients/:clientId, not /clients/all).
   const onProfile = Boolean(item.path === '/clients' && matchPath({ path: '/clients/:clientId/*' }, pathname) && !matchPath({ path: '/clients/all/*' }, pathname))
+
   // ADM-013: on a client's bookings the sidebar shows Client Profile (link) → Client Bookings (active).
   const bookingsMatch = item.path === '/clients' ? matchPath({ path: '/clients/:clientId/bookings' }, pathname) : null
   const onBookings = Boolean(bookingsMatch && bookingsMatch.params.clientId !== 'all')
@@ -141,7 +143,6 @@ function GroupChildren({ item, onNavigate }) {
   const idleCls = 'text-white/80 hover:bg-white/10 hover:text-white'
 
   const validChildren = item.children.filter((child) => !child.permission || can(child.permission))
-
   return (
     <>
       {validChildren.map((child) => {
@@ -210,8 +211,28 @@ function GroupChildren({ item, onNavigate }) {
       )}
       {onBookings && (
         <>
-          <Link to={`/clients/${bookingsMatch.params.clientId}`} onClick={onNavigate} className={cn(CHILD, idleCls)}>Client Profile</Link>
-          <span aria-current="page" className={cn(CHILD, activeCls)}>Client Bookings</span>
+          <Link to={`/clients/${subClient}`} onClick={onNavigate} className={cn(ROW, 'pl-[18px] text-white/85 hover:bg-white/10 hover:text-white')}>
+            <User className="size-[18px] shrink-0" aria-hidden="true" />
+            <span>Client Profile</span>
+          </Link>
+          {[
+            ['bookings', 'Client Bookings', User],
+            ['payments', 'Client Payments', WalletCards],
+            ['wallet', 'Client Wallet', Wallet],
+          ].map(([key, label, RowIcon]) =>
+            sub === key ? (
+              <span key={key} aria-current="page" className={cn(ROW, 'pl-[18px] bg-[#5c2dd5] font-semibold text-white shadow-md')}>
+                <RowIcon className="size-[18px] shrink-0" aria-hidden="true" />
+                <span>{label}</span>
+              </span>
+            ) : (
+              <Link key={key} to={`/clients/${subClient}/${key}`} onClick={onNavigate} className={cn(ROW, 'pl-[18px] text-white/85 hover:bg-white/10 hover:text-white')}>
+                <RowIcon className="size-[18px] shrink-0" aria-hidden="true" />
+                <span>{label}</span>
+              </Link>
+            ),
+          )}
+
         </>
       )}
     </>

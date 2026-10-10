@@ -14,6 +14,9 @@
 //   adminGetClientBookings, adminGetBookingPreview     (ADM-013)
 //   adminGetClientPayments, adminGetPaymentPreview,
 //   adminAddPaymentNote                                (ADM-014)
+//   adminGetClientWallet, adminGetWalletBalanceHistory,
+//   adminGetWalletTransactionPreview,
+//   adminAddWalletTransactionNote                      (ADM-015)
 //
 // Country scope MUST be enforced by those functions (never trust `market`).
 import { callAdmin } from '../lib/adminCall'
@@ -34,6 +37,7 @@ import { buildDashboard, buildGrowth } from './mock/clientDashboardMock'
 import { buildClientProfile } from './mock/clientProfileMock'
 import { queryClientBookings, buildBookingPreview } from './mock/clientBookingsMock'
 import { queryClientPayments, buildPaymentPreview, addMockPaymentNote } from './mock/clientPaymentsMock'
+import { queryClientWallet, buildWalletHistory, buildWalletTransactionPreview, addMockWalletNote } from './mock/clientWalletMock'
 
 const USE_MOCK = import.meta.env.VITE_USE_MOCK_CLIENTS !== 'false'
 const delay = (ms = 160) => new Promise((r) => setTimeout(r, ms))
@@ -326,6 +330,51 @@ export const clientService = {
     if (!USE_MOCK) return callAdmin('adminAddPaymentNote', { clientId, paymentId, text })
     await delay(220)
     return addMockPaymentNote(clientId, paymentId, text)
+  },
+
+  // ADM-015 — one client's wallet, read from the existing `wallets` +
+  // `wallet_transactions` collections (no admin copy). Balance, credits, debits
+  // and status counts are aggregated server-side and must reconcile
+  // (credits − debits = balance); a mismatch is reported, never auto-corrected.
+  // The server must validate admin, finance permission, country and client access,
+  // and keep the Client Wallet separate from Provider / Referral / Platform / Escrow wallets.
+  async getClientWallet(clientId, params = {}) {
+    if (!USE_MOCK) return callAdmin('adminGetClientWallet', { clientId, ...params })
+    await delay(220)
+    const r = MOCK_CLIENTS.find((c) => c.id === clientId)
+    if (!r || (params.market && params.market !== 'ALL' && r.country !== params.market)) {
+      throw new Error('Client not found or outside your authorised markets.')
+    }
+    return queryClientWallet(r, params)
+  },
+
+  // ADM-015 — compact balance-over-time series (7 / 30 / 90 days) for the chart.
+  async getWalletBalanceHistory(clientId, { market, window = 30 } = {}) {
+    if (!USE_MOCK) return callAdmin('adminGetWalletBalanceHistory', { clientId, market, window })
+    await delay(160)
+    const r = MOCK_CLIENTS.find((c) => c.id === clientId)
+    if (!r || (market && market !== 'ALL' && r.country !== market)) {
+      throw new Error('Client not found or outside your authorised markets.')
+    }
+    return buildWalletHistory(r, { window })
+  },
+
+  // ADM-015 — drawer details; permission is revalidated on every open.
+  async getWalletTransactionPreview(txnId, { clientId, market } = {}) {
+    if (!USE_MOCK) return callAdmin('adminGetWalletTransactionPreview', { txnId, clientId, market })
+    await delay(140)
+    const r = MOCK_CLIENTS.find((c) => c.id === clientId)
+    if (!r || (market && market !== 'ALL' && r.country !== market)) {
+      throw new Error('Client not found or outside your authorised markets.')
+    }
+    return buildWalletTransactionPreview(r, txnId)
+  },
+
+  // ADM-015 — internal note only; it never touches balances or financial records.
+  async addWalletTransactionNote({ clientId, txnId, text }) {
+    if (!USE_MOCK) return callAdmin('adminAddWalletTransactionNote', { clientId, txnId, text })
+    await delay(220)
+    return addMockWalletNote(clientId, txnId, text)
   },
 
   getCities(country) {
