@@ -1283,6 +1283,7 @@ export async function addInternalNote(verificationId, noteText) {
 }
 
 /**
+
  * ============================================================================
  * ADM-032: IDENTITY DOCUMENTS REVIEW SERVICES & MOCK REPOSITORY
  * ============================================================================
@@ -2234,6 +2235,7 @@ export async function addCredentialInternalNote(verificationId, credentialId = '
 }
 
 /**
+
  * -------------------------------------------------------------
  * ADM-034: Business Documents Review In-Memory Mock Store
  * -------------------------------------------------------------
@@ -2790,6 +2792,7 @@ export async function addBusinessInternalNote(verificationId, documentId = 'doc-
 }
 
 /**
+
  * Service object export for standard import patterns.
  */
 export const verificationService = {
@@ -2802,20 +2805,21 @@ export const verificationService = {
   fetchVerificationDetail,
   submitComponentDecision,
   addInternalNote,
+
   fetchIdentityVerificationDetail,
   revealSensitiveIdentityField,
   submitIdentityDecision,
   fetchCredentialVerificationDetail,
   submitCredentialDecision,
   addCredentialInternalNote,
+
   fetchBusinessVerificationDetail,
   revealBusinessDocumentNumber,
   submitBusinessDocumentDecision,
   addBusinessInternalNote,
+
   isMockMode: isVerificationMockMode,
   setMockMode: setVerificationMockMode,
 }
-
-
 
 

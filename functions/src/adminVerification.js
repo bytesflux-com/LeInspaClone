@@ -1263,6 +1263,7 @@ export const adminAddVerificationInternalNote = onCall(async (request) => {
   return result
 })
 
+
 /**
  * 10. adminGetIdentityVerificationDetail (ADM-032)
  * Retrieves identity verification record, dynamic representative context,
@@ -2937,6 +2938,7 @@ export const adminAddBusinessInternalNote = onCall(async (request) => {
 
   return result
 })
+
 
 
 

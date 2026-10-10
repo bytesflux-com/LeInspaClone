@@ -109,6 +109,7 @@ export default function VerificationReviewPage() {
 
   // Handle Tab Selection
   const handleSelectTab = (tabId) => {
+
     if (tabId === 'IDENTITY') {
       navigate(`/verifications/identity/${targetId}`)
       return
@@ -121,9 +122,14 @@ export default function VerificationReviewPage() {
       navigate(`/verifications/business/${targetId}`)
       return
     }
+
     setActiveTabId(tabId)
-    // If switching to business permits or other docs, pick corresponding document if available
-    if (tabId === 'PREMISES_PERMIT' || tabId === 'HOSPITALITY_LIC') {
+    // If switching to identity or other docs, pick corresponding document if available
+    if (tabId === 'IDENTITY') {
+      const idDoc = documents.find((d) => d.id === 'doc-102' || d.docType?.includes('ID'))
+      if (idDoc) setActiveDoc(idDoc)
+    } else if (tabId === 'CREDENTIALS' || tabId === 'PREMISES_PERMIT' || tabId === 'HOSPITALITY_LIC') {
+
       const certDoc = documents.find((d) => d.id === 'doc-101' || d.docType?.includes('Certificate') || d.docType?.includes('Permit'))
       if (certDoc) setActiveDoc(certDoc)
     }

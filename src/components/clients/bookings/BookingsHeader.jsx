@@ -10,7 +10,7 @@ import { cn } from '../../../lib/utils'
 const PILL = 'rounded-lg px-2.5 py-2 text-[12.5px] font-medium gap-1.5 [&_svg]:size-4'
 
 // Client mini-identity — the client stays clearly identified above their bookings.
-export default function BookingsHeader({ client: c, backTo, linkState, onCopyId }) {
+export default function BookingsHeader({ client: c, backTo, linkState, onCopyId, verifiedLabel = 'Verified', statusLabel }) {
   const tier = c.membershipTier
   return (
     <div className={cn(PROFILE_CARD, 'relative flex flex-wrap items-center gap-x-5 gap-y-3 px-3.5 py-3.5')}>
@@ -27,10 +27,10 @@ export default function BookingsHeader({ client: c, backTo, linkState, onCopyId 
 
         <div className="mt-2.5 flex flex-wrap items-center gap-2">
           <MembershipBadge tier={tier} label={tier === 'none' ? 'No Membership' : `${tier[0].toUpperCase()}${tier.slice(1)} Client`} className={PILL} />
-          <StatusBadge status={c.status} className={PILL} />
+          <StatusBadge status={c.status} label={statusLabel} className={PILL} />
           {c.contactVerified && (
             <span className={cn('inline-flex items-center bg-[#e4defb] leading-none text-[#3b1fd6]', PILL)}>
-              <BadgeCheck className="fill-[#4527c8] text-white" aria-hidden="true" /> Verified
+              <BadgeCheck className="fill-[#4527c8] text-white" aria-hidden="true" /> {verifiedLabel}
             </span>
           )}
         </div>
