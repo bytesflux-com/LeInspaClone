@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import { Link, useSearchParams } from 'react-router'
 import {
   ShieldCheck,
   Settings,
   RefreshCw,
   CheckCircle2,
   AlertCircle,
+  ListOrdered,
 } from 'lucide-react'
 import VerificationKPIs from '../components/verification/VerificationKPIs'
 import VerificationAttentionPerformance from '../components/verification/VerificationAttentionPerformance'
@@ -23,7 +25,11 @@ import { verificationService } from '../services/verificationService'
  * Global topbar (Search, Country, Date filter, Profile) is provided by AdminLayout.
  */
 export default function VerificationCenterPage() {
+  const [searchParams] = useSearchParams()
+  const preselectedId = searchParams.get('id') || searchParams.get('providerId')
+
   const [loading, setLoading] = useState(true)
+
   const [error, setError] = useState(null)
   const [queue, setQueue] = useState([])
   const [kpis, setKpis] = useState(null)
@@ -70,8 +76,16 @@ export default function VerificationCenterPage() {
       setNeedsAttention(data?.needsAttention || null)
       setPerformance(data?.performance || null)
 
-      // Default selection to Grace Njeri (PR-82941) if available to match mockup
-      if (!selectedRecord && data?.queue?.length > 0) {
+      // Preselected query param or default selection to Grace Njeri (PR-82941)
+      if (preselectedId && data?.queue?.length > 0) {
+        const found = data.queue.find((r) => r.id === preselectedId || r.providerId === preselectedId)
+        if (found) {
+          setSelectedRecord(found)
+        } else if (!selectedRecord) {
+          const grace = data.queue.find((r) => r.providerId === 'PR-82941')
+          setSelectedRecord(grace || data.queue[0])
+        }
+      } else if (!selectedRecord && data?.queue?.length > 0) {
         const grace = data.queue.find((r) => r.providerId === 'PR-82941')
         setSelectedRecord(grace || data.queue[0])
       } else if (selectedRecord) {
@@ -83,7 +97,8 @@ export default function VerificationCenterPage() {
     } finally {
       setLoading(false)
     }
-  }, [activeTab, tableFilters, searchTerm, selectedRecord])
+  }, [activeTab, tableFilters, searchTerm, selectedRecord, preselectedId])
+
 
   useEffect(() => {
     loadData()
@@ -272,6 +287,15 @@ export default function VerificationCenterPage() {
           >
             <RefreshCw className={`size-4 ${loading ? 'animate-spin text-purple-600' : ''}`} />
           </button>
+
+          {/* Link to Verification Queue (ADM-030) */}
+          <Link
+            to="/verifications/queue"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-purple-200 bg-purple-50 px-3.5 py-2 text-sm font-semibold text-purple-700 shadow-sm hover:bg-purple-100 transition"
+          >
+            <ListOrdered className="size-4" />
+            <span>Verification Queue</span>
+          </Link>
 
           {/* Verification Settings Button */}
           <button

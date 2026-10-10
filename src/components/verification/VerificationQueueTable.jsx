@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { Link } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 import {
   Search,
   Filter,
@@ -483,7 +483,7 @@ export default function VerificationQueueTable({
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation()
-                          onSelectRecord && onSelectRecord(record)
+                          navigate(`/verifications/review/${record.providerId || record.id}`)
                         }}
                         className={`inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
                           isSelected

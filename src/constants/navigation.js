@@ -23,6 +23,7 @@ import {
   ScrollText,
   HeartPulse,
   Wallet,
+  ListOrdered,
 } from 'lucide-react'
 import { PERMISSIONS } from './permissions.js'
 
@@ -59,6 +60,7 @@ export const NAVIGATION_SECTIONS = [
           { label: 'Provider Dashboard', icon: LayoutDashboard, path: '/providers' },
           { label: 'All Providers', icon: Users, path: '/providers/all' },
           { label: 'Verification Center', icon: ShieldCheck, path: '/verifications', permission: PERMISSIONS.PROVIDERS_VERIFY, badge: '428' },
+          { label: 'Verification Queue', icon: ListOrdered, path: '/verifications/queue', permission: PERMISSIONS.PROVIDERS_VERIFY },
           { label: 'Content Moderation', icon: FileCheck, path: '/content' },
           { label: 'Withdrawals', icon: Banknote, path: '/withdrawals', permission: PERMISSIONS.WITHDRAWALS_APPROVE },
           { label: 'Provider Subscriptions', icon: CreditCard, path: '/providers/subscriptions' },
