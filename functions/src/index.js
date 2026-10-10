@@ -1,38 +1,53 @@
-import { setGlobalOptions } from 'firebase-functions/v2'
-import { onCall } from 'firebase-functions/v2/https'
-import { initializeApp } from 'firebase-admin/app'
-import { requireAdmin } from './auth.js'
+import {setGlobalOptions} from "firebase-functions/v2";
+import {onCall} from "firebase-functions/v2/https";
+import {initializeApp} from "firebase-admin/app";
+import {requireAdmin} from "./auth.js";
 
-initializeApp()
+initializeApp();
 
-setGlobalOptions({ region: 'us-central1', maxInstances: 10 })
+setGlobalOptions({region: "us-central1", maxInstances: 10});
 
 // Health check the admin panel can call to verify the backend is reachable.
-export const adminPing = onCall(async (request) => {
-  await requireAdmin(request)
-  return { ok: true, time: new Date().toISOString() }
-})
+export const adminPing = onCall(async request => {
+  await requireAdmin(request);
+  return {ok: true, time: new Date().toISOString()};
+});
 
-export { adminStartSecondFactor, adminVerifySecondFactor } from './secondFactor.js'
+export {
+  adminStartSecondFactor,
+  adminVerifySecondFactor,
+} from "./secondFactor.js";
 export {
   adminRequestPasswordReset,
   adminVerifyPasswordReset,
   adminCompletePasswordReset,
-} from './passwordRecovery.js'
-export { adminGetSession, adminVerifySession, adminEndSession } from './sessionVerification.js'
-export { adminGetDashboardSummary } from './dashboard.js'
-export { adminGetOperationsSummary } from './operations.js'
-export { adminGlobalSearch } from './search.js'
+} from "./passwordRecovery.js";
+export {
+  adminGetSession,
+  adminVerifySession,
+  adminEndSession,
+} from "./sessionVerification.js";
+export {adminGetDashboardSummary} from "./dashboard.js";
+export {adminGetOperationsSummary} from "./operations.js";
+export {adminGlobalSearch} from "./search.js";
 export {
   adminGetNeedsAttention,
   adminGetReviewItem,
   adminProcessReviewAction,
   adminAssignQueueItem,
-} from './needsAttention.js'
-export { adminGetBookingDashboard, adminListBookings, adminGetBookingQuickView, adminRevealGuestContact } from './bookings.js'
+} from "./needsAttention.js";
+export {
+  adminGetBookingDashboard,
+  adminListBookings,
+  adminGetBookingQuickView,
+  adminRevealGuestContact,
+} from "./bookings.js";
 
-export { adminGetProviderDashboard } from './providerDashboard.js'
-export { adminListProviders, adminGetProviderDetail } from './providerDirectory.js'
+export {adminGetProviderDashboard} from "./providerDashboard.js";
+export {
+  adminListProviders,
+  adminGetProviderDetail,
+} from "./providerDirectory.js";
 export {
 
   adminGetProviderProfile,
@@ -57,6 +72,7 @@ export {
   adminGetVerificationQueue,
   adminAssignVerificationReviewer,
   adminSubmitVerificationDecision,
+
   adminGetVerificationQueueDetailed,
   adminClaimVerificationCase,
   adminEscalateVerificationCase,
@@ -67,3 +83,16 @@ export {
 
 
 
+  adminGetVerificationQueueDetailed,
+  adminClaimVerificationCase,
+  adminEscalateVerificationCase,
+  adminGetVerificationDetail,
+  adminSubmitComponentDecision,
+  adminAddVerificationInternalNote,
+  adminGetIdentityVerificationDetail,
+  adminRevealSensitiveIdentityField,
+  adminSubmitIdentityDecision,
+  adminGetCredentialVerificationDetail,
+  adminSubmitCredentialDecision,
+  adminAddCredentialInternalNote,
+} from "./adminVerification.js";
