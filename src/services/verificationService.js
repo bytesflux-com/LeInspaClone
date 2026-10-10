@@ -1722,6 +1722,518 @@ export async function submitIdentityDecision(payload) {
 }
 
 /**
+ * ============================================================================
+ * ADM-033: PROFESSIONAL CREDENTIALS REVIEW SERVICES & MOCK REPOSITORY
+ * ============================================================================
+ */
+
+const localCredentialRecords = new Map()
+
+function getDynamicRequirementsConfig(providerCategory = 'INDIVIDUAL', type = '') {
+  const norm = (type + ' ' + providerCategory).toUpperCase()
+  if (norm.includes('TRAINER') || norm.includes('FITNESS')) {
+    return {
+      category: 'Personal Trainer',
+      requiredCount: 2,
+      ruleTitle: 'Fitness Instructor & CPR Qualification',
+      services: ['1-on-1 Personal Training', 'HIIT Coaching', 'Strength & Conditioning', 'Postural Analysis'],
+    }
+  }
+  if (norm.includes('YOGA') || norm.includes('MEDITATION')) {
+    return {
+      category: 'Yoga & Meditation Specialist',
+      requiredCount: 2,
+      ruleTitle: 'Yoga Alliance & Mindfulness Accreditation',
+      services: ['Vinyasa Flow Yoga', 'Hatha Yoga', 'Guided Mindfulness Meditation', 'Sound Bath Therapy'],
+    }
+  }
+  if (norm.includes('PHYSIO') || norm.includes('RECOVERY')) {
+    return {
+      category: 'Physiotherapist & Recovery Specialist',
+      requiredCount: 3,
+      ruleTitle: 'Degree & Board Practicing License',
+      services: ['Musculoskeletal Rehabilitation', 'Sports Injury Assessment', 'Dry Needling', 'Joint Mobilization'],
+    }
+  }
+  if (norm.includes('SPA') || norm.includes('HOTEL')) {
+    return {
+      category: 'Spa & Wellness Center',
+      requiredCount: 2,
+      ruleTitle: 'Lead Therapist & Safety Protocol Certification',
+      services: ['Full Thermal & Spa Treatment Menu', 'Hydrotherapy Protocols', 'Body Wraps & Scrubs'],
+    }
+  }
+  // Default: Massage Therapist (Grace Njeri)
+  return {
+    category: 'Massage Therapist',
+    requiredCount: 2,
+    ruleTitle: 'Professional Massage Therapy Qualification',
+    services: ['Swedish Massage', 'Deep Tissue Massage', 'Sports Massage', 'Aromatherapy Treatment'],
+  }
+}
+
+function generateInitialCredentialRecord(verificationId, targetCredId = 'cred-001') {
+  const baseReview = localReviewRecords.get(verificationId) || localQueue.find((r) => r.id === verificationId || r.providerId === verificationId) || {}
+  const providerCategory = baseReview?.providerCategory || 'INDIVIDUAL'
+  const reqConfig = getDynamicRequirementsConfig(providerCategory, baseReview?.type || 'Massage Therapist')
+
+  const credentialsList = [
+    {
+      id: 'cred-001',
+      title: 'Professional Practice Certificate',
+      subtitle: 'Professional Massage Therapy',
+      status: 'REVIEWING_NOW',
+      isRequired: true,
+      fileName: 'Professional_Practice_Certificate.pdf',
+      credentialNumber: '••••7281',
+      unmaskedNumber: 'KMF-2024-7281',
+      issuer: 'Kenya Massage Federation',
+      issuerStatus: 'Recognized Institution',
+      countryOfIssue: 'Kenya',
+      issueDate: '15 Jan 2024',
+      expiryDate: '15 Jan 2028',
+      remainingTime: '1 year 4 months',
+      isCurrent: true,
+      isExpiringSoon: false,
+      uploadedAt: '12 Sep 2026 • 10:42 AM',
+      nameOnDoc: 'Grace W. Njeri',
+      pageCount: 2,
+      fileStatus: 'Readable',
+    },
+    {
+      id: 'cred-002',
+      title: 'Massage Therapy Diploma',
+      subtitle: 'Swedish & Deep Tissue Foundations',
+      status: 'APPROVED',
+      isRequired: true,
+      fileName: 'Massage_Therapy_Diploma.pdf',
+      credentialNumber: '••••4819',
+      unmaskedNumber: 'IWI-2021-4819',
+      issuer: 'International Wellness Institute',
+      issuerStatus: 'Recognized Institution',
+      countryOfIssue: 'Kenya',
+      issueDate: '10 May 2021',
+      expiryDate: 'N/A',
+      remainingTime: 'Perpetual',
+      isCurrent: true,
+      isExpiringSoon: false,
+      uploadedAt: '12 Sep 2026 • 10:40 AM',
+      nameOnDoc: 'Grace Njeri',
+      pageCount: 1,
+      fileStatus: 'Readable',
+    },
+    {
+      id: 'cred-003',
+      title: 'Sports & Remedial Accreditation',
+      subtitle: 'Advanced Athlete Recovery',
+      status: 'OPTIONAL',
+      isRequired: false,
+      fileName: 'Sports_Remedial_Cert.pdf',
+      credentialNumber: '••••9920',
+      unmaskedNumber: 'EASMB-2023-9920',
+      issuer: 'East Africa Sports Medicine Board',
+      issuerStatus: 'Recognized Institution',
+      countryOfIssue: 'Kenya',
+      issueDate: '10 Nov 2023',
+      expiryDate: '10 Nov 2027',
+      remainingTime: '1 year 2 months',
+      isCurrent: true,
+      isExpiringSoon: false,
+      uploadedAt: '12 Sep 2026 • 10:41 AM',
+      nameOnDoc: 'Grace Wanjiku Njeri',
+      pageCount: 1,
+      fileStatus: 'Readable',
+    },
+  ]
+
+  const activeCred = credentialsList.find((c) => c.id === targetCredId) || credentialsList[0]
+
+  return {
+    verificationId: verificationId || 'ver-001',
+    providerId: baseReview.providerId || 'PR-82941',
+    providerCategory,
+    name: baseReview.name || 'Grace Njeri',
+    avatarUrl: baseReview.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+    type: baseReview.type || 'Massage Therapist',
+    market: baseReview.market || { code: 'KE', name: 'Kenya', flag: '🇰🇪' },
+    status: 'UNDER_REVIEW',
+    submittedAt: '12 Sep 2026 • 10:42 AM',
+    assignedTo: 'Jane Ochieng',
+    assignedReviewer: {
+      uid: 'reviewer-jane',
+      name: 'Jane Ochieng',
+      avatarUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=80',
+    },
+    version: 2,
+    summary: {
+      credentialsRequired: reqConfig.requiredCount,
+      submitted: 2,
+      approved: 1,
+      underReview: 1,
+      changesRequested: 0,
+    },
+    credentialsList,
+    activeCredential: {
+      ...activeCred,
+      isNumberRevealed: false,
+    },
+    requirementsMapping: {
+      requiredFor: `${reqConfig.category} Verification`,
+      marketName: 'Kenya',
+      marketFlag: '🇰🇪',
+      ruleTitle: reqConfig.ruleTitle,
+      ruleStatus: 'Required',
+      eligibleServices: reqConfig.services,
+      validity: {
+        issueDate: activeCred.issueDate,
+        expiryDate: activeCred.expiryDate,
+        remainingTime: activeCred.remainingTime,
+        isCurrent: activeCred.isCurrent,
+        isExpiringSoon: activeCred.isExpiringSoon,
+      },
+    },
+    comparisonTable: [
+      {
+        id: 'cmp-c1',
+        field: 'Full Name',
+        account: baseReview.name || 'Grace Njeri',
+        credential: activeCred.nameOnDoc || 'Grace W. Njeri',
+        result: 'Review',
+        resultType: 'review',
+        note: 'Middle initial difference corresponds to National ID',
+      },
+      {
+        id: 'cmp-c2',
+        field: 'Profession',
+        account: baseReview.type || 'Massage Therapist',
+        credential: 'Massage Therapy',
+        result: 'Consistent',
+        resultType: 'consistent',
+        note: 'Matches practice category',
+      },
+      {
+        id: 'cmp-c3',
+        field: 'Country of Practice',
+        account: 'Kenya',
+        credential: activeCred.countryOfIssue || 'Kenya',
+        result: 'Match',
+        resultType: 'match',
+        note: 'Sovereign jurisdiction verified',
+      },
+      {
+        id: 'cmp-c4',
+        field: 'Credential Type',
+        account: 'Massage Therapy Qualification',
+        credential: activeCred.title || 'Professional Practice Certificate',
+        result: 'Match',
+        resultType: 'match',
+        note: 'Meets Tier-1 qualification requirement',
+      },
+      {
+        id: 'cmp-c5',
+        field: 'Document Expiry',
+        account: '—',
+        credential: activeCred.expiryDate || '15 Jan 2028',
+        result: activeCred.isCurrent ? 'Current' : 'Expired',
+        resultType: activeCred.isCurrent ? 'match' : 'fail',
+        note: `Valid (${activeCred.remainingTime})`,
+      },
+    ],
+    checklist: [
+      { key: 'documentReadable', label: 'Document readable and clear', status: 'Pass', resultType: 'pass', description: 'Text, seals, and signatures are fully legible' },
+      { key: 'pagesIncluded', label: 'Required pages included', status: 'Pass', resultType: 'pass', description: 'All certificate pages (1 & 2) submitted' },
+      { key: 'nameCorresponds', label: 'Provider name corresponds', status: 'Needs review', resultType: 'review', description: 'Grace Njeri vs Grace W. Njeri (corresponds with National ID)' },
+      { key: 'categoryMatches', label: 'Credential matches provider category', status: 'Pass', resultType: 'pass', description: 'Massage therapy qualification matches therapist profile' },
+      { key: 'issuerProvided', label: 'Issuer information provided', status: 'Pass', resultType: 'pass', description: 'Kenya Massage Federation is a recognized professional body' },
+      { key: 'issueDateValid', label: 'Issue date valid', status: 'Pass', resultType: 'pass', description: 'Issued 15 Jan 2024 within valid credential window' },
+      { key: 'credentialCurrent', label: 'Credential current / not expired', status: 'Pass', resultType: 'pass', description: 'Expiry date 15 Jan 2028 is beyond statutory threshold' },
+      { key: 'satisfiesRequirement', label: 'Satisfies configured requirement', status: 'Pass', resultType: 'pass', description: 'Fulfills Tier-1 platform qualification standards' },
+      { key: 'noTampering', label: 'No issue requiring escalation', status: 'Pass', resultType: 'pass', description: 'Signatures, borders, and official seals intact' },
+    ],
+    previousSubmissions: [
+      {
+        version: 2,
+        isCurrent: true,
+        submittedAt: '12 Sep 2026 • 10:42 AM',
+        fileName: 'Professional_Practice_Certificate.pdf',
+        status: 'Under Review',
+        statusType: 'under_review',
+        reviewer: 'Jane Ochieng',
+        notes: 'Resubmitted with clear issuing authority seal.',
+      },
+      {
+        version: 1,
+        isCurrent: false,
+        submittedAt: '10 Sep 2026 • 9:15 AM',
+        fileName: 'Certificate_v1.pdf',
+        status: 'Changes Requested',
+        statusType: 'changes_requested',
+        reviewer: 'Jane Ochieng',
+        notes: 'Issuer information and registrar seal unreadable.',
+      },
+    ],
+    reviewHistory: [
+      { id: 'crh-1', time: '12 Sep 2026 • 11:20 AM', title: 'Review started (Jane Ochieng)', actor: 'Jane Ochieng', type: 'review_started' },
+      { id: 'crh-2', time: '12 Sep 2026 • 11:05 AM', title: 'Assigned to Jane Ochieng', actor: 'System', type: 'assignment' },
+      { id: 'crh-3', time: '12 Sep 2026 • 10:42 AM', title: 'Replacement credential submitted', actor: 'Grace Njeri', type: 'submission' },
+      { id: 'crh-4', time: '10 Sep 2026 • 11:02 AM', title: 'Changes requested (Issuer unreadable)', actor: 'Jane Ochieng', type: 'changes_requested' },
+      { id: 'crh-5', time: '10 Sep 2026 • 9:15 AM', title: 'Credential submitted', actor: 'Grace Njeri', type: 'submission' },
+    ],
+    internalNotes: [
+      {
+        id: 'cn-1',
+        authorName: 'Jane Ochieng',
+        authorRole: 'Verification Specialist',
+        createdAt: '12 Sep 2026 • 11:22 AM',
+        text: 'Provider name includes middle initial. Identity record otherwise matches. Credential is valid until 2028.',
+      },
+    ],
+  }
+}
+
+/**
+ * 13. Fetch Credential Verification Detail (ADM-033)
+ */
+export async function fetchCredentialVerificationDetail(verificationId, credentialId = 'cred-001') {
+  if (!isVerificationMockMode()) {
+    try {
+      const result = await callAdmin('adminGetCredentialVerificationDetail', { verificationId, credentialId })
+      if (result?.verificationId || result?.name) {
+        return result
+      }
+    } catch (err) {
+      console.warn(
+        '[verificationService] Cloud Function adminGetCredentialVerificationDetail failed. Falling back to local store.',
+        err?.message
+      )
+    }
+  }
+
+  const cacheKey = `${verificationId || 'ver-001'}_${credentialId || 'cred-001'}`
+  if (!localCredentialRecords.has(cacheKey)) {
+    const record = generateInitialCredentialRecord(verificationId, credentialId)
+    localCredentialRecords.set(cacheKey, record)
+  }
+
+  return localCredentialRecords.get(cacheKey)
+}
+
+/**
+ * 14. Submit Credential Decision (ADM-033)
+ */
+export async function submitCredentialDecision(payload) {
+  const {
+    verificationId,
+    credentialId = 'cred-001',
+    decision,
+    checklistResults = {},
+    reason = '',
+    providerMessage = '',
+    internalNote = '',
+    expectedVersion,
+  } = payload
+
+  if (!isVerificationMockMode()) {
+    try {
+      const result = await callAdmin('adminSubmitCredentialDecision', payload)
+      if (result?.success) {
+        return result
+      }
+    } catch (err) {
+      console.warn(
+        '[verificationService] Cloud Function adminSubmitCredentialDecision failed. Falling back to local store.',
+        err?.message
+      )
+    }
+  }
+
+  const cacheKey = `${verificationId || 'ver-001'}_${credentialId || 'cred-001'}`
+  let record = localCredentialRecords.get(cacheKey)
+  if (!record) {
+    record = generateInitialCredentialRecord(verificationId, credentialId)
+    localCredentialRecords.set(cacheKey, record)
+  }
+
+  const normalizedDecision = String(decision).toUpperCase()
+  const nextVersion = (record.version || 2) + 1
+  record.version = nextVersion
+
+  const statusMap = {
+    APPROVE: 'APPROVED',
+    REQUEST_CHANGES: 'CHANGES_REQUESTED',
+    REJECT: 'REJECTED',
+    ESCALATE: 'ESCALATED',
+  }
+  const newStatus = statusMap[normalizedDecision] || normalizedDecision
+
+  // Update active credential status
+  if (record.activeCredential) {
+    record.activeCredential.status = newStatus
+  }
+
+  // Update list
+  record.credentialsList = record.credentialsList.map((c) => {
+    if (c.id === credentialId) {
+      return { ...c, status: newStatus }
+    }
+    return c
+  })
+
+  // Update summary counters
+  const approvedCount = record.credentialsList.filter((c) => c.status === 'APPROVED').length
+  const underReviewCount = record.credentialsList.filter((c) => c.status === 'REVIEWING_NOW' || c.status === 'UNDER_REVIEW').length
+  const changesCount = record.credentialsList.filter((c) => c.status === 'CHANGES_REQUESTED').length
+
+  record.summary = {
+    ...record.summary,
+    approved: approvedCount,
+    underReview: underReviewCount,
+    changesRequested: changesCount,
+  }
+
+  // If checklistResults provided, update
+  if (checklistResults && Object.keys(checklistResults).length > 0) {
+    record.checklist = record.checklist.map((item) => {
+      if (checklistResults[item.key] !== undefined) {
+        const val = checklistResults[item.key]
+        return {
+          ...item,
+          status: val === true || val === 'Pass' ? 'Pass' : val === 'Needs review' ? 'Needs review' : 'Fail',
+          resultType: val === true || val === 'Pass' ? 'pass' : val === 'Needs review' ? 'review' : 'fail',
+        }
+      }
+      return item
+    })
+  }
+
+  // Review History entry
+  const historyLabels = {
+    APPROVE: `Approved credential (${record.activeCredential?.title || 'Practice Certificate'})`,
+    REQUEST_CHANGES: `Changes requested — ${reason || 'Correction needed'}`,
+    REJECT: `Credential rejected — ${reason}`,
+    ESCALATE: `Credential escalated to senior review — ${reason}`,
+  }
+
+  const newHistory = {
+    id: `crh-${Date.now()}`,
+    time: 'Just now',
+    title: historyLabels[normalizedDecision] || `Credential decision: ${normalizedDecision}`,
+    actor: 'Jane Ochieng',
+    type: normalizedDecision.toLowerCase(),
+    notes: reason || internalNote || providerMessage || '',
+  }
+  record.reviewHistory = [newHistory, ...record.reviewHistory]
+
+  // If requesting changes, update previous submissions
+  if (normalizedDecision === 'REQUEST_CHANGES') {
+    const updatedPrev = record.previousSubmissions.map((s) => ({
+      ...s,
+      isCurrent: false,
+      status: 'Changes Requested',
+      statusType: 'changes_requested',
+      notes: reason || providerMessage || 'Resubmission required',
+    }))
+    record.previousSubmissions = [
+      {
+        version: nextVersion,
+        isCurrent: true,
+        submittedAt: 'Pending provider resubmission',
+        fileName: 'Pending upload...',
+        status: 'Awaiting Resubmission',
+        statusType: 'changes_requested',
+        reviewer: 'Jane Ochieng',
+        notes: reason || providerMessage,
+      },
+      ...updatedPrev,
+    ]
+  }
+
+  // Internal note if provided
+  if (internalNote && internalNote.trim()) {
+    record.internalNotes = [
+      {
+        id: `cn-${Date.now()}`,
+        authorName: 'Jane Ochieng',
+        authorRole: 'Verification Specialist',
+        createdAt: 'Just now',
+        text: internalNote.trim(),
+      },
+      ...record.internalNotes,
+    ]
+  }
+
+  // Propagate to ADM-031 parent review record
+  let parentReview = localReviewRecords.get(verificationId) || localReviewRecords.get(record.providerId)
+  if (parentReview) {
+    const allRequiredApproved = record.credentialsList.filter((c) => c.isRequired).every((c) => c.status === 'APPROVED')
+    const nextParentStatus = allRequiredApproved ? 'APPROVED' : normalizedDecision === 'REQUEST_CHANGES' ? 'CHANGES_REQUESTED' : 'REVIEWING_NOW'
+
+    parentReview.progressSteps = (parentReview.progressSteps || []).map((step) => {
+      if (step.id === 'CREDENTIALS' || step.number === 2) {
+        return { ...step, status: nextParentStatus }
+      }
+      return step
+    })
+
+    parentReview.componentTabs = (parentReview.componentTabs || []).map((tab) => {
+      if (tab.id === 'CREDENTIALS') {
+        return { ...tab, status: nextParentStatus, badgeCount: nextParentStatus === 'APPROVED' ? 0 : 1 }
+      }
+      return tab
+    })
+  }
+
+  return {
+    success: true,
+    verificationId: record.verificationId,
+    credentialId,
+    decision: normalizedDecision,
+    status: newStatus,
+    version: nextVersion,
+  }
+}
+
+/**
+ * 15. Add Credential Internal Note (ADM-033)
+ */
+export async function addCredentialInternalNote(verificationId, credentialId = 'cred-001', noteText = '') {
+  if (!isVerificationMockMode()) {
+    try {
+      const result = await callAdmin('adminAddCredentialInternalNote', { verificationId, credentialId, noteText })
+      if (result?.success) {
+        return result
+      }
+    } catch (err) {
+      console.warn(
+        '[verificationService] Cloud Function adminAddCredentialInternalNote failed. Falling back to local store.',
+        err?.message
+      )
+    }
+  }
+
+  const cacheKey = `${verificationId || 'ver-001'}_${credentialId || 'cred-001'}`
+  let record = localCredentialRecords.get(cacheKey)
+  if (!record) {
+    record = generateInitialCredentialRecord(verificationId, credentialId)
+    localCredentialRecords.set(cacheKey, record)
+  }
+
+  const newNote = {
+    id: `cn-${Date.now()}`,
+    authorName: 'Jane Ochieng',
+    authorRole: 'Verification Specialist',
+    createdAt: 'Just now',
+    text: noteText.trim(),
+  }
+
+  record.internalNotes = [newNote, ...(record.internalNotes || [])]
+  return {
+    success: true,
+    note: newNote,
+  }
+}
+
+/**
  * Service object export for standard import patterns.
  */
 export const verificationService = {
@@ -1737,8 +2249,12 @@ export const verificationService = {
   fetchIdentityVerificationDetail,
   revealSensitiveIdentityField,
   submitIdentityDecision,
+  fetchCredentialVerificationDetail,
+  submitCredentialDecision,
+  addCredentialInternalNote,
   isMockMode: isVerificationMockMode,
   setMockMode: setVerificationMockMode,
 }
+
 
 

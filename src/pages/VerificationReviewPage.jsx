@@ -113,9 +113,13 @@ export default function VerificationReviewPage() {
       navigate(`/verifications/identity/${targetId}`)
       return
     }
+    if (tabId === 'CREDENTIALS') {
+      navigate(`/verifications/credentials/${targetId}`)
+      return
+    }
     setActiveTabId(tabId)
-    // If switching to credentials or other docs, pick corresponding document if available
-    if (tabId === 'CREDENTIALS' || tabId === 'PREMISES_PERMIT' || tabId === 'HOSPITALITY_LIC') {
+    // If switching to business permits or other docs, pick corresponding document if available
+    if (tabId === 'PREMISES_PERMIT' || tabId === 'HOSPITALITY_LIC') {
       const certDoc = documents.find((d) => d.id === 'doc-101' || d.docType?.includes('Certificate') || d.docType?.includes('Permit'))
       if (certDoc) setActiveDoc(certDoc)
     }

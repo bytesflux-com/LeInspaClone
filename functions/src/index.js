@@ -61,4 +61,7 @@ export {
   adminGetIdentityVerificationDetail,
   adminRevealSensitiveIdentityField,
   adminSubmitIdentityDecision,
+  adminGetCredentialVerificationDetail,
+  adminSubmitCredentialDecision,
+  adminAddCredentialInternalNote,
 } from "./adminVerification.js";
