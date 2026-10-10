@@ -1,5 +1,5 @@
 import { Link, NavLink, matchPath, useLocation } from 'react-router'
-import { User, Users, Wallet, WalletCards } from 'lucide-react'
+import { Crown, User, Users, Wallet, WalletCards } from 'lucide-react'
 import { usePermissions } from '../../hooks/usePermissions'
 import { NAVIGATION_SECTIONS } from '../../constants/navigation'
 import { cn } from '../../lib/utils'
@@ -60,10 +60,10 @@ function NavLinkChildren({ item, onNavigate }) {
   // ADM-012: while a client profile is open, a "Client Profile" row appears under
   // Client Management (the profile lives at /clients/:clientId, not /clients/all).
   const onProfile = Boolean(item.path === '/clients' && matchPath({ path: '/clients/:clientId/*' }, pathname) && !matchPath({ path: '/clients/all/*' }, pathname))
-  // ADM-013 / ADM-014 / ADM-015: inside a client's Bookings, Payments or Wallet the sidebar shows
-  // Client Profile → Client Bookings → Client Payments → Client Wallet, with the current one active.
+  // ADM-013 → ADM-016: inside a client's Bookings, Payments, Wallet or Membership the sidebar shows
+  // Client Profile → Client Bookings → Client Payments → Client Wallet → Client Membership, with the current one active.
   const subMatch = item.path === '/clients' ? matchPath({ path: '/clients/:clientId/:section' }, pathname) : null
-  const sub = subMatch && subMatch.params.clientId !== 'all' && ['bookings', 'payments', 'wallet'].includes(subMatch.params.section) ? subMatch.params.section : null
+  const sub = subMatch && subMatch.params.clientId !== 'all' && ['bookings', 'payments', 'wallet', 'membership'].includes(subMatch.params.section) ? subMatch.params.section : null
   const subClient = subMatch?.params.clientId
   return (
     <ParentActive paths={item.children.map((c) => c.path)} force={onProfile}>
@@ -99,6 +99,7 @@ function NavLinkChildren({ item, onNavigate }) {
             ['bookings', 'Client Bookings', User],
             ['payments', 'Client Payments', WalletCards],
             ['wallet', 'Client Wallet', Wallet],
+            ['membership', 'Client Membership', Crown],
           ].map(([key, label, RowIcon]) =>
             sub === key ? (
               <span key={key} aria-current="page" className={cn(ROW, 'pl-[18px] bg-[#5c2dd5] font-semibold text-white shadow-md')}>
