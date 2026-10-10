@@ -10,7 +10,16 @@ import ClientManagement from './pages/clients/ClientManagement.jsx'
 import AllClients from './pages/clients/AllClients.jsx'
 import ClientProfile from './pages/clients/ClientProfile.jsx'
 import ClientBookings from './pages/clients/ClientBookings.jsx'
+
 import ClientPayments from './pages/clients/ClientPayments.jsx'
+import NeedsAttention from './pages/attention/NeedsAttention.jsx'
+import VerificationDetail from './pages/verifications/VerificationDetail.jsx'
+import WithdrawalDetail from './pages/withdrawals/WithdrawalDetail.jsx'
+import DisputeDetail from './pages/disputes/DisputeDetail.jsx'
+import SupportTicketDetail from './pages/support/SupportTicketDetail.jsx'
+import MarketDashboard from './pages/dashboard/MarketDashboard.jsx'
+import GlobalSearchPage from './pages/search/GlobalSearchPage.jsx'
+
 import Placeholder from './pages/Placeholder.jsx'
 import NotFound from './pages/NotFound.jsx'
 import RouteErrorElement from './components/ui/RouteErrorElement.jsx'
@@ -52,6 +61,7 @@ export const router = createBrowserRouter([
           // CONTROL
           { path: 'dashboard', element: <GlobalDashboard /> },
           { path: 'operations', element: <OperationsCenter /> },
+          { path: 'search', element: <GlobalSearchPage /> },
 
           // MANAGEMENT
           // ADM-010 — Client Management dashboard
@@ -67,7 +77,7 @@ export const router = createBrowserRouter([
           // ADM-014 — Client Payments (admin view of the shared payments collection)
           { path: 'clients/:clientId/payments', element: <ClientPayments />, handle: { fullBleed: true } },
           { path: 'clients/:clientId/:section', element: <ClientProfile />, handle: { fullBleed: true } },
-          { path: 'attention', element: <Placeholder title="Needs Your Attention" /> },
+          { path: 'attention', element: <NeedsAttention /> },
           { path: 'spas', element: <Placeholder title="Spas & Wellness Centers" /> },
           { path: 'hotels', element: <Placeholder title="Hotels & Resorts" /> },
           { path: 'payments', element: <Placeholder title="Payments" /> },
@@ -79,6 +89,7 @@ export const router = createBrowserRouter([
           { path: 'providers/:providerId', element: <Placeholder title="Provider Admin Profile" /> },
           { path: 'services/:serviceId', element: <Placeholder title="Service Details" /> },
           { path: 'verifications', element: <Placeholder title="Verification & Approvals" /> },
+          { path: 'verifications/:id', element: <VerificationDetail /> },
           { path: 'bookings', element: <Placeholder title="Bookings Telemetry" /> },
           { path: 'bookings/:bookingId', element: <Placeholder title="Booking Details" /> }, // ADM-051
 
@@ -88,12 +99,14 @@ export const router = createBrowserRouter([
           { path: 'escrow/:escrowId', element: <Placeholder title="Escrow Details" /> },
           { path: 'refunds/:refundId', element: <Placeholder title="Refund Details" /> },
           { path: 'withdrawals', element: <Placeholder title="Withdrawal Authorizations" /> },
+          { path: 'withdrawals/:id', element: <WithdrawalDetail /> },
 
           // TRUST & SAFETY
           { path: 'disputes', element: <Placeholder title="Disputes & Holds" /> },
+          { path: 'disputes/:id', element: <DisputeDetail /> },
           { path: 'safety', element: <Placeholder title="Safety Incidents" /> },
           { path: 'support', element: <Placeholder title="Support Concierge" /> },
-          { path: 'support/:ticketId', element: <Placeholder title="Support Ticket Details" /> }, // ADM-103
+          { path: 'support/:id', element: <SupportTicketDetail /> },
 
           // GROWTH
           { path: 'memberships', element: <Placeholder title="Memberships" /> },
@@ -102,7 +115,7 @@ export const router = createBrowserRouter([
 
           // INTELLIGENCE
           { path: 'analytics', element: <Placeholder title="Cross-Market Analytics" /> },
-          { path: 'markets', element: <Placeholder title="Market Operations" /> },
+          { path: 'markets', element: <MarketDashboard /> },
 
           // PLATFORM
           { path: 'settings', element: <Placeholder title="Platform Settings" /> },

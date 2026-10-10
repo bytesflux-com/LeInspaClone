@@ -9,7 +9,7 @@ import RowActionsMenu from './RowActionsMenu'
 import { formatDate } from '../../lib/format'
 import { cn } from '../../lib/utils'
 
-function SelectBox({ state, onChange, label }) {
+export function SelectBox({ state, onChange, label }) {
   // state: 'checked' | 'mixed' | 'unchecked'
   const on = state !== 'unchecked'
   return (
