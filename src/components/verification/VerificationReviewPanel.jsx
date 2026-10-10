@@ -149,6 +149,14 @@ export default function VerificationReviewPanel({
                   <span>{statusConfig.label}</span>
                 </span>
 
+                <Link
+                  to={`/verifications/review/${record.providerId || record.id}`}
+                  className="inline-flex items-center gap-1 rounded-full border border-purple-200 bg-purple-50 px-2.5 py-0.5 text-xs font-semibold text-[#6D28D9] hover:bg-purple-100 transition shadow-2xs"
+                  title="Open ADM-031 Full Review Screen"
+                >
+                  <span>Full Review →</span>
+                </Link>
+
                 <span className="text-[11px] text-slate-400">
                   Submitted: {record.submittedAt}
                 </span>
