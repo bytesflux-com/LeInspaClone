@@ -14,6 +14,7 @@ import ClientPayments from './pages/clients/ClientPayments.jsx'
 import ClientWallet from './pages/clients/ClientWallet.jsx'
 import ClientMembership from './pages/clients/ClientMembership.jsx'
 import ClientLoyalty from './pages/clients/ClientLoyalty.jsx'
+import ClientSupport from './pages/clients/ClientSupport.jsx'
 import Placeholder from './pages/Placeholder.jsx'
 import NotFound from './pages/NotFound.jsx'
 import RouteErrorElement from './components/ui/RouteErrorElement.jsx'
@@ -75,6 +76,8 @@ export const router = createBrowserRouter([
           { path: 'clients/:clientId/membership', element: <ClientMembership />, handle: { fullBleed: true } },
           // ADM-017 — Client Referrals & Loyalty (admin view of referrals, loyalty accounts and rewards)
           { path: 'clients/:clientId/loyalty', element: <ClientLoyalty />, handle: { fullBleed: true } },
+          // ADM-018 — Client Support & Safety History (aggregated admin view over support, dispute, safety and report records)
+          { path: 'clients/:clientId/support', element: <ClientSupport />, handle: { fullBleed: true } },
           { path: 'clients/:clientId/:section', element: <ClientProfile />, handle: { fullBleed: true } },
           { path: 'attention', element: <Placeholder title="Needs Your Attention" /> },
           { path: 'spas', element: <Placeholder title="Spas & Wellness Centers" /> },
@@ -100,7 +103,10 @@ export const router = createBrowserRouter([
 
           // TRUST & SAFETY
           { path: 'disputes', element: <Placeholder title="Disputes & Holds" /> },
+          { path: 'disputes/:disputeId', element: <Placeholder title="Dispute Details" /> },
           { path: 'safety', element: <Placeholder title="Safety Incidents" /> },
+          { path: 'safety/:caseId', element: <Placeholder title="Safety Investigation" /> },
+          { path: 'reports/:reportId', element: <Placeholder title="Report Details" /> },
           { path: 'support', element: <Placeholder title="Support Concierge" /> },
           { path: 'support/:ticketId', element: <Placeholder title="Support Ticket Details" /> }, // ADM-103
 

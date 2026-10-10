@@ -21,6 +21,9 @@
 //   adminAddMembershipNote                             (ADM-016)
 //   adminGetClientLoyalty, adminGetClientReferrals,
 //   adminGetReferralPreview, adminAddLoyaltyNote       (ADM-017)
+//   adminGetClientSupport, adminGetSupportCasePreview,
+//   adminReplyToSupportCase, adminAddSupportCaseNote,
+//   adminReassignSupportCase, adminEscalateSupportCase (ADM-018)
 //
 // Country scope MUST be enforced by those functions (never trust `market`).
 import { callAdmin } from '../lib/adminCall'
@@ -44,6 +47,7 @@ import { queryClientPayments, buildPaymentPreview, addMockPaymentNote } from './
 import { queryClientWallet, buildWalletHistory, buildWalletTransactionPreview, addMockWalletNote } from './mock/clientWalletMock'
 import { buildClientMembership, applyMockMembershipChange, addMockMembershipNote } from './mock/clientMembershipMock'
 import { buildClientLoyalty, queryClientReferrals, buildReferralPreview, addMockLoyaltyNote } from './mock/clientLoyaltyMock'
+import { queryClientSupport, buildSupportCasePreview, addMockCaseMessage, addMockCaseNote, reassignMockCase, escalateMockCase } from './mock/clientSupportMock'
 
 const USE_MOCK = import.meta.env.VITE_USE_MOCK_CLIENTS !== 'false'
 const delay = (ms = 160) => new Promise((r) => setTimeout(r, ms))
@@ -470,6 +474,62 @@ export const clientService = {
     const r = MOCK_CLIENTS.find((c) => c.id === clientId)
     if (!r) throw new Error('Client not found or outside your authorised markets.')
     return addMockLoyaltyNote(r, text)
+  },
+
+  // ADM-018 — one client's support & safety history. An aggregated Admin view over the REAL
+  // case systems (`support_tickets`, `disputes`, `safety_reports`, report records, restriction
+  // records, case events) — there is no `admin_client_support_history` collection. Support,
+  // Dispute, Safety and Report stay distinct case types. The server must validate admin, session,
+  // client and country access, resolve the admin's role, and return permission-safe data: safety
+  // cases, safety counts, restriction reasons and "reports involving client" are omitted for roles
+  // without Trust & Safety access. `perms` is used by the demo backend only.
+  async getClientSupport(clientId, params = {}, perms = {}) {
+    if (!USE_MOCK) return callAdmin('adminGetClientSupport', { clientId, ...params })
+    await delay(240)
+    const r = MOCK_CLIENTS.find((c) => c.id === clientId)
+    if (!r || (params.market && params.market !== 'ALL' && r.country !== params.market)) {
+      throw new Error('Client not found or outside your authorised markets.')
+    }
+    return queryClientSupport(r, params, perms)
+  },
+
+  // ADM-018 — drawer details. Permission is revalidated on every open, related booking/payment/
+  // provider are resolved server-side, internal notes are returned separately from the client
+  // conversation, and opening a sensitive (safety) case is written to the audit log.
+  async getSupportCasePreview(caseId, { clientId, market } = {}, perms = {}) {
+    if (!USE_MOCK) return callAdmin('adminGetSupportCasePreview', { caseId, clientId, market })
+    await delay(160)
+    const r = MOCK_CLIENTS.find((c) => c.id === clientId)
+    if (!r || (market && market !== 'ALL' && r.country !== market)) {
+      throw new Error('Client not found or outside your authorised markets.')
+    }
+    return buildSupportCasePreview(r, caseId, perms)
+  },
+
+  // ADM-018 — reply goes through the shared support messaging; it never includes internal notes.
+  async replyToSupportCase({ clientId, caseId, text }) {
+    if (!USE_MOCK) return callAdmin('adminReplyToSupportCase', { clientId, caseId, text })
+    await delay(240)
+    return addMockCaseMessage(clientId, caseId, text)
+  },
+
+  // ADM-018 — internal note: stored separately, never visible to the client.
+  async addSupportCaseNote({ clientId, caseId, text }) {
+    if (!USE_MOCK) return callAdmin('adminAddSupportCaseNote', { clientId, caseId, text })
+    await delay(200)
+    return addMockCaseNote(clientId, caseId, text)
+  },
+
+  async reassignSupportCase({ clientId, caseId, assignee }) {
+    if (!USE_MOCK) return callAdmin('adminReassignSupportCase', { clientId, caseId, assignee })
+    await delay(200)
+    return reassignMockCase(clientId, caseId, assignee)
+  },
+
+  async escalateSupportCase({ clientId, caseId }) {
+    if (!USE_MOCK) return callAdmin('adminEscalateSupportCase', { clientId, caseId })
+    await delay(200)
+    return escalateMockCase(clientId, caseId)
   },
 
   getCities(country) {
