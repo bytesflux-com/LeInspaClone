@@ -24,8 +24,10 @@ import {
 } from 'lucide-react'
 import { PERMISSIONS } from './permissions.js'
 
-// Sidebar structure per the ADM-011 mockup. An item with `children` renders
-// an expanded sub-menu while the current route is inside it.
+// Sidebar structure per the ADM-011 / ADM-044 mockups. An item with `children`
+// is an expandable group: clicking it opens or closes its sub-menu, and it
+// opens automatically while the current route is inside it. `path` is the
+// group's route prefix; the overview page is listed as the first child.
 export const NAVIGATION_SECTIONS = [
   {
     id: 'control',
@@ -41,11 +43,14 @@ export const NAVIGATION_SECTIONS = [
     section: 'USERS & PROVIDERS',
     items: [
       {
-        label: 'Client Management',
+        label: 'Clients',
         icon: Users,
         path: '/clients',
         permission: PERMISSIONS.USERS_VIEW,
-        children: [{ label: 'All Clients', icon: Users, path: '/clients/all' }],
+        children: [
+          { label: 'Client Management', path: '/clients' },
+          { label: 'All Clients', path: '/clients/all' },
+        ],
       },
       { label: 'Provider Management', icon: BriefcaseBusiness, path: '/providers', permission: PERMISSIONS.PROVIDERS_VIEW },
       { label: 'Spas & Wellness Centers', icon: Flower2, path: '/spas', permission: PERMISSIONS.PROVIDERS_VIEW },
@@ -57,7 +62,21 @@ export const NAVIGATION_SECTIONS = [
     id: 'bookings-payments',
     section: 'BOOKINGS & PAYMENTS',
     items: [
-      { label: 'Bookings', icon: CalendarCheck, path: '/bookings', permission: PERMISSIONS.BOOKINGS_VIEW },
+      {
+        label: 'Bookings',
+        icon: CalendarCheck,
+        path: '/bookings',
+        permission: PERMISSIONS.BOOKINGS_VIEW,
+        children: [
+          { label: 'Booking Management', path: '/bookings' },
+          { label: 'Active Bookings', path: '/bookings/active' },
+          { label: 'Upcoming Bookings', path: '/bookings/upcoming' },
+          { label: 'Ongoing Bookings', path: '/bookings/ongoing' },
+          { label: 'Completed Bookings', path: '/bookings/completed' },
+          { label: 'Cancelled Bookings', path: '/bookings/cancelled' },
+          { label: 'Guest Bookings', path: '/guest-bookings' },
+        ],
+      },
       { label: 'Payments', icon: CreditCard, path: '/payments', permission: PERMISSIONS.FINANCE_VIEW },
       { label: 'Withdrawals', icon: Banknote, path: '/withdrawals', permission: PERMISSIONS.WITHDRAWALS_APPROVE },
       { label: 'Disputes', icon: CircleAlert, path: '/disputes', permission: PERMISSIONS.DISPUTES_MANAGE },

@@ -1,13 +1,35 @@
+import { useEffect, useState } from 'react'
 import { Link, NavLink, matchPath, useLocation } from 'react-router'
-import { User, Users } from 'lucide-react'
+import { ChevronRight } from 'lucide-react'
 import { usePermissions } from '../../hooks/usePermissions'
 import { NAVIGATION_SECTIONS } from '../../constants/navigation'
 import { cn } from '../../lib/utils'
 
 const ROW = 'group flex items-center gap-2.5 whitespace-nowrap rounded-xl px-2.5 py-[3px] text-[12.5px] font-medium leading-5 transition-colors'
+const CHILD = 'flex items-center whitespace-nowrap rounded-lg py-[3px] pr-2.5 pl-[38px] text-[12px] leading-5 transition-colors'
+
+// A route is inside a group when it matches the group prefix or any child path.
+const groupPaths = (item) => [item.path, ...item.children.map((c) => c.path)]
+const inside = (paths, pathname) => paths.some((p) => pathname === p || pathname.startsWith(`${p}/`))
 
 export default function NavigationMenu({ onNavigate }) {
   const { can } = usePermissions()
+  const { pathname } = useLocation()
+
+  // Expandable groups: open while the route is inside them, and toggled by
+  // clicking the parent row. Entering a group (e.g. via a link) opens it.
+  const [open, setOpen] = useState(() => new Set())
+  useEffect(() => {
+    const active = NAVIGATION_SECTIONS.flatMap((s) => s.items).filter((i) => i.children && inside(groupPaths(i), pathname))
+    if (active.length) setOpen((prev) => (active.every((i) => prev.has(i.path)) ? prev : new Set([...prev, ...active.map((i) => i.path)])))
+  }, [pathname])
+  const toggle = (path) =>
+    setOpen((prev) => {
+      const next = new Set(prev)
+      if (next.has(path)) next.delete(path)
+      else next.add(path)
+      return next
+    })
 
   return (
     <nav className="space-y-3" aria-label="Admin navigation">
@@ -26,11 +48,11 @@ export default function NavigationMenu({ onNavigate }) {
             <div className="space-y-0.5">
               {items.map((item) => {
                 const Icon = item.icon
-                return (
-                  <div key={item.path + item.label} className="space-y-0.5">
+                if (!item.children) {
+                  return (
                     <NavLink
+                      key={item.path + item.label}
                       to={item.path}
-                      end={Boolean(item.children)}
                       onClick={onNavigate}
                       className={({ isActive }) =>
                         cn(ROW, isActive ? 'bg-[#5c2dd5] font-semibold text-white shadow-md' : 'text-white/90 hover:bg-white/10 hover:text-white')
@@ -39,10 +61,29 @@ export default function NavigationMenu({ onNavigate }) {
                       <Icon className="size-[18px] shrink-0" aria-hidden="true" />
                       <span>{item.label}</span>
                     </NavLink>
+                  )
+                }
 
-                    {/* Sub-menu is open whenever its parent route is active */}
-                    {item.children && (
-                      <NavLinkChildren item={item} onNavigate={onNavigate} />
+                const isOpen = open.has(item.path)
+                const current = inside(groupPaths(item), pathname)
+                const id = `nav-group-${item.path.slice(1)}`
+                return (
+                  <div key={item.path + item.label} className="space-y-0.5">
+                    <button
+                      type="button"
+                      onClick={() => toggle(item.path)}
+                      aria-expanded={isOpen}
+                      aria-controls={id}
+                      className={cn(ROW, 'w-full', current ? 'bg-white/12 font-semibold text-white' : 'text-white/90 hover:bg-white/10 hover:text-white')}
+                    >
+                      <Icon className="size-[18px] shrink-0" aria-hidden="true" />
+                      <span>{item.label}</span>
+                      <ChevronRight className={cn('ml-auto size-4 shrink-0 text-white/70 transition-transform', isOpen && 'rotate-90')} aria-hidden="true" />
+                    </button>
+                    {isOpen && (
+                      <div id={id} className="space-y-0.5">
+                        <GroupChildren item={item} onNavigate={onNavigate} />
+                      </div>
                     )}
                   </div>
                 )
@@ -55,56 +96,39 @@ export default function NavigationMenu({ onNavigate }) {
   )
 }
 
-function NavLinkChildren({ item, onNavigate }) {
+function GroupChildren({ item, onNavigate }) {
   const { pathname } = useLocation()
   // ADM-012: while a client profile is open, a "Client Profile" row appears under
-  // Client Management (the profile lives at /clients/:clientId, not /clients/all).
+  // Clients (the profile lives at /clients/:clientId, not /clients/all).
   const onProfile = Boolean(item.path === '/clients' && matchPath({ path: '/clients/:clientId/*' }, pathname) && !matchPath({ path: '/clients/all/*' }, pathname))
   // ADM-013: on a client's bookings the sidebar shows Client Profile (link) → Client Bookings (active).
   const bookingsMatch = item.path === '/clients' ? matchPath({ path: '/clients/:clientId/bookings' }, pathname) : null
   const onBookings = Boolean(bookingsMatch && bookingsMatch.params.clientId !== 'all')
+  const activeCls = 'bg-[#5c2dd5] font-semibold text-white shadow-md'
+  const idleCls = 'text-white/80 hover:bg-white/10 hover:text-white'
+
   return (
-    <ParentActive paths={item.children.map((c) => c.path)} force={onProfile}>
-      {item.children.map((child) => {
-        const ChildIcon = child.icon
-        return (
-          <NavLink
-            key={child.path}
-            to={child.path}
-            onClick={onNavigate}
-            className={({ isActive }) =>
-              cn(ROW, 'pl-[18px]', isActive ? 'bg-[#6a4bc4] font-semibold text-white' : 'text-white/85 hover:bg-white/10 hover:text-white')
-            }
-          >
-            <ChildIcon className="size-[18px] shrink-0" aria-hidden="true" />
-            <span>{child.label}</span>
-          </NavLink>
-        )
-      })}
+    <>
+      {item.children.map((child) => (
+        <NavLink
+          key={child.path}
+          to={child.path}
+          end
+          onClick={onNavigate}
+          className={({ isActive }) => cn(CHILD, isActive ? activeCls : idleCls)}
+        >
+          {child.label}
+        </NavLink>
+      ))}
       {onProfile && !onBookings && (
-        <span aria-current="page" className={cn(ROW, 'pl-[18px] bg-[#6a4bc4] font-semibold text-white')}>
-          <Users className="size-[18px] shrink-0" aria-hidden="true" />
-          <span>Client Profile</span>
-        </span>
+        <span aria-current="page" className={cn(CHILD, activeCls)}>Client Profile</span>
       )}
       {onBookings && (
         <>
-          <Link to={`/clients/${bookingsMatch.params.clientId}`} onClick={onNavigate} className={cn(ROW, 'pl-[18px] text-white/85 hover:bg-white/10 hover:text-white')}>
-            <User className="size-[18px] shrink-0" aria-hidden="true" />
-            <span>Client Profile</span>
-          </Link>
-          <span aria-current="page" className={cn(ROW, 'pl-[18px] bg-[#5c2dd5] font-semibold text-white shadow-md')}>
-            <User className="size-[18px] shrink-0" aria-hidden="true" />
-            <span>Client Bookings</span>
-          </span>
+          <Link to={`/clients/${bookingsMatch.params.clientId}`} onClick={onNavigate} className={cn(CHILD, idleCls)}>Client Profile</Link>
+          <span aria-current="page" className={cn(CHILD, activeCls)}>Client Bookings</span>
         </>
       )}
-    </ParentActive>
+    </>
   )
-}
-
-function ParentActive({ paths, force = false, children }) {
-  const { pathname } = useLocation()
-  const open = force || paths.some((path) => pathname === path || pathname.startsWith(`${path}/`))
-  return open ? <div className="space-y-0.5">{children}</div> : null
 }
