@@ -12,6 +12,7 @@ import {
   Banknote,
   CircleAlert,
   FileText,
+  FileCheck,
   Megaphone,
   Gift,
   ShieldCheck,
@@ -21,11 +22,11 @@ import {
   UsersRound,
   ScrollText,
   HeartPulse,
+  Wallet,
+  ListOrdered,
 } from 'lucide-react'
 import { PERMISSIONS } from './permissions.js'
 
-// Sidebar structure per the ADM-011 mockup. An item with `children` renders
-// an expanded sub-menu while the current route is inside it.
 export const NAVIGATION_SECTIONS = [
   {
     id: 'control',
@@ -41,36 +42,65 @@ export const NAVIGATION_SECTIONS = [
     section: 'USERS & PROVIDERS',
     items: [
       {
-        label: 'Client Management',
+        label: 'Clients',
         icon: Users,
         path: '/clients',
         permission: PERMISSIONS.USERS_VIEW,
-        children: [{ label: 'All Clients', icon: Users, path: '/clients/all' }],
+        children: [
+          { label: 'Client Management', path: '/clients' },
+          { label: 'All Clients', path: '/clients/all' },
+        ],
       },
-      { label: 'Provider Management', icon: BriefcaseBusiness, path: '/providers', permission: PERMISSIONS.PROVIDERS_VIEW },
-      { label: 'Spas & Wellness Centers', icon: Flower2, path: '/spas', permission: PERMISSIONS.PROVIDERS_VIEW },
-      { label: 'Hotels & Resorts', icon: Hotel, path: '/hotels', permission: PERMISSIONS.PROVIDERS_VIEW },
-      { label: 'Verification & Approvals', icon: BadgeCheck, path: '/verifications', permission: PERMISSIONS.PROVIDERS_VERIFY },
+      {
+        label: 'Provider Management',
+        icon: BriefcaseBusiness,
+        path: '/providers',
+        permission: PERMISSIONS.PROVIDERS_VIEW,
+        children: [
+          { label: 'Provider Dashboard', icon: LayoutDashboard, path: '/providers' },
+          { label: 'All Providers', icon: Users, path: '/providers/all' },
+          { label: 'Verification Center', icon: ShieldCheck, path: '/verifications', permission: PERMISSIONS.PROVIDERS_VERIFY, badge: '428' },
+          { label: 'Verification Queue', icon: ListOrdered, path: '/verifications/queue', permission: PERMISSIONS.PROVIDERS_VERIFY },
+          { label: 'Content Moderation', icon: FileCheck, path: '/content' },
+          { label: 'Withdrawals', icon: Banknote, path: '/withdrawals', permission: PERMISSIONS.WITHDRAWALS_APPROVE },
+          { label: 'Provider Subscriptions', icon: CreditCard, path: '/providers/subscriptions' },
+          { label: 'Spa & Wellness Centers', icon: Flower2, path: '/spas', permission: PERMISSIONS.PROVIDERS_VIEW },
+          { label: 'Hotels & Resorts', icon: Hotel, path: '/hotels', permission: PERMISSIONS.PROVIDERS_VIEW },
+        ],
+      },
     ],
   },
   {
     id: 'bookings-payments',
     section: 'BOOKINGS & PAYMENTS',
     items: [
-      { label: 'Bookings', icon: CalendarCheck, path: '/bookings', permission: PERMISSIONS.BOOKINGS_VIEW },
+      {
+        label: 'Bookings',
+        icon: CalendarCheck,
+        path: '/bookings',
+        permission: PERMISSIONS.BOOKINGS_VIEW,
+        children: [
+          { label: 'Booking Management', path: '/bookings' },
+          { label: 'Active Bookings', path: '/bookings/active' },
+          { label: 'Upcoming Bookings', path: '/bookings/upcoming' },
+          { label: 'Ongoing Bookings', path: '/bookings/ongoing' },
+          { label: 'Completed Bookings', path: '/bookings/completed' },
+          { label: 'Cancelled Bookings', path: '/bookings/cancelled' },
+          { label: 'Guest Bookings', path: '/guest-bookings' },
+        ],
+      },
       { label: 'Payments', icon: CreditCard, path: '/payments', permission: PERMISSIONS.FINANCE_VIEW },
-      { label: 'Withdrawals', icon: Banknote, path: '/withdrawals', permission: PERMISSIONS.WITHDRAWALS_APPROVE },
+      { label: 'Wallet & Payouts', icon: Wallet, path: '/finance', permission: PERMISSIONS.FINANCE_VIEW },
       { label: 'Disputes', icon: CircleAlert, path: '/disputes', permission: PERMISSIONS.DISPUTES_MANAGE },
     ],
   },
   {
-    id: 'platform-management',
-    section: 'PLATFORM MANAGEMENT',
+    id: 'marketing-growth',
+    section: 'MARKETING & GROWTH',
     items: [
-      { label: 'Content Management', icon: FileText, path: '/content' },
       { label: 'Promotions', icon: Megaphone, path: '/promotions' },
       { label: 'Referrals & Loyalty', icon: Gift, path: '/loyalty' },
-      { label: 'Support & Safety', icon: ShieldCheck, path: '/support', permission: PERMISSIONS.SUPPORT_VIEW },
+      { label: 'Campaigns', icon: FileText, path: '/campaigns' },
     ],
   },
   {

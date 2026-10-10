@@ -91,6 +91,22 @@ const SAMPLE_ENTITIES = {
       avatarUrl: null,
       link: '/providers',
     },
+    {
+      id: 'prv-203',
+      name: 'Daniel Kimani',
+      type: 'provider',
+      specialty: 'Personal Trainer',
+      verified: true,
+      rating: 4.7,
+      reviewCount: 42,
+      location: 'Nairobi, Kenya',
+      market: 'KE',
+      marketName: 'Kenya',
+      status: 'Suspended',
+      joinedAt: 'Suspended 4 Sep 2026',
+      avatarUrl: null,
+      link: '/providers/prv-203',
+    },
   ],
   spas: [
     {
