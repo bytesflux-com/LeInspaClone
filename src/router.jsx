@@ -17,6 +17,7 @@ import DisputeDetail from './pages/disputes/DisputeDetail.jsx'
 import SupportTicketDetail from './pages/support/SupportTicketDetail.jsx'
 import MarketDashboard from './pages/dashboard/MarketDashboard.jsx'
 import GlobalSearchPage from './pages/search/GlobalSearchPage.jsx'
+import ProviderDashboard from './pages/providers/ProviderDashboard.jsx'
 import Placeholder from './pages/Placeholder.jsx'
 import NotFound from './pages/NotFound.jsx'
 import RouteErrorElement from './components/ui/RouteErrorElement.jsx'
@@ -79,8 +80,10 @@ export const router = createBrowserRouter([
           { path: 'payments/:paymentId', element: <Placeholder title="Payment Details" /> }, // ADM-056
           { path: 'content', element: <Placeholder title="Content Management" /> },
           { path: 'reports', element: <Placeholder title="Reports" /> },
-          { path: 'market-insights', element: <Placeholder title="Market Insights" /> },
-          { path: 'providers', element: <Placeholder title="Providers & Spas" /> },
+          // ADM-020 — Provider Management Dashboard
+          { path: 'providers', element: <ProviderDashboard />, handle: { fullBleed: true } },
+          { path: 'providers/all', element: <Placeholder title="All Providers (ADM-021)" />, handle: { fullBleed: true } },
+          { path: 'providers/subscriptions', element: <Placeholder title="Provider Subscriptions" /> },
           { path: 'providers/:providerId', element: <Placeholder title="Provider Admin Profile" /> },
           { path: 'services/:serviceId', element: <Placeholder title="Service Details" /> },
           { path: 'verifications', element: <Placeholder title="Verification & Approvals" /> },
@@ -105,6 +108,7 @@ export const router = createBrowserRouter([
           { path: 'memberships', element: <Placeholder title="Memberships" /> },
           { path: 'loyalty', element: <Placeholder title="Referrals & Loyalty" /> },
           { path: 'promotions', element: <Placeholder title="Promotions & Campaigns" /> },
+          { path: 'campaigns', element: <Placeholder title="Marketing Campaigns" /> },
 
           // INTELLIGENCE
           { path: 'analytics', element: <Placeholder title="Cross-Market Analytics" /> },

@@ -29,3 +29,5 @@ export {
   adminProcessReviewAction,
   adminAssignQueueItem,
 } from './needsAttention.js'
+export { adminGetProviderDashboard } from './providerDashboard.js'
+
