@@ -173,11 +173,13 @@ export async function adminAccess(uid) {
   const profile = await profileRef(uid).get()
   const roleId = profile.exists ? profile.get('roleId') : BOOTSTRAP_ROLE
   const role = await db().collection('admin_roles').doc(roleId).get()
+  // Super Admin covers every market by definition, whatever the profile lists.
+  const markets = roleId === 'super_admin' || !profile.exists ? [ALL_MARKETS] : (profile.get('markets') ?? [])
   return {
     roleId,
     roleName: role.exists ? role.get('name') : (ROLES[roleId]?.name ?? roleId),
     permissions: [...(await permissionsFor(profile))].sort(),
-    markets: profile.exists ? (profile.get('markets') ?? []) : [ALL_MARKETS],
+    markets,
     fullName: profile.exists ? profile.get('fullName') : null,
   }
 }
