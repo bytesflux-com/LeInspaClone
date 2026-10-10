@@ -29,6 +29,9 @@ import CompletedBookings from './pages/bookings/CompletedBookings.jsx'
 import CancelledBookings from './pages/bookings/CancelledBookings.jsx'
 import GuestBookings from './pages/bookings/GuestBookings.jsx'
 
+import ContentApprovalCenter from './pages/content/ContentApprovalCenter.jsx'
+import ProfilePhotoApproval from './pages/content/ProfilePhotoApproval.jsx'
+import GalleryMediaApproval from './pages/content/GalleryMediaApproval.jsx'
 import Placeholder from './pages/Placeholder.jsx'
 import NotFound from './pages/NotFound.jsx'
 import RouteErrorElement from './components/ui/RouteErrorElement.jsx'
@@ -103,6 +106,15 @@ export const router = createBrowserRouter([
           { path: 'providers/:providerId', element: <Placeholder title="Provider Admin Profile" /> },
           { path: 'services/:serviceId', element: <Placeholder title="Service Details" /> },
           { path: 'verifications', element: <Placeholder title="Verification & Approvals" /> },
+          // ADM-035 → ADM-037 — Content moderation (separate from provider verification)
+          { path: 'content-approval', element: <ContentApprovalCenter />, handle: { fullBleed: true } },
+          { path: 'content-approval/profile-photos', element: <ContentApprovalCenter presetType="profile_photo" title="Profile Photo Approval" />, handle: { fullBleed: true } },
+          { path: 'content-approval/profile-photos/:moderationId', element: <ProfilePhotoApproval />, handle: { fullBleed: true } },
+          { path: 'content-approval/gallery', element: <ContentApprovalCenter presetType="gallery" title="Gallery & Media Approval" />, handle: { fullBleed: true } },
+          { path: 'content-approval/gallery/:moderationId', element: <GalleryMediaApproval />, handle: { fullBleed: true } },
+          { path: 'content-approval/services', element: <ContentApprovalCenter presetType="service" title="Service Content Approval" />, handle: { fullBleed: true } },
+          { path: 'content-approval/offers', element: <ContentApprovalCenter presetType="offer" title="Offers & Packages Approval" />, handle: { fullBleed: true } },
+          { path: 'content-approval/business', element: <ContentApprovalCenter presetType="business_profile" title="Business Content Approval" />, handle: { fullBleed: true } },
           { path: 'verifications/:id', element: <VerificationDetail /> },
           // ADM-044 → ADM-048 — Booking Operations (views over the shared bookings collection)
           { path: 'bookings', element: <BookingManagement />, handle: { fullBleed: true } },

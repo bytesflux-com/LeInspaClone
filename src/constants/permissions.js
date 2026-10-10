@@ -7,6 +7,7 @@ export const PERMISSIONS = {
   USERS_REVEAL_PII: 'users.reveal_pii', // ADM-012 — unmask client email / phone (audited)
   PROVIDERS_VIEW: 'providers.view',
   PROVIDERS_VERIFY: 'providers.verify',
+  CONTENT_MODERATE: 'content.moderate', // ADM-035 → ADM-037
   BOOKINGS_VIEW: 'bookings.view',
   BOOKINGS_MANAGE: 'bookings.manage',
   FINANCE_VIEW: 'payments.view',

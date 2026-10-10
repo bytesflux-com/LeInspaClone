@@ -34,3 +34,12 @@ export { adminGetBookingDashboard, adminListBookings, adminGetBookingQuickView, 
 export { adminGetProviderDashboard } from './providerDashboard.js'
 export { adminListProviders, adminGetProviderDetail } from './providerDirectory.js'
 
+export {
+  adminGetContentQueue,
+  adminGetContentReview,
+  adminStartContentReview,
+  adminContentDecision,
+  adminBulkMediaDecision,
+  adminCompleteGalleryReview,
+  adminAddModerationNote,
+} from './contentModeration.js'

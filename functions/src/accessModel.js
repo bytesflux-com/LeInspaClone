@@ -8,7 +8,7 @@ import { newSessionData, sessionPolicy } from './session.js'
 //   admin_sessions/{uid_authTime}     each sign-in that passed 2FA (see session.js)
 // Bump CATALOG_VERSION when permissions or roles change; the next admin login
 // writes the new catalog.
-export const CATALOG_VERSION = 1
+export const CATALOG_VERSION = 2
 
 export const PERMISSIONS = {
   'dashboard.view': { name: 'View dashboard', category: 'Overview', sensitive: false },
@@ -22,6 +22,7 @@ export const PERMISSIONS = {
   'withdrawals.approve': { name: 'Approve withdrawals', category: 'Finance', sensitive: true },
   'escrow.release': { name: 'Release escrow', category: 'Finance', sensitive: true },
   'refunds.issue': { name: 'Issue refunds', category: 'Finance', sensitive: true },
+  'content.moderate': { name: 'Moderate provider content before publication', category: 'Providers', sensitive: true },
   'support.view': { name: 'View support tickets', category: 'Support', sensitive: false },
   'support.respond': { name: 'Reply to support tickets', category: 'Support', sensitive: false },
   'safety.manage': { name: 'Handle safety reports', category: 'Safety', sensitive: true },

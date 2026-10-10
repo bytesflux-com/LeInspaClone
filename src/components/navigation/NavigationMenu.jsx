@@ -114,17 +114,21 @@ function GroupChildren({ item, onNavigate }) {
 
   return (
     <>
-      {validChildren.map((child) => (
-        <NavLink
-          key={child.path}
-          to={child.path}
-          end
-          onClick={onNavigate}
-          className={({ isActive }) => cn(CHILD, isActive ? activeCls : idleCls)}
-        >
-          {child.label}
-        </NavLink>
-      ))}
+      {validChildren.map((child) =>
+        child.children ? (
+          <NestedGroup key={child.path + child.label} item={child} onNavigate={onNavigate} activeCls={activeCls} idleCls={idleCls} />
+        ) : (
+          <NavLink
+            key={child.path}
+            to={child.path}
+            end
+            onClick={onNavigate}
+            className={({ isActive }) => cn(CHILD, isActive ? activeCls : idleCls)}
+          >
+            {child.label}
+          </NavLink>
+        ),
+      )}
       {onProfile && !onBookings && (
         <span aria-current="page" className={cn(CHILD, activeCls)}>Client Profile</span>
       )}
@@ -135,5 +139,30 @@ function GroupChildren({ item, onNavigate }) {
         </>
       )}
     </>
+  )
+}
+
+// Second-level group inside a sidebar group (e.g. Provider Management →
+// Content Moderation). Opens while the route is inside it; click toggles.
+function NestedGroup({ item, onNavigate, activeCls, idleCls }) {
+  const { pathname } = useLocation()
+  const current = inside(groupPaths(item), pathname)
+  const [open, setOpen] = useState(current)
+  useEffect(() => {
+    if (current) setOpen(true)
+  }, [current])
+  return (
+    <div className="space-y-0.5">
+      <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} className={cn(CHILD, 'w-full', current ? 'font-semibold text-white' : idleCls)}>
+        {item.label}
+        <ChevronRight className={cn('ml-auto size-3.5 shrink-0 text-white/60 transition-transform', open && 'rotate-90')} aria-hidden="true" />
+      </button>
+      {open &&
+        item.children.map((child) => (
+          <NavLink key={child.path} to={child.path} end onClick={onNavigate} className={({ isActive }) => cn(CHILD, 'pl-[52px] text-[11.5px]', isActive ? activeCls : idleCls)}>
+            {child.label}
+          </NavLink>
+        ))}
+    </div>
   )
 }
