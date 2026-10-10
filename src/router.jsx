@@ -13,6 +13,7 @@ import ClientBookings from './pages/clients/ClientBookings.jsx'
 import ClientPayments from './pages/clients/ClientPayments.jsx'
 import ClientWallet from './pages/clients/ClientWallet.jsx'
 import ClientMembership from './pages/clients/ClientMembership.jsx'
+import ClientLoyalty from './pages/clients/ClientLoyalty.jsx'
 import Placeholder from './pages/Placeholder.jsx'
 import NotFound from './pages/NotFound.jsx'
 import RouteErrorElement from './components/ui/RouteErrorElement.jsx'
@@ -72,6 +73,8 @@ export const router = createBrowserRouter([
           { path: 'clients/:clientId/wallet', element: <ClientWallet />, handle: { fullBleed: true } },
           // ADM-016 — Client Membership (admin view of customer_memberships + plan configuration)
           { path: 'clients/:clientId/membership', element: <ClientMembership />, handle: { fullBleed: true } },
+          // ADM-017 — Client Referrals & Loyalty (admin view of referrals, loyalty accounts and rewards)
+          { path: 'clients/:clientId/loyalty', element: <ClientLoyalty />, handle: { fullBleed: true } },
           { path: 'clients/:clientId/:section', element: <ClientProfile />, handle: { fullBleed: true } },
           { path: 'attention', element: <Placeholder title="Needs Your Attention" /> },
           { path: 'spas', element: <Placeholder title="Spas & Wellness Centers" /> },
