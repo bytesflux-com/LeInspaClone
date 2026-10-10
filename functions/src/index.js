@@ -23,4 +23,14 @@ export { adminGetSession, adminVerifySession, adminEndSession } from './sessionV
 export { adminGetDashboardSummary } from './dashboard.js'
 export { adminGetOperationsSummary } from './operations.js'
 export { adminGlobalSearch } from './search.js'
-export { adminGetNeedsAttention } from './needsAttention.js'
+export {
+  adminGetNeedsAttention,
+  adminGetReviewItem,
+  adminProcessReviewAction,
+  adminAssignQueueItem,
+} from './needsAttention.js'
+export { adminGetBookingDashboard, adminListBookings, adminGetBookingQuickView, adminRevealGuestContact } from './bookings.js'
+
+export { adminGetProviderDashboard } from './providerDashboard.js'
+export { adminListProviders, adminGetProviderDetail } from './providerDirectory.js'
+
