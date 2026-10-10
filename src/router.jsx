@@ -18,6 +18,7 @@ import SupportTicketDetail from './pages/support/SupportTicketDetail.jsx'
 import MarketDashboard from './pages/dashboard/MarketDashboard.jsx'
 import GlobalSearchPage from './pages/search/GlobalSearchPage.jsx'
 import ProviderDashboard from './pages/providers/ProviderDashboard.jsx'
+import ProviderDirectory from './pages/providers/ProviderDirectory.jsx'
 import Placeholder from './pages/Placeholder.jsx'
 import NotFound from './pages/NotFound.jsx'
 import RouteErrorElement from './components/ui/RouteErrorElement.jsx'
@@ -82,7 +83,9 @@ export const router = createBrowserRouter([
           { path: 'reports', element: <Placeholder title="Reports" /> },
           // ADM-020 — Provider Management Dashboard
           { path: 'providers', element: <ProviderDashboard />, handle: { fullBleed: true } },
-          { path: 'providers/all', element: <Placeholder title="All Providers (ADM-021)" />, handle: { fullBleed: true } },
+          // ADM-021 — Provider Directory (Dynamic Master Search & Filter Directory)
+          { path: 'providers/all', element: <ProviderDirectory />, handle: { fullBleed: true } },
+          { path: 'providers/directory', element: <ProviderDirectory />, handle: { fullBleed: true } },
           { path: 'providers/subscriptions', element: <Placeholder title="Provider Subscriptions" /> },
           { path: 'providers/:providerId', element: <Placeholder title="Provider Admin Profile" /> },
           { path: 'services/:serviceId', element: <Placeholder title="Service Details" /> },

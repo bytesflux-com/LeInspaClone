@@ -1,5 +1,6 @@
 import { callAdmin } from '../lib/firebaseFunctions'
 import { buildProviderDashboard } from './mock/providerDashboardMock'
+import { queryProviderDirectory, DIRECTORY_PROVIDERS } from './mock/providerDirectoryMock'
 
 export const providerService = {
   /**
@@ -23,6 +24,53 @@ export const providerService = {
         err?.message || err,
       )
       return buildProviderDashboard(market, dateRange)
+    }
+  },
+
+  /**
+   * ADM-021: Query Provider Directory.
+   * Calls live Cloud Function `adminListProviders` with fallback to deterministic multi-market mock directory.
+   */
+  async listProviders(params = {}) {
+    try {
+      const result = await callAdmin('adminListProviders', params)
+      if (result && Array.isArray(result.items)) {
+        return result
+      }
+      return queryProviderDirectory(params)
+    } catch (err) {
+      console.warn(
+        '[providerService] adminListProviders Cloud Function not reachable, falling back to local dataset:',
+        err?.message || err,
+      )
+      return queryProviderDirectory(params)
+    }
+  },
+
+  /**
+   * ADM-021: Fetch detailed provider profile for quick preview drawer.
+   */
+  async getProviderDetail(providerId) {
+    try {
+      const result = await callAdmin('adminGetProviderDetail', { providerId })
+      if (result && result.provider) {
+        return result.provider
+      }
+      return (
+        DIRECTORY_PROVIDERS.find(
+          (p) => p.id === providerId || p.dbId === providerId,
+        ) || null
+      )
+    } catch (err) {
+      console.warn(
+        '[providerService] adminGetProviderDetail error, falling back:',
+        err?.message || err,
+      )
+      return (
+        DIRECTORY_PROVIDERS.find(
+          (p) => p.id === providerId || p.dbId === providerId,
+        ) || null
+      )
     }
   },
 
@@ -71,5 +119,31 @@ export const providerService = {
 
     return lines.join('\n')
   },
-}
 
+  /**
+   * ADM-021: Export Directory Table as CSV.
+   */
+  async exportProvidersDirectory(params = {}, selectedIds = []) {
+    const data = await this.listProviders({ ...params, page: 1, pageSize: 1000 })
+    let exportItems = data.items || []
+
+    if (selectedIds && selectedIds.length > 0) {
+      exportItems = exportItems.filter((item) => selectedIds.includes(item.id))
+    }
+
+    const lines = []
+    lines.push(`LÉ INSPA — PROVIDER DIRECTORY EXPORT`)
+    lines.push(`Generated,${new Date().toISOString()}`)
+    lines.push(`Total Records,${exportItems.length}`)
+    lines.push(``)
+    lines.push(`ID,Name,Entity Type,Category,Market,City,Verification,Availability,Rating,Reviews,Bookings,Status,Joined Date,Email,Phone`)
+
+    exportItems.forEach((p) => {
+      lines.push(
+        `"${p.id}","${p.name}","${p.entityType}","${p.typeLabel}","${p.market}","${p.city}","${p.verificationLabel}","${p.availabilityLabel}",${p.rating},${p.reviewCount},${p.bookings},"${p.statusLabel}","${p.joinedDate}","${p.email}","${p.phone}"`,
+      )
+    })
+
+    return lines.join('\n')
+  },
+}

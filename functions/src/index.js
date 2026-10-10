@@ -30,4 +30,5 @@ export {
   adminAssignQueueItem,
 } from './needsAttention.js'
 export { adminGetProviderDashboard } from './providerDashboard.js'
+export { adminListProviders, adminGetProviderDetail } from './providerDirectory.js'
 
