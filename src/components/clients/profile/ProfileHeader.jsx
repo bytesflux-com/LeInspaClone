@@ -1,5 +1,6 @@
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router'
-import { BadgeCheck, CalendarDays, ChartPie, ChevronDown, ClipboardList, Clock, Copy, CreditCard, Crown, Headphones, Mail, ShieldAlert, UsersRound, Wallet } from 'lucide-react'
+import { BadgeCheck, CalendarDays, ChartPie, ChevronDown, ChevronLeft, ChevronRight, ClipboardList, Clock, Copy, CreditCard, Crown, Headphones, Mail, ShieldAlert, UsersRound, Wallet } from 'lucide-react'
 import PersonAvatar from '../../ui/PersonAvatar'
 import CountryFlag from '../../ui/CountryFlag'
 import Dropdown from '../../ui/Dropdown'
@@ -26,31 +27,125 @@ const PILL = 'rounded-full px-3.5 py-2 text-[13px] font-semibold gap-1.5 [&_svg]
 
 export function ProfileTabs({ clientId, active, can, linkState }) {
   const tabs = PROFILE_TABS.filter((t) => !t.permission || can(t.permission))
+  const scrollRef = useRef(null)
+  const drag = useRef({ down: false, moved: false, startX: 0, startLeft: 0 })
+  const [edge, setEdge] = useState({ left: false, right: false })
+
+  const updateEdges = useCallback(() => {
+    const el = scrollRef.current
+    if (!el) return
+    setEdge({
+      left: el.scrollLeft > 4,
+      right: el.scrollLeft + el.clientWidth < el.scrollWidth - 4,
+    })
+  }, [])
+
+  // Keep the active tab visible and track whether more tabs hide off-screen.
+  useEffect(() => {
+    const el = scrollRef.current
+    if (!el) return undefined
+    el.querySelector('[aria-selected="true"]')?.scrollIntoView({ block: 'nearest', inline: 'center' })
+    updateEdges()
+    const ro = new ResizeObserver(updateEdges)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [active, tabs.length, updateEdges])
+
+  const scrollByDir = (dir) => {
+    const el = scrollRef.current
+    if (el) el.scrollBy({ left: dir * Math.max(200, el.clientWidth * 0.6), behavior: 'smooth' })
+  }
+
+  // Mouse wheel scrolls the row sideways when it overflows.
+  const onWheel = (e) => {
+    const el = scrollRef.current
+    if (!el || el.scrollWidth <= el.clientWidth || Math.abs(e.deltaX) > Math.abs(e.deltaY)) return
+    el.scrollLeft += e.deltaY
+  }
+
+  // Click-and-drag to scroll with a mouse.
+  const onPointerDown = (e) => {
+    if (e.pointerType !== 'mouse') return
+    const el = scrollRef.current
+    drag.current = { down: true, moved: false, startX: e.clientX, startLeft: el.scrollLeft }
+  }
+  const onPointerMove = (e) => {
+    const d = drag.current
+    if (!d.down) return
+    const dx = e.clientX - d.startX
+    if (Math.abs(dx) > 5) d.moved = true
+    if (d.moved) scrollRef.current.scrollLeft = d.startLeft - dx
+  }
+  const endDrag = () => {
+    drag.current.down = false
+  }
+  const onClickCapture = (e) => {
+    if (drag.current.moved) {
+      e.preventDefault()
+      e.stopPropagation()
+      drag.current.moved = false
+    }
+  }
+
+  const arrowCls =
+    'absolute top-1/2 z-10 grid size-8 -translate-y-1/2 place-items-center rounded-full border border-[#ddd7ee] bg-white text-[#3b1fd6] shadow-md transition hover:bg-[#f3efff]'
+
   return (
-    <nav aria-label="Client profile sections" role="tablist" className="-mb-px flex items-center gap-0 overflow-x-auto px-2 py-2 [scrollbar-width:none]">
-      {tabs.map((t, i) => {
-        const Icon = TAB_ICONS[t.id]
-        const on = t.id === active
-        return (
-          <div key={t.id} className="flex shrink-0 items-center">
-            <Link
-              to={t.section ? `/clients/${clientId}/${t.section}` : `/clients/${clientId}`}
-              state={linkState}
-              role="tab"
-              aria-selected={on}
-              className={cn(
-                'flex h-[36px] items-center gap-1.5 rounded-lg border-[1.5px] px-2.5 text-[12.5px] whitespace-nowrap transition',
-                on ? 'border-[#7a5cf0] bg-[#f3efff] font-semibold text-[#3b1fd6]' : 'border-transparent font-medium text-[#1b1140] hover:bg-[#f7f5fd]',
-              )}
-            >
-              <Icon className={cn('size-[16px]', on || t.id === 'membership' ? 'fill-[#4527c8]/85 text-[#4527c8]' : 'text-[#2a1b57]')} aria-hidden="true" />
-              {t.label}
-            </Link>
-            {DIVIDER_AFTER.has(t.id) && i < tabs.length - 1 && <span className="mx-1 h-5 w-px bg-[#ddd7ee]" aria-hidden="true" />}
-          </div>
-        )
-      })}
-    </nav>
+    <div className="relative">
+      {edge.left && (
+        <>
+          <span className="pointer-events-none absolute inset-y-0 left-0 z-[5] w-12 bg-gradient-to-r from-white to-transparent" aria-hidden="true" />
+          <button type="button" onClick={() => scrollByDir(-1)} aria-label="Scroll tabs left" className={cn(arrowCls, 'left-1')}>
+            <ChevronLeft className="size-4" />
+          </button>
+        </>
+      )}
+      {edge.right && (
+        <>
+          <span className="pointer-events-none absolute inset-y-0 right-0 z-[5] w-12 bg-gradient-to-l from-white to-transparent" aria-hidden="true" />
+          <button type="button" onClick={() => scrollByDir(1)} aria-label="Scroll tabs right" className={cn(arrowCls, 'right-1')}>
+            <ChevronRight className="size-4" />
+          </button>
+        </>
+      )}
+      <nav
+        ref={scrollRef}
+        aria-label="Client profile sections"
+        role="tablist"
+        onScroll={updateEdges}
+        onWheel={onWheel}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={endDrag}
+        onPointerLeave={endDrag}
+        onClickCapture={onClickCapture}
+        className="-mb-px flex items-center gap-0 overflow-x-auto scroll-smooth px-2 py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
+        {tabs.map((t, i) => {
+          const Icon = TAB_ICONS[t.id]
+          const on = t.id === active
+          return (
+            <div key={t.id} className="flex shrink-0 items-center">
+              <Link
+                to={t.section ? `/clients/${clientId}/${t.section}` : `/clients/${clientId}`}
+                state={linkState}
+                role="tab"
+                aria-selected={on}
+                draggable={false}
+                className={cn(
+                  'flex h-[36px] items-center gap-1.5 rounded-lg border-[1.5px] px-2.5 text-[12.5px] whitespace-nowrap transition',
+                  on ? 'border-[#7a5cf0] bg-[#f3efff] font-semibold text-[#3b1fd6]' : 'border-transparent font-medium text-[#1b1140] hover:bg-[#f7f5fd]',
+                )}
+              >
+                <Icon className={cn('size-[16px]', on || t.id === 'membership' ? 'fill-[#4527c8]/85 text-[#4527c8]' : 'text-[#2a1b57]')} aria-hidden="true" />
+                {t.label}
+              </Link>
+              {DIVIDER_AFTER.has(t.id) && i < tabs.length - 1 && <span className="mx-1 h-5 w-px bg-[#ddd7ee]" aria-hidden="true" />}
+            </div>
+          )
+        })}
+      </nav>
+    </div>
   )
 }
 

@@ -4,18 +4,18 @@ import { CARD, H2 } from './AccountParts'
 import { cn } from '../../../lib/utils'
 
 function Tile({ to, state, tone, disc, icon: Icon, iconClass, label, value, restricted }) {
-  const cls = cn('flex min-w-0 items-center gap-2.5 rounded-xl px-2.5 py-3 transition', tone, to && !restricted && 'hover:brightness-[0.97]')
+  const cls = cn('flex min-w-0 items-center gap-2 rounded-xl px-2.5 py-2.5 transition', tone, to && !restricted && 'hover:brightness-[0.97]')
   const body = (
     <>
-      <span className={cn('flex size-[46px] shrink-0 items-center justify-center rounded-full', disc)}>
-        <Icon className={cn('size-[24px]', iconClass)} aria-hidden="true" />
+      <span className={cn('flex size-[40px] shrink-0 items-center justify-center rounded-full', disc)}>
+        <Icon className={cn('size-[21px]', iconClass)} aria-hidden="true" />
       </span>
       <div className="min-w-0">
         <p className="text-[11.5px] leading-[1.15] font-medium text-[#1b1140]">{label}</p>
         {restricted ? (
           <p className="mt-1 flex items-center gap-1 text-[11.5px] font-semibold text-[#4a4466]"><Lock className="size-3.5" aria-hidden="true" /> Restricted</p>
         ) : (
-          <p className="mt-0.5 text-[28px] leading-[1.1] font-bold tracking-tight text-[#1b1140]">{value}</p>
+          <p className="mt-0.5 text-[26px] leading-[1.1] font-bold tracking-tight text-[#1b1140]">{value}</p>
         )}
       </div>
     </>
@@ -27,7 +27,7 @@ function Tile({ to, state, tone, disc, icon: Icon, iconClass, label, value, rest
 export default function AccountReviewCards({ review, clientId, linkState }) {
   const base = `/clients/${clientId}`
   return (
-    <section aria-label="Account review" className={cn(CARD, 'min-w-0')}>
+    <section aria-label="Account review" className={cn(CARD, '@container min-w-0')}>
       <h2 className={H2}>Account Review</h2>
       <div className="mt-2.5 grid grid-cols-2 gap-2.5 @[40rem]:grid-cols-4">
         <Tile to={`${base}/support?tab=safety`} state={linkState} tone="bg-[#eee9fc]" disc="bg-[#d6cdf6]" icon={ShieldCheck} iconClass="fill-[#4527c8] text-white" label={<>Open Safety<br />Cases</>} value={review.safety} restricted={review.safety == null} />

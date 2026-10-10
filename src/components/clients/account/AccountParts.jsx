@@ -8,7 +8,7 @@ export const CARD =
 export const H2 = 'text-[17px] leading-tight font-bold tracking-tight text-[#1b1140]'
 export const LINK = 'inline-flex shrink-0 items-center gap-1 text-[12px] font-semibold text-[#3b1fd6] hover:underline'
 export const OUTLINE_BTN =
-  'inline-flex h-[30px] w-full items-center justify-center gap-1.5 rounded-lg border-[1.5px] border-[#6b4df0] bg-white px-2 text-[12px] font-semibold text-[#3b1fd6] transition hover:bg-[#f4f1fc] disabled:cursor-not-allowed disabled:border-[#cfc8ea] disabled:text-[#8b86a5] disabled:hover:bg-white'
+  'inline-flex min-h-[30px] w-full items-center justify-center gap-1 rounded-lg border-[1.5px] border-[#6b4df0] bg-white px-1.5 py-1 text-center text-[11.5px] leading-tight font-semibold text-[#3b1fd6] transition hover:bg-[#f4f1fc] disabled:cursor-not-allowed disabled:border-[#cfc8ea] disabled:text-[#8b86a5] disabled:hover:bg-white'
 export const VIEW_BTN =
   'inline-flex h-[24px] items-center justify-center gap-1 rounded-md border-[1.5px] border-[#6b4df0] bg-white px-2.5 text-[11px] font-semibold text-[#3b1fd6] transition hover:bg-[#f4f1fc]'
 

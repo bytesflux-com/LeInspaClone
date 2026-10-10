@@ -86,11 +86,11 @@ export function UpcomingBookingsCard({ bookings, count, client, canSeeFinance, a
                 <span className="block text-[12.5px] leading-tight font-bold text-[#1b1140]">#{b.id}</span>
                 <span className="block truncate text-[10.5px] leading-tight text-[#2a1b57]">{b.service}</span>
               </Link>
-              <span className="flex min-w-0 flex-[1.2] items-center gap-1.5 text-[11px] whitespace-nowrap text-[#1b1140]">
+              <span className="flex min-w-0 flex-[1.2] items-center gap-1.5 text-[11px] leading-tight text-[#1b1140]">
                 <CalendarDays className="size-3.5 shrink-0 text-[#4527c8]" aria-hidden="true" />
                 {formatDay(b.scheduledAt, tz, { year: true })} • {formatTime(b.scheduledAt, tz)}
               </span>
-              <span className="w-[68px] shrink-0 text-right text-[12px] font-bold text-[#1b1140]">{canSeeFinance ? moneyOf(client.currency, b.amount) : '—'}</span>
+              <span className="shrink-0 pl-1 text-right text-[12px] font-bold whitespace-nowrap text-[#1b1140]">{canSeeFinance ? moneyOf(client.currency, b.amount) : '—'}</span>
             </li>
           ))}
         </ul>

@@ -2,7 +2,7 @@ import { ArrowRight, CalendarDays, FileText, Lock, MessageSquare, Pause, Play, P
 import { BadgedGlyph, CARD, H2, OUTLINE_BTN } from './AccountParts'
 import { cn } from '../../../lib/utils'
 
-const TILE = 'flex min-w-0 flex-col rounded-xl border border-[#e6e1f3] bg-[#f6f3fd] p-2.5'
+const TILE = 'flex min-w-0 flex-col gap-0 rounded-xl border border-[#e6e1f3] bg-[#f6f3fd] p-2.5'
 
 function ActionTile({ glyph, title, desc, cta, onClick, locked, lockedReason, badge }) {
   return (
@@ -12,8 +12,8 @@ function ActionTile({ glyph, title, desc, cta, onClick, locked, lockedReason, ba
         {badge && <span className="rounded-full bg-[#ffe9d2] px-1.5 py-[3px] text-[9.5px] leading-none font-semibold text-[#c2570c]">{badge}</span>}
       </div>
       <h3 className="mt-2 min-h-[34px] text-[14px] leading-[1.15] font-bold tracking-tight text-[#1b1140]">{title}</h3>
-      <p className="mt-1 min-h-[44px] text-[11px] leading-snug text-[#2a1b57]">{locked ? <span className="flex items-start gap-1 text-[#6b6785]"><Lock className="mt-0.5 size-3 shrink-0" aria-hidden="true" />{lockedReason}</span> : desc}</p>
-      <button type="button" onClick={onClick} disabled={locked} className={cn(OUTLINE_BTN, 'mt-2')}>
+      <p className="mt-1 mb-2 min-h-[44px] text-[11px] leading-snug text-[#2a1b57]">{locked ? <span className="flex items-start gap-1 text-[#6b6785]"><Lock className="mt-0.5 size-3 shrink-0" aria-hidden="true" />{lockedReason}</span> : desc}</p>
+      <button type="button" onClick={onClick} disabled={locked} className={cn(OUTLINE_BTN, 'mt-auto')}>
         {cta} <ArrowRight className="size-3.5" aria-hidden="true" />
       </button>
     </div>
@@ -30,10 +30,10 @@ export function AccessControlsCard({ permitted, restrictions, onManage }) {
     { id: 'restrict_payments', kind: 'payments', icon: Wallet, title: 'Restrict Payments / Wallet', desc: 'Limit wallet usage and payment actions.' },
   ]
   return (
-    <section aria-label="Access controls" className={cn(CARD, 'min-w-0')}>
+    <section aria-label="Access controls" className={cn(CARD, '@container min-w-0')}>
       <h2 className={H2}>Access Controls</h2>
       <p className="mt-0.5 text-[11.5px] text-[#2a1b57]">Restrict specific client features without suspending the entire account.</p>
-      <div className="mt-2.5 grid gap-2.5 @[34rem]:grid-cols-3">
+      <div className="mt-2.5 grid gap-2.5 @[21rem]:grid-cols-3">
         {items.map((it) => {
           const active = hasKind(restrictions, it.kind)
           const p = permitted[it.id]
@@ -62,10 +62,10 @@ export function ReviewActionsCard({ permitted, restrictions, onAction, onManage 
   const reviewActive = hasKind(restrictions, 'review')
   const review = permitted.place_review
   return (
-    <section aria-label="Account review actions" className={cn(CARD, 'min-w-0')}>
+    <section aria-label="Account review actions" className={cn(CARD, '@container min-w-0')}>
       <h2 className={H2}>Account Review Actions</h2>
       <p className="mt-0.5 text-[11.5px] text-[#2a1b57]">Use these actions when additional steps are needed.</p>
-      <div className="mt-2.5 grid gap-2.5 @[34rem]:grid-cols-3">
+      <div className="mt-2.5 grid gap-2.5 @[21rem]:grid-cols-3">
         <ActionTile
           glyph={<span className="relative inline-flex size-[34px] items-center justify-center" aria-hidden="true"><FileText className="size-[30px] fill-[#e4defb] text-[#3b1fd6]" strokeWidth={2} /><span className="absolute -right-1 -bottom-1 flex size-[16px] items-center justify-center rounded-full bg-[#3b1fd6] text-[10px] font-bold text-white">?</span></span>}
           title="Request Information" desc="Ask the client to provide additional information." cta="Send Request"

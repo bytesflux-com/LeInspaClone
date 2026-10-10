@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router'
 import {
   AlertCircle,
   ArrowRight,
@@ -13,6 +14,8 @@ import {
   Scale,
   ShieldAlert,
   SlidersHorizontal,
+  UserCheck,
+  UserX,
 } from 'lucide-react'
 import PageContainer from '../../components/layout/PageContainer'
 import Badge from '../../components/ui/Badge'
@@ -21,7 +24,11 @@ import Card from '../../components/ui/Card'
 import EmptyState from '../../components/ui/EmptyState'
 import ErrorState from '../../components/ui/ErrorState'
 import LoadingState from '../../components/ui/LoadingState'
+import Notice from '../../components/ui/Notice'
 import { useNeedsAttention } from '../../hooks/useNeedsAttention'
+import { useMarketContext } from '../../hooks/useMarketContext'
+import { useAdminSession } from '../../hooks/useAdminSession'
+import { attentionService } from '../../services/attentionService'
 import { cn } from '../../lib/utils'
 
 const CATEGORY_META = {
@@ -103,11 +110,18 @@ function humanizeStatus(status) {
   return text.charAt(0).toUpperCase() + text.slice(1)
 }
 
-function Adm009PageHeader({ total, generatedAt }) {
+function Adm009PageHeader({ total, generatedAt, isMock, onToggleMock }) {
   return (
     <div className="flex flex-col gap-4 border-b border-gray-200/80 pb-5 lg:flex-row lg:items-end lg:justify-between">
       <div>
-        <p className="text-xs font-bold uppercase tracking-wider text-royal-700">ADM-009</p>
+        <div className="flex items-center gap-2">
+          <p className="text-xs font-bold uppercase tracking-wider text-royal-700">ADM-009</p>
+          {isMock && (
+            <Badge variant="gold" size="sm">
+              Simulated Dev Fixtures
+            </Badge>
+          )}
+        </div>
         <h1 className="mt-1 text-2xl font-extrabold tracking-tight text-royal-950 sm:text-3xl">
           Needs Your Attention
         </h1>
@@ -115,6 +129,15 @@ function Adm009PageHeader({ total, generatedAt }) {
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
+        {import.meta.env.DEV && onToggleMock && (
+          <button
+            type="button"
+            onClick={onToggleMock}
+            className="rounded-full border border-gray-200 bg-white px-3 py-1 text-xs font-semibold text-royal-800 hover:bg-gray-50 shadow-2xs transition"
+          >
+            {isMock ? 'Mock Mode: ON (Toggle)' : 'Mock Mode: OFF (Toggle)'}
+          </button>
+        )}
         <Badge variant="danger" size="lg" dot>
           {displayCount(total)} Awaiting Action
         </Badge>
@@ -195,12 +218,15 @@ function QueueTabs({ activeTab, onChange }) {
   )
 }
 
-function ActionQueueItem({ item }) {
+function ActionQueueItem({ item, onReview, onAssignToMe, onUnassign }) {
   const meta = CATEGORY_META[item.category] || CATEGORY_META.verification
   const Icon = meta.icon
 
   return (
-    <div className="flex flex-col gap-4 border-b border-gray-100 px-5 py-4 transition last:border-b-0 hover:bg-gray-50/70 lg:flex-row lg:items-center lg:justify-between">
+    <div
+      onClick={() => onReview?.(item)}
+      className="flex cursor-pointer flex-col gap-4 border-b border-gray-100 px-5 py-4 transition last:border-b-0 hover:bg-gray-50/70 lg:flex-row lg:items-center lg:justify-between"
+    >
       <div className="flex min-w-0 gap-3">
         <span className={cn('mt-0.5 flex size-11 shrink-0 items-center justify-center rounded-xl', meta.iconClass)}>
           <Icon className="size-5" />
@@ -221,11 +247,45 @@ function ActionQueueItem({ item }) {
       </div>
 
       <div className="flex flex-wrap items-center gap-3 lg:justify-end">
+        {item.assignedTo ? (
+          <div className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-2.5 py-1 text-xs font-medium text-gray-700 shadow-2xs">
+            <UserCheck className="size-3 text-royal-700" />
+            <span className="truncate max-w-[120px]">{item.assignedTo.name || item.assignedTo.email}</span>
+            <button
+              type="button"
+              title="Unassign item"
+              onClick={(e) => {
+                e.stopPropagation()
+                onUnassign?.(item, e)
+              }}
+              className="ml-0.5 text-gray-400 hover:text-rose-600 transition"
+            >
+              <UserX className="size-3" />
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              onAssignToMe?.(item, e)
+            }}
+            className="inline-flex items-center gap-1 rounded-full border border-dashed border-gray-300 bg-white px-2.5 py-1 text-xs font-semibold text-gray-600 hover:border-royal-300 hover:bg-lavender-50 hover:text-royal-800 transition"
+          >
+            <UserCheck className="size-3" />
+            <span>Assign to Me</span>
+          </button>
+        )}
+
         <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-semibold text-gray-600">
           {formatWaiting(item.waitingMinutes)}
         </span>
         <button
           type="button"
+          onClick={(e) => {
+            e.stopPropagation()
+            onReview?.(item)
+          }}
           className="inline-flex items-center gap-1.5 rounded-xl bg-royal-900 px-3 py-2 text-xs font-semibold text-white shadow-xs transition hover:bg-royal-800"
         >
           <span>{item.actionLabel || 'Review'}</span>
@@ -242,7 +302,7 @@ function filterItems(items, tab) {
   return items.filter((item) => item.category === tab)
 }
 
-function ActionQueue({ items, loading, error, onRetry, activeTab, onTabChange }) {
+function ActionQueue({ items, loading, error, onRetry, activeTab, onTabChange, onReview, onAssignToMe, onUnassign }) {
   const visibleItems = filterItems(items, activeTab)
 
   return (
@@ -279,7 +339,13 @@ function ActionQueue({ items, loading, error, onRetry, activeTab, onTabChange })
       {!loading && !error && visibleItems.length > 0 ? (
         <div>
           {visibleItems.map((item) => (
-            <ActionQueueItem key={item.id} item={item} />
+            <ActionQueueItem
+              key={item.id}
+              item={item}
+              onReview={onReview}
+              onAssignToMe={onAssignToMe}
+              onUnassign={onUnassign}
+            />
           ))}
         </div>
       ) : null}
@@ -299,10 +365,55 @@ function ActionQueue({ items, loading, error, onRetry, activeTab, onTabChange })
 }
 
 export default function NeedsAttention() {
-  const { data, loading, error, refetch } = useNeedsAttention()
-  const [activeTab, setActiveTab] = useState('all')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const marketParam = searchParams.get('market')
+  const { selectedMarket, setSelectedMarket } = useMarketContext()
+  const effectiveMarket = marketParam || selectedMarket?.id || 'ALL'
+
+  const { data, loading, error, refetch } = useNeedsAttention(effectiveMarket)
+  const navigate = useNavigate()
+
+  const initialTab = searchParams.get('tab') || 'all'
+  const [activeTab, setActiveTab] = useState(initialTab)
+
+  useEffect(() => {
+    if (marketParam && selectedMarket?.id !== marketParam) {
+      setSelectedMarket(marketParam)
+    }
+  }, [marketParam, selectedMarket?.id, setSelectedMarket])
+
   const summary = data?.summary
   const items = data?.items || []
+  const currentMarket = effectiveMarket
+
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId)
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev)
+        if (tabId === 'all') next.delete('tab')
+        else next.set('tab', tabId)
+        return next
+      },
+      { replace: true },
+    )
+  }
+
+  const handleReview = (item) => {
+    let path = '/attention'
+    if (item.sourceType === 'user_verification') {
+      path = `/verifications/${item.sourceId}`
+    } else if (item.sourceType === 'withdrawal_request') {
+      path = `/withdrawals/${item.sourceId}`
+    } else if (item.sourceType === 'dispute') {
+      path = `/disputes/${item.sourceId}`
+    } else if (item.sourceType === 'support_ticket') {
+      path = `/support/${item.sourceId}`
+    }
+    navigate(
+      `${path}?returnTo=attention&market=${encodeURIComponent(currentMarket)}&tab=${encodeURIComponent(activeTab)}`,
+    )
+  }
 
   const overviewItems = useMemo(
     () => [
@@ -355,9 +466,56 @@ export default function NeedsAttention() {
     [summary],
   )
 
+  const isMock = Boolean(data?.isMock)
+  const handleToggleMock = () => {
+    attentionService.setMockMode(!attentionService.isMockMode())
+    refetch()
+  }
+
+  const { admin } = useAdminSession()
+
+  const handleAssignToMe = async (item) => {
+    try {
+      await attentionService.assignQueueItem({
+        sourceType: item.sourceType,
+        sourceId: item.sourceId,
+        assigneeId: admin?.uid || 'adm-me',
+        assigneeName: admin?.displayName || admin?.email || 'Me',
+        assigneeEmail: admin?.email || 'admin@le-inspa.com',
+      })
+      refetch()
+    } catch (err) {
+      console.error('Failed to assign item:', err)
+    }
+  }
+
+  const handleUnassign = async (item) => {
+    try {
+      await attentionService.assignQueueItem({
+        sourceType: item.sourceType,
+        sourceId: item.sourceId,
+        assigneeId: 'unassigned',
+      })
+      refetch()
+    } catch (err) {
+      console.error('Failed to unassign item:', err)
+    }
+  }
+
   return (
     <PageContainer>
-      <Adm009PageHeader total={summary?.total} generatedAt={data?.context?.generatedAt} />
+      <Adm009PageHeader
+        total={summary?.total}
+        generatedAt={data?.context?.generatedAt}
+        isMock={isMock}
+        onToggleMock={handleToggleMock}
+      />
+
+      {isMock && (
+        <Notice tone="attention" title="Development Dummy Data Active">
+          Viewing local development test fixtures across sovereign markets. Simulated actions update session memory only and are never written to production Firestore.
+        </Notice>
+      )}
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Priority overview">
         {overviewItems.map((item) => (
@@ -372,7 +530,7 @@ export default function NeedsAttention() {
         </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {categoryItems.map((item) => (
-            <ActionCategoryCard key={item.label} item={item} onSelect={() => setActiveTab(item.id === 'booking' ? 'all' : item.id)} />
+            <ActionCategoryCard key={item.label} item={item} onSelect={() => handleTabChange(item.id === 'booking' ? 'all' : item.id)} />
           ))}
         </div>
       </section>
@@ -383,7 +541,10 @@ export default function NeedsAttention() {
         error={error}
         onRetry={refetch}
         activeTab={activeTab}
-        onTabChange={setActiveTab}
+        onTabChange={handleTabChange}
+        onReview={handleReview}
+        onAssignToMe={handleAssignToMe}
+        onUnassign={handleUnassign}
       />
     </PageContainer>
   )
