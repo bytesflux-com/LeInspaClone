@@ -10,6 +10,7 @@ import ClientManagement from './pages/clients/ClientManagement.jsx'
 import AllClients from './pages/clients/AllClients.jsx'
 import ClientProfile from './pages/clients/ClientProfile.jsx'
 import ClientBookings from './pages/clients/ClientBookings.jsx'
+import ClientPayments from './pages/clients/ClientPayments.jsx'
 import Placeholder from './pages/Placeholder.jsx'
 import NotFound from './pages/NotFound.jsx'
 import RouteErrorElement from './components/ui/RouteErrorElement.jsx'
@@ -63,6 +64,8 @@ export const router = createBrowserRouter([
           { path: 'clients/:clientId', element: <ClientProfile />, handle: { fullBleed: true } },
           // ADM-013 — Client Bookings (admin view of the shared bookings collection)
           { path: 'clients/:clientId/bookings', element: <ClientBookings />, handle: { fullBleed: true } },
+          // ADM-014 — Client Payments (admin view of the shared payments collection)
+          { path: 'clients/:clientId/payments', element: <ClientPayments />, handle: { fullBleed: true } },
           { path: 'clients/:clientId/:section', element: <ClientProfile />, handle: { fullBleed: true } },
           { path: 'attention', element: <Placeholder title="Needs Your Attention" /> },
           { path: 'spas', element: <Placeholder title="Spas & Wellness Centers" /> },
@@ -82,6 +85,8 @@ export const router = createBrowserRouter([
           // FINANCE
           { path: 'finance', element: <Placeholder title="Finance & Wallets" /> },
           { path: 'escrow', element: <Placeholder title="Escrow Custody" /> },
+          { path: 'escrow/:escrowId', element: <Placeholder title="Escrow Details" /> },
+          { path: 'refunds/:refundId', element: <Placeholder title="Refund Details" /> },
           { path: 'withdrawals', element: <Placeholder title="Withdrawal Authorizations" /> },
 
           // TRUST & SAFETY
