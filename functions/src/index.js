@@ -46,4 +46,11 @@ export {
   adminModerateProviderService,
   adminUpdateProviderServiceStatus,
 } from './providerServices.js'
+export {
+  adminGetProviderBookings,
+  adminGetProviderBookingDetail,
+  adminGetProviderEarningsOverview,
+  adminGetProviderEarningsChart,
+} from './providerBookings.js'
+
 
