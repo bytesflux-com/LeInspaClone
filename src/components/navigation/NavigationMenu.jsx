@@ -92,6 +92,7 @@ export default function NavigationMenu({ onNavigate }) {
 
 function NavLinkChildren({ item, onNavigate }) {
   const { pathname } = useLocation()
+
   const { can } = usePermissions()
 
   // ADM-012: while a client profile is open, a "Client Profile" row appears under Client Management
@@ -107,7 +108,6 @@ function NavLinkChildren({ item, onNavigate }) {
   const onBookings = Boolean(bookingsMatch && bookingsMatch.params.clientId !== 'all')
 
   const validChildren = item.children.filter((c) => !c.permission || can(c.permission))
-
   return (
     <ParentActive paths={item.children.map((c) => c.path)} force={onProfile}>
       {validChildren.map((child) => {
@@ -133,6 +133,7 @@ function NavLinkChildren({ item, onNavigate }) {
           </NavLink>
         )
       })}
+
 
       {onProfile && !onBookings && (
         <span

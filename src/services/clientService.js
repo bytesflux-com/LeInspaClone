@@ -12,6 +12,8 @@
 //   adminBulkTagClients, adminAddClientNote,
 //   adminGetClientProfile, adminRevealClientContact   (ADM-012)
 //   adminGetClientBookings, adminGetBookingPreview     (ADM-013)
+//   adminGetClientPayments, adminGetPaymentPreview,
+//   adminAddPaymentNote                                (ADM-014)
 //
 // Country scope MUST be enforced by those functions (never trust `market`).
 import { callAdmin } from '../lib/adminCall'
@@ -31,6 +33,7 @@ import {
 import { buildDashboard, buildGrowth } from './mock/clientDashboardMock'
 import { buildClientProfile } from './mock/clientProfileMock'
 import { queryClientBookings, buildBookingPreview } from './mock/clientBookingsMock'
+import { queryClientPayments, buildPaymentPreview, addMockPaymentNote } from './mock/clientPaymentsMock'
 
 const USE_MOCK = import.meta.env.VITE_USE_MOCK_CLIENTS !== 'false'
 const delay = (ms = 160) => new Promise((r) => setTimeout(r, ms))
@@ -290,6 +293,39 @@ export const clientService = {
       throw new Error('Client not found or outside your authorised markets.')
     }
     return buildBookingPreview(r, bookingId, { finance })
+  },
+
+  // ADM-014 — a client's payment history, read from the central `payments`
+  // collection (no admin copy). Filtering, sorting, paging and summary metrics
+  // run on the server; status comes from verified backend / provider events,
+  // never from the client-facing success screen. The server must validate admin,
+  // finance permission, country and client access, and mask processor details.
+  async getClientPayments(clientId, params = {}) {
+    if (!USE_MOCK) return callAdmin('adminGetClientPayments', { clientId, ...params })
+    await delay(220)
+    const r = MOCK_CLIENTS.find((c) => c.id === clientId)
+    if (!r || (params.market && params.market !== 'ALL' && r.country !== params.market)) {
+      throw new Error('Client not found or outside your authorised markets.')
+    }
+    return queryClientPayments(r, params)
+  },
+
+  // ADM-014 — drawer details; permission is revalidated on every open.
+  async getPaymentPreview(paymentId, { clientId, market } = {}) {
+    if (!USE_MOCK) return callAdmin('adminGetPaymentPreview', { paymentId, clientId, market })
+    await delay(140)
+    const r = MOCK_CLIENTS.find((c) => c.id === clientId)
+    if (!r || (market && market !== 'ALL' && r.country !== market)) {
+      throw new Error('Client not found or outside your authorised markets.')
+    }
+    return buildPaymentPreview(r, paymentId)
+  },
+
+  // ADM-014 — internal note only; it never touches the financial record.
+  async addPaymentNote({ clientId, paymentId, text }) {
+    if (!USE_MOCK) return callAdmin('adminAddPaymentNote', { clientId, paymentId, text })
+    await delay(220)
+    return addMockPaymentNote(clientId, paymentId, text)
   },
 
   getCities(country) {
