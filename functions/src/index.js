@@ -45,10 +45,12 @@ export {
 
 export {adminGetProviderDashboard} from "./providerDashboard.js";
 export {
+
   adminListProviders,
   adminGetProviderDetail,
 } from "./providerDirectory.js";
 export {
+
 
   adminGetProviderProfile,
   adminAddProviderInternalNote,
@@ -68,6 +70,15 @@ export {
   adminGetProviderEarningsOverview,
   adminGetProviderEarningsChart,
 } from './providerBookings.js'
+=======
+  adminGetVerificationQueue,
+  adminAssignVerificationReviewer,
+  adminSubmitVerificationDecision,
+  adminGetVerificationQueueDetailed,
+  adminClaimVerificationCase,
+  adminEscalateVerificationCase,
+} from './adminVerification.js'
+
 
   adminGetVerificationQueue,
   adminAssignVerificationReviewer,

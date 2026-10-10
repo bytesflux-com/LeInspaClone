@@ -23,12 +23,14 @@ import ClientSupport from './pages/clients/ClientSupport.jsx'
 import NeedsAttention from './pages/attention/NeedsAttention.jsx'
 import VerificationCenterPage from './pages/VerificationCenterPage.jsx'
 import VerificationQueuePage from './pages/VerificationQueuePage.jsx'
+
 import VerificationReviewPage from './pages/VerificationReviewPage.jsx'
 
 import IdentityDocumentsReviewPage from './pages/IdentityDocumentsReviewPage.jsx'
 import ProfessionalCredentialsReviewPage from './pages/ProfessionalCredentialsReviewPage.jsx'
 
 import BusinessDocumentsReviewPage from './pages/BusinessDocumentsReviewPage.jsx'
+
 
 import VerificationDetail from './pages/verifications/VerificationDetail.jsx'
 import WithdrawalDetail from './pages/withdrawals/WithdrawalDetail.jsx'
@@ -143,6 +145,7 @@ export const router = createBrowserRouter([
           { path: 'verifications', element: <VerificationCenterPage />, handle: { fullBleed: true } },
           { path: 'verifications/queue', element: <VerificationQueuePage />, handle: { fullBleed: true } },
 
+
           { path: 'verifications/identity/:id', element: <IdentityDocumentsReviewPage />, handle: { fullBleed: true } },
           { path: 'verifications/identity', element: <IdentityDocumentsReviewPage />, handle: { fullBleed: true } },
           { path: 'verifications/review/:id/identity', element: <IdentityDocumentsReviewPage />, handle: { fullBleed: true } },
@@ -157,6 +160,7 @@ export const router = createBrowserRouter([
           { path: 'verifications/review/:id', element: <VerificationReviewPage />, handle: { fullBleed: true } },
           { path: 'verifications/review', element: <VerificationReviewPage />, handle: { fullBleed: true } },
           { path: 'verifications/:id', element: <VerificationReviewPage />, handle: { fullBleed: true } },
+
           // ADM-044 → ADM-048 — Booking Operations (views over the shared bookings collection)
           { path: 'bookings', element: <BookingManagement />, handle: { fullBleed: true } },
           { path: 'bookings/active', element: <ActiveBookings />, handle: { fullBleed: true } },

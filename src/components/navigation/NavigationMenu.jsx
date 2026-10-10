@@ -227,6 +227,7 @@ function GroupChildren({ item, onNavigate }) {
             )}
           </div>
 
+
         if (child.path === '/verifications' || child.label === 'Verification Center' || child.isAccordion) {
           return (
             <VerificationCenterAccordion
@@ -238,6 +239,7 @@ function GroupChildren({ item, onNavigate }) {
         if (child.path === '/verifications/queue' || child.label === 'Verification Queue') {
           return null
         }
+
 
 
         const ChildIcon = child.icon

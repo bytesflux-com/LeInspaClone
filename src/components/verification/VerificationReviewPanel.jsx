@@ -157,6 +157,7 @@ export default function VerificationReviewPanel({
                   <span>Full Review →</span>
                 </Link>
 
+
                 <span className="text-[11px] text-slate-400">
                   Submitted: {record.submittedAt}
                 </span>

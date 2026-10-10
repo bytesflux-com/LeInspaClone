@@ -633,6 +633,7 @@ export async function escalateCase(verificationId, reasonData = {}) {
 }
 
 /**
+
  * 7. Fetch Verification Detail (ADM-031)
  * Retrieves complete verification workspace payload for a specific provider/record.
  *
@@ -2793,6 +2794,7 @@ export async function addBusinessInternalNote(verificationId, documentId = 'doc-
 
 /**
 
+
  * Service object export for standard import patterns.
  */
 export const verificationService = {
@@ -2802,6 +2804,7 @@ export const verificationService = {
   escalateCase,
   assignReviewer,
   submitVerificationDecision,
+
   fetchVerificationDetail,
   submitComponentDecision,
   addInternalNote,
@@ -2821,5 +2824,4 @@ export const verificationService = {
   isMockMode: isVerificationMockMode,
   setMockMode: setVerificationMockMode,
 }
-
 

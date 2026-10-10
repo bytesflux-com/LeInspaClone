@@ -58,6 +58,7 @@ export const NAVIGATION_SECTIONS = [
         permission: PERMISSIONS.PROVIDERS_VIEW,
         children: [
           { label: 'Provider Dashboard', icon: LayoutDashboard, path: '/providers' },
+
           {
             label: 'Verification Center',
             icon: FileText,
@@ -73,6 +74,7 @@ export const NAVIGATION_SECTIONS = [
               { label: 'Business Documents', path: '/verifications/business', icon: FileText },
             ],
           },
+
           { label: 'Content Moderation', icon: FileCheck, path: '/content' },
           { label: 'Withdrawals', icon: Banknote, path: '/withdrawals', permission: PERMISSIONS.WITHDRAWALS_APPROVE },
           { label: 'Provider Subscriptions', icon: CreditCard, path: '/providers/subscriptions' },
