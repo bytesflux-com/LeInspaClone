@@ -63,3 +63,11 @@ export {
   adminCompleteGalleryReview,
   adminAddModerationNote,
 } from './contentModeration.js'
+export { adminProfileFieldDecision, adminPublishProfileChanges, adminServiceDecision } from './changeReview.js'
+export {
+  adminGetInfoRequestWorkspace,
+  adminSaveInfoRequest,
+  adminGetInfoRequest,
+  adminListInfoRequests,
+  adminInfoRequestAction,
+} from './informationRequests.js'

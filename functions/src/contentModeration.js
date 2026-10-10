@@ -12,7 +12,6 @@ import {
   MARKET_META,
   OPEN_STATUSES,
   buildQueue,
-  buildReview,
   checklistFor,
   decideMedia,
   decideRecord,
@@ -23,6 +22,7 @@ import {
   scopeRecords,
   validateDecision,
 } from './contentModerationLogic.js'
+import { buildFullReview } from './changeReviewLogic.js'
 
 // ADM-035 Content Approval Center · ADM-036 Profile Photo · ADM-037 Gallery & Media.
 //
@@ -42,7 +42,7 @@ const PROVIDER_CATEGORIES = ['individual', 'spa', 'hotel']
 const db = () => getFirestore()
 const col = () => db().collection('content_moderation')
 
-async function adminContext(request) {
+export async function adminContext(request) {
   const uid = await requireAdmin(request, { permission: PERMISSION })
   const access = await adminAccess(uid)
   return { uid, access, actor: { id: uid, name: access.fullName || 'Admin' } }
@@ -58,13 +58,13 @@ function marketScope(access, requested) {
   return { market, markets: market !== ALL_MARKETS ? [market] : unrestricted ? null : access.markets }
 }
 
-function assertRecordAccess(access, data) {
+export function assertRecordAccess(access, data) {
   const country = String(data.countryCode || '').toUpperCase()
   const ok = country ? canAccessMarket(access, country) : access.markets.includes(ALL_MARKETS)
   if (!ok) throw new HttpsError('permission-denied', 'You do not have access to this content.', { reason: 'market-denied' })
 }
 
-const requireId = (value, what = 'moderation ID') => {
+export const requireId = (value, what = 'moderation ID') => {
   const id = String(value || '').trim()
   if (!id || id.includes('/')) throw new HttpsError('invalid-argument', `A ${what} is required.`)
   return id
@@ -92,7 +92,7 @@ export const adminGetContentQueue = onCall(async (request) => {
   }
   // Open work regardless of age, plus anything decided in the last 30 days.
   const [open, recent] = await Promise.all([
-    read(col().where('status', 'in', [...OPEN_STATUSES, 'changes_requested']), OPEN_LIMIT, 'open'),
+    read(col().where('status', 'in', [...OPEN_STATUSES, 'changes_requested', 'reverification']), OPEN_LIMIT, 'open'),
     read(col().where('reviewedAt', '>=', Timestamp.fromMillis(now - 30 * DAY)), RECENT_LIMIT, 'recent'),
   ])
   const byId = new Map()
@@ -112,7 +112,7 @@ export const adminGetContentQueue = onCall(async (request) => {
   }
 })
 
-async function loadRelated(moderationId, providerId) {
+export async function loadRelated(moderationId, providerId) {
   const safe = async (query, what) => {
     try {
       return (await query.get()).docs.map((doc) => ({ id: doc.id, ...doc.data() }))
@@ -150,12 +150,14 @@ export const adminGetContentReview = onCall(async (request) => {
   assertRecordAccess(access, snap.data())
   const record = normalizeModeration(snap.id, snap.data())
   const related = await loadRelated(id, record.provider.id)
-  return buildReview(record, { now: Date.now(), ...related })
+  return buildFullReview(record, { now: Date.now(), ...related })
 })
 
 // Runs `mutate` in a transaction against the latest record, after checking
 // market access and (when given) that the admin saw the current version.
-async function transact(request, id, expectedVersion, mutate) {
+// `side(tx, out, record)` may read and write related documents; it runs after
+// the record read and before any write, as Firestore transactions require.
+export async function transact(request, id, expectedVersion, mutate, side = null) {
   const { access, actor, uid } = await adminContext(request)
   const ref = col().doc(id)
   const result = await db().runTransaction(async (tx) => {
@@ -168,6 +170,7 @@ async function transact(request, id, expectedVersion, mutate) {
     }
     const now = Timestamp.now()
     const out = mutate({ record, raw: snap.data(), actor, now })
+    if (side) await side(tx, out, record)
     if (out.patch) tx.update(ref, out.patch)
     for (const h of out.history || []) tx.set(db().collection('content_moderation_history').doc(), h)
     return { record, out }
@@ -217,6 +220,10 @@ export const adminContentDecision = onCall(async (request) => {
 
   const { uid, record, out } = await transact(request, id, d.version, ({ record, actor, now }) => {
     if (!OPEN_STATUSES.includes(record.status)) throw new HttpsError('failed-precondition', `This content is already ${label(record.status).toLowerCase()}.`)
+    // Field-level and eligibility rules live in the dedicated endpoints.
+    if (input.decision !== 'escalate' && (record.contentType === 'profile_change' || (record.contentType === 'service' && record.serviceChange))) {
+      throw new HttpsError('failed-precondition', 'Use the Profile Change / Service review to decide this item.')
+    }
     const isMedia = Boolean(d.mediaId)
     const error = validateDecision(input, checklistFor(record.contentType, isMedia || record.contentType === 'gallery'))
     if (error) throw new HttpsError('invalid-argument', error)

@@ -5,7 +5,7 @@ import Skeleton from '../ui/Skeleton'
 import CountryFlag from '../ui/CountryFlag'
 import { useContentReview } from '../../hooks/useContentModeration'
 import { contentModerationService } from '../../services/contentModerationService'
-import { reviewPath } from '../../constants/contentModeration'
+import { CONTENT_BASE, infoRequestPath, reviewPath } from '../../constants/contentModeration'
 import { formatCurrency } from '../../lib/currency'
 import { cn } from '../../lib/utils'
 import { CARD, Card, DecisionDialog, MediaViewer, Placements, PolicyChecklist, ProviderAvatarImg, ReviewActions, Rows, StatusPill, Verified, stamp } from './ContentUI'
@@ -67,6 +67,8 @@ export default function ContentReviewPanel({ id, onPrev, onNext, onChanged }) {
   if (loading || !r) return <Skeleton className="h-[760px] rounded-2xl" />
 
   const full = reviewPath(r)
+  // These types are decided on their dedicated screens (item / field level).
+  const fullOnly = ['gallery', 'profile_change', 'service'].includes(r.contentType)
   const open = ['awaiting_review', 'under_review', 'resubmitted', 'escalated'].includes(r.status)
   const reviewing = r.status === 'under_review' || (r.status === 'escalated' && r.assignedTo)
   const media = r.media.length ? r.media : []
@@ -122,6 +124,7 @@ export default function ContentReviewPanel({ id, onPrev, onNext, onChanged }) {
         <div className="mt-3 flex flex-wrap gap-2">
           {r.provider.id && <Link to={`/providers/${r.provider.id}`} className="inline-flex h-8 items-center gap-1 rounded-lg border border-[#b9a9f0] px-3 text-[12px] font-semibold text-[#4527c8] hover:bg-[#f4f0ff]">View Provider Profile</Link>}
           {full && <Link to={full} className="inline-flex h-8 items-center gap-1 rounded-lg border border-[#ddd7ee] px-3 text-[12px] font-semibold text-[#1b1140] hover:bg-[#f4f1fc]">Open Full Review <ArrowRight className="size-3.5" /></Link>}
+          {open && <Link to={infoRequestPath(r.contentType === 'profile_change' ? 'profile_change' : r.contentType === 'service' ? 'service' : 'content', r.id, `${CONTENT_BASE}?c=${r.id}`)} className="inline-flex h-8 items-center gap-1 rounded-lg border border-dashed border-[#b9a9f0] px-3 text-[12px] font-semibold text-[#4527c8] hover:bg-[#f4f0ff]">Request More Info</Link>}
         </div>
       </section>
 
@@ -160,7 +163,7 @@ export default function ContentReviewPanel({ id, onPrev, onNext, onChanged }) {
         </section>
       )}
 
-      {open && r.contentType !== 'gallery' && (
+      {open && !fullOnly && (
         <div className="grid gap-2.5 2xl:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
           <Card title="Review Checklist" icon={ClipboardCheck}>
             <PolicyChecklist checklist={r.checklist} value={checks} onChange={setChecks} readOnly={!reviewing} />
@@ -178,10 +181,10 @@ export default function ContentReviewPanel({ id, onPrev, onNext, onChanged }) {
           </Card>
         </div>
       )}
-      {open && r.contentType === 'gallery' && (
+      {open && fullOnly && (
         <section className={cn(CARD, 'space-y-2 p-3.5')}>
-          <p className="text-[12.5px] text-[#2a1b57]">Gallery media is moderated image by image — one rejected image never rejects the whole gallery.</p>
-          <button type="button" disabled={busy} onClick={reviewing ? () => navigate(full) : start} className="flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-[#4125d0] text-[13px] font-semibold text-white hover:bg-[#3519b8] disabled:opacity-60"><Play className="size-4" /> {reviewing ? 'Continue Gallery Review' : 'Start Gallery Review'}</button>
+          <p className="text-[12.5px] text-[#2a1b57]">{r.contentType === 'gallery' ? 'Gallery media is moderated image by image — one rejected image never rejects the whole gallery.' : r.contentType === 'profile_change' ? 'Profile changes are decided field by field; the current profile stays live until changes are approved.' : 'Service submissions are reviewed against the provider’s approved category before publication.'}</p>
+          <button type="button" disabled={busy} onClick={reviewing ? () => navigate(full) : start} className="flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-[#4125d0] text-[13px] font-semibold text-white hover:bg-[#3519b8] disabled:opacity-60"><Play className="size-4" /> {reviewing ? 'Continue Review' : 'Start Review'}</button>
           {actionError && <p role="alert" className="text-[11.5px] text-[#b91c1c]">{actionError}</p>}
         </section>
       )}

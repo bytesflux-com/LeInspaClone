@@ -9,7 +9,7 @@ const ROW = 'group flex items-center gap-2.5 whitespace-nowrap rounded-xl px-2.5
 const CHILD = 'flex items-center whitespace-nowrap rounded-lg py-[3px] pr-2.5 pl-[38px] text-[12px] leading-5 transition-colors'
 
 // A route is inside a group when it matches the group prefix or any child path.
-const groupPaths = (item) => [item.path, ...item.children.map((c) => c.path)]
+const groupPaths = (item) => [item.path, ...item.children.flatMap((c) => (c.children ? groupPaths(c) : [c.path]))]
 const inside = (paths, pathname) => paths.some((p) => pathname === p || pathname.startsWith(`${p}/`))
 
 export default function NavigationMenu({ onNavigate }) {

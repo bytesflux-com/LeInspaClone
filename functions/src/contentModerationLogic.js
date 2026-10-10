@@ -16,6 +16,7 @@ export const REVIEW_TARGET_HOURS = { urgent: 4, high: 12, normal: 24, low: 48 }
 
 export const CONTENT_TYPES = {
   profile_photo: 'Profile Photo',
+  profile_change: 'Profile Change',
   gallery: 'Gallery',
   service: 'Service Content',
   business_profile: 'Business Profile',
@@ -24,7 +25,7 @@ export const CONTENT_TYPES = {
   other: 'Other Public Content',
 }
 
-export const STATUSES = ['awaiting_review', 'under_review', 'resubmitted', 'escalated', 'changes_requested', 'approved', 'rejected']
+export const STATUSES = ['awaiting_review', 'under_review', 'resubmitted', 'escalated', 'changes_requested', 'reverification', 'approved', 'rejected']
 // Items a moderator can act on now (changes_requested waits for the provider).
 export const OPEN_STATUSES = ['awaiting_review', 'under_review', 'resubmitted', 'escalated']
 export const PRIORITIES = ['urgent', 'high', 'normal', 'low']
@@ -87,13 +88,30 @@ export const CHECKLISTS = {
     ['standards', 'Meets Lé Inspa media standards'],
   ],
   service: [
-    ['category', 'Service belongs to an appropriate provider category'],
-    ['professional', 'Description is professional'],
-    ['no_explicit_language', 'No sexual or explicit language'],
-    ['no_medical_claims', 'No prohibited or misleading medical claims'],
-    ['no_external_booking', 'No external booking or contact solicitation'],
-    ['images', 'Images are appropriate'],
-    ['complete', 'Pricing and content fields are complete'],
+    ['name', 'Service name is clear and professional'],
+    ['category', "Service belongs to provider's approved category"],
+    ['accurate', 'Description accurately explains the service'],
+    ['no_explicit', 'No prohibited sexual/explicit content'],
+    ['no_solicitation', 'No prohibited solicitation'],
+    ['no_contact', 'No external contact/booking information'],
+    ['no_misleading', 'No misleading claims'],
+    ['no_medical_claims', 'No unsupported medical/therapeutic claims'],
+    ['duration', 'Duration information is complete'],
+    ['pricing', 'Pricing information is complete'],
+    ['location', 'Service location information is consistent'],
+    ['standards', 'Meets Lé Inspa service-content standards'],
+  ],
+  profile_change: [
+    ['clear', 'Information is clear and professional'],
+    ['relevant', 'Relevant to provider/business profile'],
+    ['no_solicitation', 'No prohibited sexual solicitation'],
+    ['no_contact', 'No prohibited contact information'],
+    ['no_external_booking', 'No external booking solicitation'],
+    ['no_misleading', 'No misleading claims'],
+    ['no_language', 'No inappropriate language'],
+    ['category', "Consistent with provider's approved category"],
+    ['verified', 'Does not improperly conflict with verified information'],
+    ['standards', 'Meets Lé Inspa profile standards'],
   ],
   offer: [
     ['accurate', 'Offer details are clear and accurate'],
@@ -218,6 +236,8 @@ export function normalizeModeration(id, d = {}) {
     placements: Array.isArray(d.placements) ? d.placements.filter(Boolean) : [],
     media: (d.media || []).map(normalizeMedia),
     service: d.service || null,
+    serviceChange: d.serviceChange || null,
+    profileChange: d.profileChange || null,
     offer: d.offer || null,
     business: d.business || null,
     previousVersions: (d.previousVersions || []).map((v) => ({ version: num(v.version), status: lower(v.status, STATUSES, 'changes_requested'), reason: str(v.reason), submittedAt: toMillis(v.submittedAt), url: str(v.url) })),
@@ -239,7 +259,7 @@ const startOfDayIn = (ms, tzOffsetMins = 180) => {
 }
 
 const PRIORITY_RANK = { urgent: 0, high: 1, normal: 2, low: 3 }
-const TABS = ['all', 'profile_photo', 'gallery', 'service', 'business_profile', 'offer', 'package', 'other']
+const TABS = ['all', 'profile_photo', 'profile_change', 'gallery', 'service', 'business_profile', 'offer', 'package', 'other']
 
 export function scopeRecords(records, { markets, providerCategory: cat }) {
   return records.filter((r) => (!markets || markets.includes(r.countryCode)) && (!cat || r.provider.category === cat))
@@ -257,7 +277,7 @@ function submittedWithin(r, key, now) {
 }
 
 // Thumbnail shown in the queue: first media item, else the offer image.
-const thumbOf = (r) => r.media[0]?.url || r.offer?.imageUrl || r.business?.logoUrl || r.service?.imageUrl || null
+const thumbOf = (r) => r.media[0]?.url || r.offer?.imageUrl || r.business?.logoUrl || r.service?.imageUrl || r.serviceChange?.proposed?.imageUrl || r.provider.photoUrl || null
 
 export function toQueueRow(r, now) {
   return {

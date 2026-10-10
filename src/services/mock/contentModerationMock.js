@@ -129,6 +129,7 @@ function seeded(now) {
       ...biz(BUSINESSES[2]), contentId: 'CNT-62811', contentType: 'service', title: 'Service Description', status: 'resubmitted', priority: 'normal', contentVersion: 2, resubmitted: true,
       submittedAt: iso(now - 20 * HOUR), placements: PLACEMENTS.service,
       service: { name: 'Couples Massage', description: 'A relaxing side-by-side massage for two in our private couples suite, using warm aromatherapy oils to release tension and restore balance.', durationMins: 90, price: 14000, category: 'Massage', imageUrl: IMG('spa-treatment') },
+      serviceChange: { serviceId: 'SRV-62811', mediaStatus: 'awaiting_review', branches: ['Wellness Pavilion', 'In-Room'], current: null, proposed: { name: 'Couples Massage', description: 'A relaxing side-by-side massage for two in our private couples suite, using warm aromatherapy oils to release tension and restore balance.', durationMins: 90, price: 14000, category: 'Massage', serviceModes: ['Hotel Spa', 'In-Room'], locations: ['Wellness Pavilion'], tags: ['Couples', 'Aromatherapy'], imageUrl: IMG('spa-treatment'), pricingType: 'Fixed' }, versions: [{ version: 2, label: 'Proposed', status: 'resubmitted', submittedAt: iso(now - 20 * HOUR), note: 'Resubmitted' }, { version: 1, label: '', status: 'changes_requested', submittedAt: iso(now - 4 * DAY), note: 'Unsupported claim' }] },
       media: [{ mediaId: 'MED-62811', title: 'Service Image', category: 'services', url: IMG('spa-treatment'), width: 1800, height: 1200, sizeBytes: 1.6 * 1024 * 1024, format: 'JPG', status: 'awaiting_review', version: 2 }],
       previousVersions: [{ version: 1, status: 'changes_requested', reason: 'Unsupported claim — "cures chronic pain"', submittedAt: iso(now - 4 * DAY) }],
       history: [['Service content submitted (Version 1)', now - 4 * DAY, null], ['Changes requested — Unsupported claim', now - 3 * DAY, REVIEWERS[2]], ['Service content resubmitted (Version 2)', now - 20 * HOUR, null]],
@@ -140,6 +141,78 @@ function seeded(now) {
       offer: { title: 'Midweek Glow Facial', description: '25% off our signature facial every Tuesday and Wednesday.', originalPrice: 180000, offerPrice: 135000, validFrom: null, validTo: null, eligibleServices: ['Signature Facial'], location: 'Kololo Branch', imageUrl: IMG('facial-mask') },
       media: [{ mediaId: 'MED-51733', title: 'Promotional Image', category: 'services', url: IMG('facial-mask'), width: 1600, height: 1067, sizeBytes: 1.1 * 1024 * 1024, format: 'JPG', status: 'changes_requested', version: 1 }],
       history: [['Offer submitted', now - 22 * HOUR, null], ['Changes requested — Promotional information incomplete', now - 5 * HOUR, REVIEWERS[1]]],
+      notes: [],
+    }],
+    // ADM-038 — profile information change (one verification-sensitive field)
+    ['CNT-83110', {
+      ...grace, contentId: 'CNT-83110', contentType: 'profile_change', contentLabel: 'Profile Information Change', title: 'Profile Changes', status: 'under_review', priority: 'normal', contentVersion: 8,
+      assignedTo: REVIEWERS[0], reviewStartedAt: iso(now - 20 * MIN), submittedAt: iso(now - 58 * MIN), placements: ['Professional Profile', 'Search Results'],
+      profileChange: {
+        currentVersion: 7, proposedVersion: 8, previousRequests: 0,
+        currentProfile: { bio: 'Certified massage therapist providing professional wellness services in Nairobi.', languages: ['English', 'Swahili'], displayName: 'Grace Njeri', professionalCategory: 'Massage Therapist' },
+        fields: [
+          { key: 'displayName', current: 'Grace Njeri', proposed: 'Grace Njeri — Deep Tissue Specialist', path: 'displayName', publicImpact: 'Search Results, Professional Profile' },
+          { key: 'bio', current: 'Certified massage therapist providing professional wellness services in Nairobi. Specializing in relaxation, stress relief and overall well-being.', proposed: 'Professional massage therapist specializing in deep tissue, sports massage and personalized home wellness sessions across Nairobi. Passionate about helping clients achieve better physical and mental well-being through holistic massage therapies.', path: 'bio' },
+          { key: 'languages', current: ['English', 'Swahili'], proposed: ['English', 'Swahili', 'French'], path: 'languages' },
+          { key: 'professionalCategory', current: 'Massage Therapist', proposed: 'Physiotherapist & Recovery Specialist', path: 'professionalCategory', publicImpact: 'Discovery, Service Eligibility' },
+        ],
+        versions: [
+          { version: 8, label: 'Proposed', status: 'under_review', submittedAt: iso(now - 58 * MIN), note: '4 fields changed' },
+          { version: 7, label: 'Current Live', status: 'approved', submittedAt: iso(now - 8 * DAY), note: 'No changes' },
+          { version: 6, label: '', status: 'approved', submittedAt: iso(now - 25 * DAY), note: '2 fields changed' },
+        ],
+      },
+      history: [
+        ['Profile changes submitted', now - 58 * MIN, null],
+        ['4 changed fields detected', now - 57 * MIN, null],
+        ['1 verification-sensitive field detected', now - 57 * MIN, null],
+        ['Assigned to Jane Ochieng', now - 35 * MIN, REVIEWERS[1]],
+        ['Review started', now - 20 * MIN, REVIEWERS[0]],
+      ],
+      notes: [{ text: 'Bio update looks professional and appropriate. No contact information. Professional category change requires re-verification.', authorName: 'Jane Ochieng', createdAt: iso(now - 12 * MIN) }],
+    }],
+    // ADM-039 — service update (current live vs proposed)
+    ['CNT-48291', {
+      ...grace, contentId: 'CNT-48291', contentType: 'service', title: 'Deep Tissue Massage', status: 'under_review', priority: 'normal', contentVersion: 2,
+      assignedTo: REVIEWERS[0], reviewStartedAt: iso(now - 25 * MIN), submittedAt: iso(now - 70 * MIN), placements: ['Service Listing', 'Provider Profile', 'Search Results'],
+      service: { name: 'Deep Tissue Massage', description: 'Deep tissue massage focused on relieving muscle tension and supporting recovery after physical activity.', durationMins: 60, price: 4500, category: 'Massage', imageUrl: IMG('massage-oil') },
+      media: ['massage-oil', 'hot-stone', 'spa-products', 'aromatherapy'].map((img, k) => ({ mediaId: `MED-4829${k}`, title: 'Service Image', category: 'services', url: IMG(img), width: 1800, height: 1200, sizeBytes: 1.4 * 1024 * 1024, format: 'JPG', status: 'approved', version: 1 })),
+      serviceChange: {
+        serviceId: 'SRV-48291', bufferMins: 15, mediaStatus: 'approved', mediaModerationId: null,
+        current: { name: 'Deep Tissue Massage', description: 'Professional deep tissue massage for relaxation and muscle tension.', durationMins: 45, price: 4000, category: 'Massage', serviceModes: ['At Provider Location'], locations: ['Nairobi'], tags: ['Relaxation'] },
+        proposed: { name: 'Deep Tissue Massage', description: 'Deep tissue massage focused on relieving muscle tension and supporting recovery after physical activity. Ideal for athletes and individuals with active lifestyles.', durationMins: 60, price: 4500, category: 'Massage', serviceModes: ['At Provider Location'], locations: ['Nairobi'], tags: ['Relaxation', 'Sports Recovery'], imageUrl: IMG('massage-oil'), pricingType: 'Fixed' },
+        versions: [
+          { version: 2, label: 'Proposed', status: 'under_review', submittedAt: iso(now - 70 * MIN), note: '4 fields changed' },
+          { version: 1, label: 'Current Live', status: 'approved', submittedAt: iso(now - 10 * DAY), note: '—' },
+        ],
+      },
+      history: [
+        ['Service update submitted', now - 70 * MIN, null],
+        ['4 changed fields detected', now - 69 * MIN, null],
+        ['Provider eligibility check passed', now - 69 * MIN, null],
+        ['Assigned to Jane Ochieng', now - 40 * MIN, REVIEWERS[1]],
+        ['Review started', now - 25 * MIN, REVIEWERS[0]],
+      ],
+      notes: [{ text: "Description and duration changes are appropriate. Service remains consistent with provider's approved Massage Therapist category.", authorName: 'Jane Ochieng', createdAt: iso(now - 10 * MIN) }],
+    }],
+    // ADM-039 — new service outside the provider's approved category
+    ['CNT-48302', {
+      ...grace, contentId: 'CNT-48302', contentType: 'service', title: 'Physiotherapy Assessment', status: 'awaiting_review', priority: 'high', contentVersion: 1,
+      submittedAt: iso(now - 3 * HOUR), placements: ['Service Listing', 'Provider Profile'],
+      service: { name: 'Physiotherapy Assessment', description: 'A full musculoskeletal assessment with a personalised rehabilitation plan.', durationMins: 60, price: 6000, category: 'Physiotherapy', imageUrl: IMG('fitness') },
+      media: [{ mediaId: 'MED-48302', title: 'Service Image', category: 'services', url: IMG('fitness'), width: 1800, height: 1200, sizeBytes: 1.2 * 1024 * 1024, format: 'JPG', status: 'awaiting_review', version: 1 }],
+      serviceChange: { serviceId: 'SRV-48302', mediaStatus: 'awaiting_review', current: null, proposed: { name: 'Physiotherapy Assessment', description: 'A full musculoskeletal assessment with a personalised rehabilitation plan.', durationMins: 60, price: 6000, category: 'Physiotherapy', serviceModes: ['At Provider Location', 'Home Service'], locations: ['Nairobi'], tags: ['Assessment'], imageUrl: IMG('fitness'), pricingType: 'Fixed' }, versions: [{ version: 1, label: 'Proposed', status: 'awaiting_review', submittedAt: iso(now - 3 * HOUR), note: 'New service' }] },
+      history: [['New service submitted', now - 3 * HOUR, null], ['Provider eligibility check: category outside approved scope', now - 3 * HOUR, null]],
+      notes: [],
+    }],
+    // ADM-039 — new service with an unsupported medical claim
+    ['CNT-48315', {
+      ...pro(PROFESSIONALS[2]), contentId: 'CNT-48315', contentType: 'service', title: 'Back Pain Recovery Session', status: 'awaiting_review', priority: 'urgent', contentVersion: 1,
+      submittedAt: iso(now - 5 * HOUR), placements: ['Service Listing'],
+      service: { name: 'Back Pain Recovery Session', description: 'Guaranteed to cure chronic back disease in 3 sessions. WhatsApp me on +254 711 000 111 to book directly.', durationMins: 45, price: 3500, category: 'Fitness', imageUrl: IMG('yoga-sunset') },
+      media: [{ mediaId: 'MED-48315', title: 'Service Image', category: 'services', url: IMG('yoga-sunset'), width: 1800, height: 1200, sizeBytes: 1.1 * 1024 * 1024, format: 'JPG', status: 'approved', version: 1 }],
+      serviceChange: { serviceId: 'SRV-48315', mediaStatus: 'approved', current: null, proposed: { name: 'Back Pain Recovery Session', description: 'Guaranteed to cure chronic back disease in 3 sessions. WhatsApp me on +254 711 000 111 to book directly.', durationMins: 45, price: 3500, category: 'Fitness', serviceModes: ['Home Service'], locations: ['Westlands'], tags: [], imageUrl: IMG('yoga-sunset'), pricingType: 'Fixed' }, versions: [{ version: 1, label: 'Proposed', status: 'awaiting_review', submittedAt: iso(now - 5 * HOUR), note: 'New service' }] },
+      history: [['New service submitted', now - 5 * HOUR, null], ['2 potential policy issues detected', now - 5 * HOUR, null]],
       notes: [],
     }],
   ]
@@ -158,7 +231,8 @@ const TEMPLATES = [
   (r, now, i) => {
     const p = PROFESSIONALS[i % PROFESSIONALS.length]
     const svc = [['Deep Tissue Massage', 'massage-oil', 'Massage', 60], ['Sunrise Yoga Flow', 'yoga-sunset', 'Yoga', 60], ['Guided Meditation', 'meditation', 'Meditation', 45], ['Personal Training', 'fitness', 'Fitness', 60]][i % 4]
-    return { ...pro(p), contentType: 'service', title: 'Service Content', service: { name: svc[0], description: `A ${svc[2].toLowerCase()} session delivered by a verified Lé Inspa professional, tailored to your goals and comfort.`, durationMins: svc[3], price: p[8], category: svc[2], imageUrl: IMG(svc[1]) }, media: [{ mediaId: `MED-${i}`, title: 'Service Image', category: 'services', url: IMG(svc[1]), width: 1800, height: 1200, sizeBytes: 1.3 * 1024 * 1024, format: 'JPG', status: 'awaiting_review', version: 1 }] }
+    const service = { name: svc[0], description: `A ${svc[2].toLowerCase()} session delivered by a verified Lé Inspa professional, tailored to your goals and comfort.`, durationMins: svc[3], price: p[8], category: svc[2], imageUrl: IMG(svc[1]) }
+    return { ...pro(p), contentType: 'service', title: svc[0], service, serviceChange: { serviceId: `SRV-${40000 + i}`, mediaStatus: 'approved', current: null, proposed: { ...service, serviceModes: ['At Provider Location'], locations: [p[5]], tags: [], pricingType: 'Fixed' } }, media: [{ mediaId: `MED-${i}`, title: 'Service Image', category: 'services', url: IMG(svc[1]), width: 1800, height: 1200, sizeBytes: 1.3 * 1024 * 1024, format: 'JPG', status: 'awaiting_review', version: 1 }] }
   },
   (r, now, i) => {
     const b = BUSINESSES[i % BUSINESSES.length]

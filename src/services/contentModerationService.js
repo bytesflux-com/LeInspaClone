@@ -11,7 +11,6 @@ import { callAdmin } from '../lib/adminCall'
 import { MARKETS } from '../constants/markets'
 import {
   buildQueue,
-  buildReview,
   checklistFor,
   decideMedia,
   decideRecord,
@@ -23,6 +22,16 @@ import {
   scopeRecords,
   validateDecision,
 } from '../../functions/src/contentModerationLogic.js'
+import {
+  buildFullReview,
+  changeRequestOutcome,
+  decideField,
+  normalizeField,
+  publishable,
+  serviceEligibility,
+  validateFieldDecision,
+  validateServiceDecision,
+} from '../../functions/src/changeReviewLogic.js'
 import { MOCK_ADMIN, contentStore } from './mock/contentModerationMock'
 
 const USE_MOCK = import.meta.env.VITE_USE_MOCK_CONTENT === 'true'
@@ -74,7 +83,7 @@ const mock = {
     await delay(150)
     const e = entry(id)
     const record = normalizeModeration(id, e.doc)
-    return buildReview(record, { now: Date.now(), history: e.history, notes: e.notes, providerStats: providerStats(record) })
+    return buildFullReview(record, { now: Date.now(), history: e.history, notes: e.notes, providerStats: providerStats(record) })
   },
   async start(id) {
     await delay(150)
@@ -89,6 +98,7 @@ const mock = {
     await delay(200)
     return mutate(input.moderationId, input.version, ({ record, now }) => {
       if (!OPEN_STATUSES.includes(record.status)) fail(`This content is already ${label(record.status).toLowerCase()}.`)
+      if (input.decision !== 'escalate' && (record.contentType === 'profile_change' || (record.contentType === 'service' && record.serviceChange))) fail('Use the Profile Change / Service review to decide this item.')
       const isMedia = Boolean(input.mediaId)
       const error = validateDecision(input, checklistFor(record.contentType, isMedia || record.contentType === 'gallery'))
       if (error) fail(error)
@@ -128,6 +138,48 @@ const mock = {
     })
     return { ok: true, status: out.outcome.status, summary: out.outcome.summary }
   },
+  async fieldDecision(input) {
+    await delay(180)
+    return mutate(input.moderationId, input.version, ({ record, now }) => {
+      if (!OPEN_STATUSES.includes(record.status)) fail(`This request is already ${label(record.status).toLowerCase()}.`)
+      const fields = (record.profileChange?.fields || []).map(normalizeField)
+      const field = fields.find((f) => f.key === input.fieldKey)
+      const error = validateFieldDecision(field, input, checklistFor('profile_change'))
+      if (error) fail(error)
+      const next = decideField(fields, field.key, input, MOCK_ADMIN, now)
+      const outcome = changeRequestOutcome(next)
+      const history = [historyEntry(input.moderationId, `${field.label}: ${label(next.find((f) => f.key === field.key).status)}${input.reason ? ` — ${input.reason}` : ''}`, MOCK_ADMIN, now)]
+      if (input.decision === 'reverify') history.push(historyEntry(input.moderationId, `Sent for re-verification (${field.reverifyRoute?.label || 'Verification Review'})`, MOCK_ADMIN, now))
+      return { patch: { profileChange: { ...record.profileChange, fields: next }, status: outcome || (record.status === 'awaiting_review' ? 'under_review' : record.status), ...(outcome ? { reviewedBy: MOCK_ADMIN, reviewedAt: now } : {}) }, history }
+    })
+  },
+  async publishProfile({ moderationId, version }) {
+    await delay(200)
+    let published = []
+    mutate(moderationId, version, ({ record, now }) => {
+      const fields = (record.profileChange?.fields || []).map(normalizeField)
+      const ready = publishable(fields)
+      if (!ready.length) fail('There are no approved changes to publish.')
+      published = ready.map((f) => f.key)
+      const next = fields.map((f) => (published.includes(f.key) ? { ...f, status: 'published' } : f))
+      const outcome = changeRequestOutcome(next)
+      const currentProfile = { ...record.profileChange.currentProfile, ...Object.fromEntries(ready.map((f) => [f.key, f.proposed])) }
+      return { patch: { profileChange: { ...record.profileChange, fields: next, currentProfile }, status: outcome || record.status, ...(outcome ? { reviewedBy: MOCK_ADMIN, reviewedAt: now } : {}) }, history: [historyEntry(moderationId, `Published ${ready.length} approved change${ready.length === 1 ? '' : 's'}: ${ready.map((f) => f.label).join(', ')}`, MOCK_ADMIN, now)] }
+    })
+    return { ok: true, published }
+  },
+  async serviceDecision(input) {
+    await delay(200)
+    return mutate(input.moderationId, input.version, ({ record, now }) => {
+      if (!OPEN_STATUSES.includes(record.status)) fail(`This service is already ${label(record.status).toLowerCase()}.`)
+      const proposed = record.serviceChange?.proposed || {}
+      const eligibility = serviceEligibility(record.provider.type, proposed.category, record.provider.typeLabel)
+      const error = validateServiceDecision(input, { checklist: checklistFor('service'), eligibility })
+      if (error) fail(error)
+      const status = { approve: 'approved', request_changes: 'changes_requested', reject: 'rejected', reverify: 'reverification', escalate: 'escalated' }[input.decision]
+      return { patch: { status, decision: input.decision, reason: input.reason || null, affectedField: input.affectedField || null, providerMessage: input.providerMessage || null, reviewedBy: MOCK_ADMIN, reviewedAt: now, ...(input.decision === 'escalate' ? { escalation: { team: input.escalateTo, reason: input.reason, at: now } } : {}) }, history: [historyEntry(input.moderationId, `${label(status)}${input.affectedField ? ` (${input.affectedField})` : ''}${input.reason ? ` — ${input.reason}` : ''}`, MOCK_ADMIN, now)] }
+    })
+  },
   async note({ moderationId, text }) {
     await delay(120)
     const note = { text, authorName: MOCK_ADMIN.name, createdAt: new Date().toISOString() }
@@ -145,4 +197,8 @@ export const contentModerationService = {
   bulkMediaDecision: (input) => (USE_MOCK ? mock.bulk(input) : callAdmin('adminBulkMediaDecision', input)),
   completeGallery: (input) => (USE_MOCK ? mock.complete(input) : callAdmin('adminCompleteGalleryReview', input)),
   addNote: (input) => (USE_MOCK ? mock.note(input) : callAdmin('adminAddModerationNote', input)),
+  // ADM-038 / ADM-039
+  profileFieldDecision: (input) => (USE_MOCK ? mock.fieldDecision(input) : callAdmin('adminProfileFieldDecision', input)),
+  publishProfileChanges: (input) => (USE_MOCK ? mock.publishProfile(input) : callAdmin('adminPublishProfileChanges', input)),
+  serviceDecision: (input) => (USE_MOCK ? mock.serviceDecision(input) : callAdmin('adminServiceDecision', input)),
 }
