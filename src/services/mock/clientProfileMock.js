@@ -99,7 +99,7 @@ function seededProfile(r) {
       { id: 'PAY-55612', createdAt: at(2026, 8, 2, 15, 20), amount: 2000, status: 'refunded', kind: 'Booking refund', category: 'refund' },
     ],
     wallet: { balance: 12450, credits: 28500, debits: 16050, pendingRefund: 2000 },
-    referrals: { code: 'WALLEN24', referredBy: null, successful: 4, loyaltyStatus: 'active', totalSavings: 8200 },
+    referrals: { code: 'WALLEN24', referredBy: null, successful: 8, loyaltyStatus: 'active', totalSavings: 3200 },
     support: { openTickets: 1, openDisputes: 0, safetyReports: 0, latest: { id: 'SUP-4812', subject: 'Payment not reflected in wallet', createdAt: at(2026, 9, 8, 15, 0), status: 'in_review' } },
     activity: [
       { id: 'e1', type: 'booking', at: at(2026, 9, 22, 10, 42), text: 'Booking created – Deep Tissue Massage' },
