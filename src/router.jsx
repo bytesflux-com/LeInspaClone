@@ -120,6 +120,7 @@ export const router = createBrowserRouter([
           { path: 'verifications/business', element: <BusinessDocumentsReviewPage />, handle: { fullBleed: true } },
           { path: 'verifications/review/:id/business', element: <BusinessDocumentsReviewPage />, handle: { fullBleed: true } },
           { path: 'verifications/review/:id', element: <VerificationReviewPage />, handle: { fullBleed: true } },
+          { path: 'verifications/review', element: <VerificationReviewPage />, handle: { fullBleed: true } },
           { path: 'verifications/:id', element: <VerificationReviewPage />, handle: { fullBleed: true } },
           // ADM-044 → ADM-048 — Booking Operations (views over the shared bookings collection)
           { path: 'bookings', element: <BookingManagement />, handle: { fullBleed: true } },

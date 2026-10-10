@@ -30,7 +30,7 @@ export default function BusinessDocumentsReviewPage() {
   const navigate = useNavigate()
 
   // Target provider/verification ID (defaults to Serenity Wellness Spa if absent)
-  const targetId = id || 'ver-002'
+  const targetId = id || 'SPA-28192'
 
   // Data states
   const [loading, setLoading] = useState(true)
