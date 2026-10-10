@@ -11,7 +11,7 @@ import {
 } from '../../constants/clients'
 import { cn } from '../../lib/utils'
 
-function FilterSelect({ label, value, options, onChange, disabled = false, width = 'w-52' }) {
+export function FilterSelect({ label, value, options, onChange, disabled = false, width = 'w-52' }) {
   const current = options.find((o) => o.value === value)
   const active = Boolean(value) && value !== 'all'
   return (

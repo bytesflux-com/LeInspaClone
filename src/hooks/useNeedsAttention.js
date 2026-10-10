@@ -2,9 +2,9 @@ import { useCallback, useEffect, useState } from 'react'
 import { attentionService } from '../services/attentionService'
 import { useMarketContext } from './useMarketContext'
 
-export function useNeedsAttention() {
+export function useNeedsAttention(marketOverride) {
   const { selectedMarket } = useMarketContext()
-  const marketId = selectedMarket?.id || 'ALL'
+  const marketId = marketOverride || selectedMarket?.id || 'ALL'
 
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)

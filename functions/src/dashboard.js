@@ -43,7 +43,7 @@ const MARKET_METADATA = {
   ZA: { name: 'South Africa', code: 'ZA', currency: 'ZAR' },
 }
 
-function safeTimeZone(tz) {
+export function safeTimeZone(tz) {
   try {
     if (typeof tz === 'string' && tz) {
       new Intl.DateTimeFormat('en', { timeZone: tz })
@@ -55,7 +55,7 @@ function safeTimeZone(tz) {
   return DEFAULT_TIME_ZONE
 }
 
-function getDateBounds(dateRange = 'today', customRange = null, timeZone = DEFAULT_TIME_ZONE) {
+export function getDateBounds(dateRange = 'today', customRange = null, timeZone = DEFAULT_TIME_ZONE) {
   const zonedNow = toZonedTime(new Date(), timeZone)
 
   let startZoned = startOfDay(zonedNow)

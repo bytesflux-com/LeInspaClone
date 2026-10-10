@@ -1,26 +1,114 @@
-import { setGlobalOptions } from 'firebase-functions/v2'
-import { onCall } from 'firebase-functions/v2/https'
-import { initializeApp } from 'firebase-admin/app'
-import { requireAdmin } from './auth.js'
+import {setGlobalOptions} from "firebase-functions/v2";
+import {onCall} from "firebase-functions/v2/https";
+import {initializeApp} from "firebase-admin/app";
+import {requireAdmin} from "./auth.js";
 
-initializeApp()
+initializeApp();
 
-setGlobalOptions({ region: 'us-central1', maxInstances: 10 })
+setGlobalOptions({region: "us-central1", maxInstances: 10});
 
 // Health check the admin panel can call to verify the backend is reachable.
-export const adminPing = onCall(async (request) => {
-  await requireAdmin(request)
-  return { ok: true, time: new Date().toISOString() }
-})
+export const adminPing = onCall(async request => {
+  await requireAdmin(request);
+  return {ok: true, time: new Date().toISOString()};
+});
 
-export { adminStartSecondFactor, adminVerifySecondFactor } from './secondFactor.js'
+export {
+  adminStartSecondFactor,
+  adminVerifySecondFactor,
+} from "./secondFactor.js";
 export {
   adminRequestPasswordReset,
   adminVerifyPasswordReset,
   adminCompletePasswordReset,
-} from './passwordRecovery.js'
-export { adminGetSession, adminVerifySession, adminEndSession } from './sessionVerification.js'
-export { adminGetDashboardSummary } from './dashboard.js'
-export { adminGetOperationsSummary } from './operations.js'
-export { adminGlobalSearch } from './search.js'
-export { adminGetNeedsAttention } from './needsAttention.js'
+} from "./passwordRecovery.js";
+export {
+  adminGetSession,
+  adminVerifySession,
+  adminEndSession,
+} from "./sessionVerification.js";
+export {adminGetDashboardSummary} from "./dashboard.js";
+export {adminGetOperationsSummary} from "./operations.js";
+export {adminGlobalSearch} from "./search.js";
+export {
+  adminGetNeedsAttention,
+  adminGetReviewItem,
+  adminProcessReviewAction,
+  adminAssignQueueItem,
+} from "./needsAttention.js";
+export {
+  adminGetBookingDashboard,
+  adminListBookings,
+  adminGetBookingQuickView,
+  adminRevealGuestContact,
+} from "./bookings.js";
+
+export {adminGetProviderDashboard} from "./providerDashboard.js";
+export {
+
+  adminListProviders,
+  adminGetProviderDetail,
+} from "./providerDirectory.js";
+export {
+
+
+  adminGetProviderProfile,
+  adminAddProviderInternalNote,
+  adminUpdateProviderContentStatus,
+  adminUpdateProviderVerificationStatus,
+  adminUpdateProviderAccountStatus,
+} from './providerProfile.js'
+export {
+  adminGetProviderServices,
+  adminGetProviderServiceDetail,
+  adminModerateProviderService,
+  adminUpdateProviderServiceStatus,
+} from './providerServices.js'
+export {
+  adminGetProviderBookings,
+  adminGetProviderBookingDetail,
+  adminGetProviderEarningsOverview,
+  adminGetProviderEarningsChart,
+} from './providerBookings.js'
+=======
+  adminGetVerificationQueue,
+  adminAssignVerificationReviewer,
+  adminSubmitVerificationDecision,
+  adminGetVerificationQueueDetailed,
+  adminClaimVerificationCase,
+  adminEscalateVerificationCase,
+} from './adminVerification.js'
+
+
+  adminGetVerificationQueue,
+  adminAssignVerificationReviewer,
+  adminSubmitVerificationDecision,
+
+  adminGetVerificationQueueDetailed,
+  adminClaimVerificationCase,
+  adminEscalateVerificationCase,
+  adminGetVerificationDetail,
+  adminSubmitComponentDecision,
+  adminAddVerificationInternalNote,
+} from './adminVerification.js'
+
+
+
+  adminGetVerificationQueueDetailed,
+  adminClaimVerificationCase,
+  adminEscalateVerificationCase,
+  adminGetVerificationDetail,
+  adminSubmitComponentDecision,
+  adminAddVerificationInternalNote,
+  adminGetIdentityVerificationDetail,
+  adminRevealSensitiveIdentityField,
+  adminSubmitIdentityDecision,
+  adminGetCredentialVerificationDetail,
+  adminSubmitCredentialDecision,
+  adminAddCredentialInternalNote,
+  adminGetBusinessVerificationDetail,
+  adminRevealBusinessDocumentNumber,
+  adminSubmitBusinessDocumentDecision,
+  adminAddBusinessInternalNote,
+} from "./adminVerification.js";
+

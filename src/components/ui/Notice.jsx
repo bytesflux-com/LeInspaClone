@@ -28,7 +28,7 @@ const tones = {
 }
 
 export default function Notice({ tone = 'security', title, icon, children, className = '', ...props }) {
-  const t = tones[tone]
+  const t = tones[tone] || tones.security
   const Icon = icon ?? t.icon
   const hasBadge = tone === 'security'
 
