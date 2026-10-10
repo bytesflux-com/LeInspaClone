@@ -633,6 +633,656 @@ export async function escalateCase(verificationId, reasonData = {}) {
 }
 
 /**
+ * 7. Fetch Verification Detail (ADM-031)
+ * Retrieves complete verification workspace payload for a specific provider/record.
+ *
+ * @param {string} verificationId
+ * @returns {Promise<Object>}
+ */
+const localReviewRecords = new Map()
+
+function generateInitialReviewRecord(idOrProviderId) {
+  const base = localQueue.find((r) => r.id === idOrProviderId || r.providerId === idOrProviderId) || localQueue[0] || {}
+  const providerCategory = base?.providerCategory || 'INDIVIDUAL'
+  const isGrace = !base?.providerId || base.providerId === 'PR-82941' || base.id === 'ver-001'
+  const isSpa = providerCategory === 'SPA_WELLNESS'
+  const isHotel = providerCategory === 'HOTEL_RESORT'
+
+  if (isGrace && !isSpa && !isHotel) {
+    return {
+      id: 'ver-001',
+      providerId: 'PR-82941',
+      name: 'Grace Njeri',
+      avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+      type: 'Massage Therapist',
+      providerCategory: 'INDIVIDUAL',
+      market: {
+        code: 'KE',
+        name: 'Kenya',
+        flag: '🇰🇪',
+      },
+      status: 'UNDER_REVIEW',
+      submittedAt: '12 Sep 2026 • 10:42 AM',
+      assignedTo: 'Jane Ochieng',
+      assignedReviewer: {
+        uid: 'reviewer-jane',
+        name: 'Jane Ochieng',
+        avatarUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=80',
+      },
+      phone: '+254 712 345 678',
+      email: 'grace.njeri@gmail.com',
+      version: 1,
+      progressSteps: [
+        { id: 'IDENTITY', label: 'Identity Verification', status: 'APPROVED', number: 1 },
+        { id: 'CREDENTIALS', label: 'Professional Credentials', status: 'REVIEWING_NOW', number: 2 },
+        { id: 'PROFILE', label: 'Profile Information', status: 'PENDING', number: 3 },
+        { id: 'FINAL', label: 'Final Verification', status: 'PENDING', number: 4 },
+      ],
+      componentTabs: [
+        { id: 'IDENTITY', label: 'Identity Verification', status: 'APPROVED', badgeCount: 0 },
+        { id: 'CREDENTIALS', label: 'Professional Credentials', status: 'REVIEWING_NOW', badgeCount: 1 },
+        { id: 'PROFILE', label: 'Profile Information', status: 'PENDING', badgeCount: 0 },
+        { id: 'DOCUMENTS', label: 'Required Documents', status: 'PENDING', badgeCount: 0 },
+        { id: 'FINAL', label: 'Final Verification', status: 'PENDING', badgeCount: 0 },
+      ],
+      activeDocument: {
+        id: 'doc-101',
+        title: 'Professional Certificate',
+        fileName: 'Professional_Certificate.pdf',
+        docType: 'Professional Certificate',
+        nameOnDoc: 'Grace Njeri',
+        docNumber: '•••• 7281',
+        unmaskedDocNumber: 'KMF-2024-7281',
+        issuer: 'International Wellness Institute',
+        issueDate: '15 Jan 2024',
+        expiryDate: '15 Jan 2028',
+        uploadedAt: '12 Sep 2026 • 10:42 AM',
+        fileStatus: 'Readable',
+        pageCount: 2,
+        activePage: 1,
+        ocrStatus: 'SUCCESS',
+        totalPagesSubmitted: 3,
+      },
+      documents: [
+        {
+          id: 'doc-101',
+          title: 'Professional Certificate',
+          fileName: 'Professional_Certificate.pdf',
+          docType: 'Professional Certificate',
+          nameOnDoc: 'Grace Njeri',
+          docNumber: '•••• 7281',
+          unmaskedDocNumber: 'KMF-2024-7281',
+          issuer: 'International Wellness Institute',
+          issueDate: '15 Jan 2024',
+          expiryDate: '15 Jan 2028',
+          uploadedAt: '12 Sep 2026 • 10:42 AM',
+          fileStatus: 'Readable',
+          pageCount: 2,
+        },
+        {
+          id: 'doc-102',
+          title: 'National ID Card',
+          fileName: 'National_ID_Card.pdf',
+          docType: 'National ID Card',
+          nameOnDoc: 'Grace Wanjiku Njeri',
+          docNumber: '•••• 3942',
+          unmaskedDocNumber: 'ID-8291-3942',
+          issuer: 'Republic of Kenya - National Registration Bureau',
+          issueDate: '10 Feb 2020',
+          expiryDate: 'N/A',
+          uploadedAt: '12 Sep 2026 • 10:40 AM',
+          fileStatus: 'Readable',
+          pageCount: 2,
+        },
+        {
+          id: 'doc-103',
+          title: 'Practice License',
+          fileName: 'Practice_License_2026.pdf',
+          docType: 'Practice License',
+          nameOnDoc: 'Grace Njeri',
+          docNumber: '•••• 4419',
+          unmaskedDocNumber: 'LIC-2026-4419',
+          issuer: 'Kenya Allied Health Professionals Board',
+          issueDate: '01 Jan 2026',
+          expiryDate: '31 Dec 2026',
+          uploadedAt: '12 Sep 2026 • 10:41 AM',
+          fileStatus: 'Readable',
+          pageCount: 1,
+        },
+      ],
+      previousSubmissions: [
+        {
+          num: 1,
+          submittedAt: '12 Sep 2026 10:42 AM',
+          fileName: 'Professional_Certificate.pdf',
+          status: 'Current',
+          statusType: 'current',
+          reviewedBy: '—',
+          notes: '—',
+          docId: 'doc-101',
+        },
+        {
+          num: 2,
+          submittedAt: '10 Sep 2026 9:15 AM',
+          fileName: 'Certificate_v1.pdf',
+          status: 'Replaced',
+          statusType: 'replaced',
+          reviewedBy: 'Jane Ochieng',
+          notes: 'Document unclear',
+          docId: 'doc-101-v1',
+        },
+      ],
+      reviewHistory: [
+        {
+          id: 'rh-1',
+          time: '12 Sep 2026 • 11:20 AM',
+          title: 'Review started (Jane Ochieng)',
+          actor: 'Jane Ochieng',
+          type: 'review_started',
+        },
+        {
+          id: 'rh-2',
+          time: '12 Sep 2026 • 11:05 AM',
+          title: 'Assigned to Jane Ochieng by System',
+          actor: 'System',
+          type: 'assignment',
+        },
+        {
+          id: 'rh-3',
+          time: '12 Sep 2026 • 10:42 AM',
+          title: 'Document submitted by Grace Njeri',
+          actor: 'Grace Njeri',
+          type: 'submission',
+        },
+      ],
+      comparisonData: [
+        { field: 'Full Name', account: 'Grace Njeri', document: 'Grace W. Njeri', result: 'Review', resultType: 'review' },
+        { field: 'Country', account: 'Kenya', document: 'Kenya', result: 'Match', resultType: 'match' },
+        { field: 'Profession', account: 'Massage Therapist', document: 'Massage Therapy', result: 'Consistent', resultType: 'consistent' },
+        { field: 'Document Status', account: '—', document: 'Valid', result: 'Valid', resultType: 'valid' },
+        { field: 'Expiry Date', account: '—', document: '15 Jan 2028', result: 'Valid', resultType: 'valid' },
+      ],
+      checklist: [
+        { id: 'chk-1', key: 'documentReadable', label: 'Document readable', status: 'Pass', resultType: 'pass' },
+        { id: 'chk-2', key: 'nameMatches', label: 'Name reasonably matches account', status: 'Needs review', resultType: 'review' },
+        { id: 'chk-3', key: 'issuerProvided', label: 'Issuer provided', status: 'Pass', resultType: 'pass' },
+        { id: 'chk-4', key: 'documentCurrent', label: 'Document current (not expired)', status: 'Pass', resultType: 'pass' },
+        { id: 'chk-5', key: 'pagesIncluded', label: 'Required pages included', status: 'Pass', resultType: 'pass' },
+        { id: 'chk-6', key: 'credentialAccepted', label: 'Credential type accepted', status: 'Pass', resultType: 'pass' },
+        { id: 'chk-7', key: 'noTampering', label: 'No obvious tampering concern', status: 'Pass', resultType: 'pass' },
+      ],
+      internalNotes: [
+        {
+          id: 'note-1',
+          authorName: 'Jane Ochieng',
+          authorRole: 'Verification Specialist',
+          text: 'Verified registration with the Kenya Allied Health Professionals Board records database. Certificate watermark is authentic.',
+          createdAt: '12 Sep 2026 • 11:22 AM',
+        },
+      ],
+    }
+  }
+
+  // Spa & Wellness Center dynamic structure
+  if (isSpa) {
+    return {
+      id: base.id || 'ver-002',
+      providerId: base.providerId || 'SPA-28192',
+      name: base.name || 'Serenity Wellness Spa',
+      avatarUrl: base.avatarUrl || 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=150&auto=format&fit=crop&q=80',
+      type: 'Spa & Wellness Center',
+      providerCategory: 'SPA_WELLNESS',
+      market: base.market || { code: 'KE', name: 'Kenya', flag: '🇰🇪' },
+      status: base.status || 'UNDER_REVIEW',
+      submittedAt: base.submittedAt || '11 Sep 2026 • 3:18 PM',
+      assignedTo: base.assignedTo || 'Jane Ochieng',
+      assignedReviewer: {
+        uid: 'reviewer-jane',
+        name: 'Jane Ochieng',
+        avatarUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=80',
+      },
+      phone: '+254 722 998 877',
+      email: 'info@serenityspa.co.ke',
+      version: base.version || 1,
+      progressSteps: [
+        { id: 'BUSINESS_REG', label: 'Business Registration', status: 'APPROVED', number: 1 },
+        { id: 'PREMISES_PERMIT', label: 'Premises Permit', status: 'REVIEWING_NOW', number: 2 },
+        { id: 'TAX_CLEARANCE', label: 'Tax / VAT Clearance', status: 'PENDING', number: 3 },
+        { id: 'FINAL', label: 'Final Verification', status: 'PENDING', number: 4 },
+      ],
+      componentTabs: [
+        { id: 'BUSINESS_REG', label: 'Business Registration', status: 'APPROVED', badgeCount: 0 },
+        { id: 'PREMISES_PERMIT', label: 'Premises Permit', status: 'REVIEWING_NOW', badgeCount: 1 },
+        { id: 'TAX_CLEARANCE', label: 'Tax / VAT Clearance', status: 'PENDING', badgeCount: 0 },
+        { id: 'FACILITY', label: 'Operating Location', status: 'PENDING', badgeCount: 0 },
+        { id: 'FINAL', label: 'Final Verification', status: 'PENDING', badgeCount: 0 },
+      ],
+      activeDocument: {
+        id: 'doc-spa-01',
+        title: 'Premises Operating Permit',
+        fileName: 'County_Operating_Permit_2026.pdf',
+        docType: 'County Operating Permit',
+        nameOnDoc: 'Serenity Wellness Spa Ltd',
+        docNumber: '•••• 9120',
+        unmaskedDocNumber: 'NBI-SBL-2026-9120',
+        issuer: 'Nairobi City County Government',
+        issueDate: '01 Jan 2026',
+        expiryDate: '31 Dec 2026',
+        uploadedAt: '11 Sep 2026 • 3:18 PM',
+        fileStatus: 'Readable',
+        pageCount: 2,
+        activePage: 1,
+        ocrStatus: 'SUCCESS',
+        totalPagesSubmitted: 4,
+      },
+      documents: [
+        {
+          id: 'doc-spa-01',
+          title: 'Premises Operating Permit',
+          fileName: 'County_Operating_Permit_2026.pdf',
+          docType: 'County Operating Permit',
+          nameOnDoc: 'Serenity Wellness Spa Ltd',
+          docNumber: '•••• 9120',
+          unmaskedDocNumber: 'NBI-SBL-2026-9120',
+          issuer: 'Nairobi City County Government',
+          issueDate: '01 Jan 2026',
+          expiryDate: '31 Dec 2026',
+          uploadedAt: '11 Sep 2026 • 3:18 PM',
+          fileStatus: 'Readable',
+          pageCount: 2,
+        },
+        {
+          id: 'doc-spa-02',
+          title: 'Certificate of Incorporation',
+          fileName: 'Certificate_of_Incorporation.pdf',
+          docType: 'Business Registration',
+          nameOnDoc: 'Serenity Wellness Spa Ltd',
+          docNumber: '•••• 4410',
+          unmaskedDocNumber: 'CPR-2018-4410',
+          issuer: 'Business Registration Service (BRS Kenya)',
+          issueDate: '14 May 2018',
+          expiryDate: 'N/A',
+          uploadedAt: '11 Sep 2026 • 3:15 PM',
+          fileStatus: 'Readable',
+          pageCount: 2,
+        },
+      ],
+      previousSubmissions: [
+        {
+          num: 1,
+          submittedAt: '11 Sep 2026 3:18 PM',
+          fileName: 'County_Operating_Permit_2026.pdf',
+          status: 'Current',
+          statusType: 'current',
+          reviewedBy: '—',
+          notes: '—',
+          docId: 'doc-spa-01',
+        },
+      ],
+      reviewHistory: [
+        {
+          id: 'rh-s1',
+          time: '11 Sep 2026 • 4:00 PM',
+          title: 'Review started (Jane Ochieng)',
+          actor: 'Jane Ochieng',
+          type: 'review_started',
+        },
+      ],
+      comparisonData: [
+        { field: 'Business Name', account: 'Serenity Wellness Spa', document: 'Serenity Wellness Spa Ltd', result: 'Match', resultType: 'match' },
+        { field: 'Operating County', account: 'Nairobi, Kenya', document: 'Nairobi City County', result: 'Match', resultType: 'match' },
+        { field: 'Registration Number', account: '•••• 4410', document: 'CPR-2018-4410', result: 'Consistent', resultType: 'consistent' },
+        { field: 'Premises Permit', account: '—', document: 'Valid', result: 'Valid', resultType: 'valid' },
+        { field: 'Expiry Date', account: '—', document: '31 Dec 2026', result: 'Valid', resultType: 'valid' },
+      ],
+      checklist: [
+        { id: 'chk-s1', key: 'businessEntityValid', label: 'Business registration valid', status: 'Pass', resultType: 'pass' },
+        { id: 'chk-s2', key: 'premisesPermitActive', label: 'Premises operating permit active', status: 'Pass', resultType: 'pass' },
+        { id: 'chk-s3', key: 'taxPinActive', label: 'VAT / Tax PIN active & verified', status: 'Pass', resultType: 'pass' },
+        { id: 'chk-s4', key: 'locationMatches', label: 'Operating location matches registry', status: 'Pass', resultType: 'pass' },
+        { id: 'chk-s5', key: 'directorMandate', label: 'Director authorized mandate verified', status: 'Pass', resultType: 'pass' },
+        { id: 'chk-s6', key: 'hygieneHealthCleared', label: 'Public health inspection cleared', status: 'Pass', resultType: 'pass' },
+      ],
+      internalNotes: [],
+    }
+  }
+
+  // Hotel & Wellness Resort dynamic structure
+  return {
+    id: base.id || 'ver-003',
+    providerId: base.providerId || 'HOTEL-55102',
+    name: base.name || 'Mara Safari Wellness Lodge',
+    avatarUrl: base.avatarUrl || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=150&auto=format&fit=crop&q=80',
+    type: 'Hotel & Wellness Resort',
+    providerCategory: 'HOTEL_RESORT',
+    market: base.market || { code: 'KE', name: 'Kenya', flag: '🇰🇪' },
+    status: base.status || 'UNDER_REVIEW',
+    submittedAt: base.submittedAt || '10 Sep 2026 • 2:10 PM',
+    assignedTo: base.assignedTo || 'Jane Ochieng',
+    assignedReviewer: {
+      uid: 'reviewer-jane',
+      name: 'Jane Ochieng',
+      avatarUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=80',
+    },
+    phone: '+254 733 112 233',
+    email: 'admin@marawellness.ke',
+    version: base.version || 1,
+    progressSteps: [
+      { id: 'PROPERTY_TITLE', label: 'Property Title / Lease', status: 'APPROVED', number: 1 },
+      { id: 'HOSPITALITY_LIC', label: 'Hospitality Operating Permit', status: 'REVIEWING_NOW', number: 2 },
+      { id: 'SAFETY_AUDIT', label: 'Wellness Safety Accreditation', status: 'PENDING', number: 3 },
+      { id: 'FINAL', label: 'Final Verification', status: 'PENDING', number: 4 },
+    ],
+    componentTabs: [
+      { id: 'PROPERTY_TITLE', label: 'Property Title / Lease', status: 'APPROVED', badgeCount: 0 },
+      { id: 'HOSPITALITY_LIC', label: 'Hospitality License', status: 'REVIEWING_NOW', badgeCount: 1 },
+      { id: 'SAFETY_AUDIT', label: 'Safety Accreditation', status: 'PENDING', badgeCount: 0 },
+      { id: 'MANDATE', label: 'Corporate Mandate', status: 'PENDING', badgeCount: 0 },
+      { id: 'FINAL', label: 'Final Verification', status: 'PENDING', badgeCount: 0 },
+    ],
+    activeDocument: {
+      id: 'doc-hotel-01',
+      title: 'TRA Hospitality Operating Permit',
+      fileName: 'TRA_Hospitality_Permit_2026.pdf',
+      docType: 'Hospitality Operating Permit',
+      nameOnDoc: 'Mara Safari Wellness Lodge & Spa',
+      docNumber: '•••• 1849',
+      unmaskedDocNumber: 'TRA-LODGE-2026-1849',
+      issuer: 'Tourism Regulatory Authority (TRA)',
+      issueDate: '01 Jan 2026',
+      expiryDate: '31 Dec 2027',
+      uploadedAt: '10 Sep 2026 • 2:10 PM',
+      fileStatus: 'Readable',
+      pageCount: 3,
+      activePage: 1,
+      ocrStatus: 'SUCCESS',
+      totalPagesSubmitted: 5,
+    },
+    documents: [
+      {
+        id: 'doc-hotel-01',
+        title: 'TRA Hospitality Operating Permit',
+        fileName: 'TRA_Hospitality_Permit_2026.pdf',
+        docType: 'Hospitality Operating Permit',
+        nameOnDoc: 'Mara Safari Wellness Lodge & Spa',
+        docNumber: '•••• 1849',
+        unmaskedDocNumber: 'TRA-LODGE-2026-1849',
+        issuer: 'Tourism Regulatory Authority (TRA)',
+        issueDate: '01 Jan 2026',
+        expiryDate: '31 Dec 2027',
+        uploadedAt: '10 Sep 2026 • 2:10 PM',
+        fileStatus: 'Readable',
+        pageCount: 3,
+      },
+    ],
+    previousSubmissions: [
+      {
+        num: 1,
+        submittedAt: '10 Sep 2026 2:10 PM',
+        fileName: 'TRA_Hospitality_Permit_2026.pdf',
+        status: 'Current',
+        statusType: 'current',
+        reviewedBy: '—',
+        notes: '—',
+        docId: 'doc-hotel-01',
+      },
+    ],
+    reviewHistory: [
+      {
+        id: 'rh-h1',
+        time: '10 Sep 2026 • 3:00 PM',
+        title: 'Review started (Jane Ochieng)',
+        actor: 'Jane Ochieng',
+        type: 'review_started',
+      },
+    ],
+    comparisonData: [
+      { field: 'Resort Name', account: 'Mara Safari Wellness Lodge', document: 'Mara Safari Wellness Lodge & Spa', result: 'Match', resultType: 'match' },
+      { field: 'Operating Jurisdiction', account: 'Maasai Mara, Kenya', document: 'Narok County / TRA Zone 4', result: 'Consistent', resultType: 'consistent' },
+      { field: 'Hospitality Class', account: '5-Star Eco Wellness Resort', document: 'Class A Eco Resort', result: 'Match', resultType: 'match' },
+      { field: 'Permit Status', account: '—', document: 'Active', result: 'Valid', resultType: 'valid' },
+      { field: 'Expiry Date', account: '—', document: '31 Dec 2027', result: 'Valid', resultType: 'valid' },
+    ],
+    checklist: [
+      { id: 'chk-h1', key: 'propertyTitleLease', label: 'Property Title Deed / Master Lease verified', status: 'Pass', resultType: 'pass' },
+      { id: 'chk-h2', key: 'hospitalityLicense', label: 'Hospitality Operating Permit in good standing', status: 'Pass', resultType: 'pass' },
+      { id: 'chk-h3', key: 'safetyAccreditation', label: 'Wellness & hydrotherapy safety standards passed', status: 'Pass', resultType: 'pass' },
+      { id: 'chk-h4', key: 'insuranceCoverage', label: 'Commercial public liability coverage active', status: 'Pass', resultType: 'pass' },
+      { id: 'chk-h5', key: 'gmMandate', label: 'Authorized General Manager mandate confirmed', status: 'Pass', resultType: 'pass' },
+    ],
+    internalNotes: [],
+  }
+}
+
+export async function fetchVerificationDetail(verificationId) {
+  if (!isVerificationMockMode()) {
+    try {
+      const result = await callAdmin('adminGetVerificationDetail', { verificationId })
+      if (result?.verification) {
+        return result
+      }
+    } catch (err) {
+      console.warn(
+        '[verificationService] Cloud Function adminGetVerificationDetail failed. Falling back to local store.',
+        err?.message
+      )
+    }
+  }
+
+  // Check in-memory store
+  if (!localReviewRecords.has(verificationId)) {
+    const fresh = generateInitialReviewRecord(verificationId)
+    localReviewRecords.set(verificationId, fresh)
+    if (fresh.providerId) localReviewRecords.set(fresh.providerId, fresh)
+    if (fresh.id) localReviewRecords.set(fresh.id, fresh)
+  }
+
+  const record = localReviewRecords.get(verificationId)
+  return {
+    verification: record,
+    checklist: record.checklist,
+    documents: record.documents,
+    previousSubmissions: record.previousSubmissions,
+    reviewHistory: record.reviewHistory,
+    internalNotes: record.internalNotes,
+    comparisonData: record.comparisonData,
+    components: record.components || {},
+  }
+}
+
+/**
+ * 8. Submit Component Decision (ADM-031)
+ *
+ * @param {Object} payload
+ * @param {string} payload.verificationId
+ * @param {string} payload.componentKey
+ * @param {string} payload.decision - 'APPROVE' | 'REQUEST_CHANGES' | 'REJECT' | 'ESCALATE'
+ * @param {Object} [payload.checklistResults]
+ * @param {string} [payload.reason]
+ * @param {string} [payload.providerMessage]
+ * @param {string} [payload.internalNote]
+ * @param {number} [payload.expectedVersion]
+ */
+export async function submitComponentDecision(payload) {
+  const {
+    verificationId,
+    componentKey,
+    decision,
+    checklistResults = {},
+    reason = '',
+    providerMessage = '',
+    internalNote = '',
+    expectedVersion,
+  } = payload
+
+  if (!isVerificationMockMode()) {
+    try {
+      const result = await callAdmin('adminSubmitComponentDecision', payload)
+      if (result?.success) {
+        return result
+      }
+    } catch (err) {
+      console.warn(
+        '[verificationService] Cloud Function adminSubmitComponentDecision failed. Falling back to local store.',
+        err?.message
+      )
+    }
+  }
+
+  // Local fallback
+  let record = localReviewRecords.get(verificationId)
+  if (!record) {
+    record = generateInitialReviewRecord(verificationId)
+    localReviewRecords.set(verificationId, record)
+  }
+
+  if (typeof expectedVersion === 'number' && record.version && record.version !== expectedVersion) {
+    console.warn('[verificationService] Concurrency version check warning', { expected: expectedVersion, current: record.version })
+  }
+
+  const normalizedDecision = String(decision).toUpperCase()
+  const nextVersion = (record.version || 1) + 1
+  record.version = nextVersion
+
+  // Update step status in progressSteps
+  record.progressSteps = (record.progressSteps || []).map((step) => {
+    if (step.id === componentKey || (componentKey === 'CREDENTIALS' && step.number === 2)) {
+      return {
+        ...step,
+        status: normalizedDecision === 'APPROVE' ? 'APPROVED' : normalizedDecision === 'REQUEST_CHANGES' ? 'CHANGES_REQUESTED' : normalizedDecision === 'REJECT' ? 'REJECTED' : 'ESCALATED',
+      }
+    }
+    return step
+  })
+
+  // Update tabs status
+  record.componentTabs = (record.componentTabs || []).map((tab) => {
+    if (tab.id === componentKey) {
+      return {
+        ...tab,
+        status: normalizedDecision === 'APPROVE' ? 'APPROVED' : normalizedDecision === 'REQUEST_CHANGES' ? 'CHANGES_REQUESTED' : normalizedDecision === 'REJECT' ? 'REJECTED' : 'ESCALATED',
+        badgeCount: 0,
+      }
+    }
+    return tab
+  })
+
+  // Update overall status
+  if (normalizedDecision === 'APPROVE') {
+    const allApproved = record.progressSteps.every((s) => s.status === 'APPROVED')
+    if (componentKey === 'FINAL' || allApproved) {
+      record.status = 'APPROVED'
+    } else {
+      record.status = 'UNDER_REVIEW'
+    }
+  } else if (normalizedDecision === 'REQUEST_CHANGES') {
+    record.status = 'CHANGES_REQUESTED'
+  } else if (normalizedDecision === 'REJECT') {
+    record.status = 'REJECTED'
+  } else if (normalizedDecision === 'ESCALATE') {
+    record.status = 'ESCALATED'
+  }
+
+  // Update checklist items if checklistResults provided
+  if (checklistResults && Object.keys(checklistResults).length > 0) {
+    record.checklist = (record.checklist || []).map((item) => {
+      if (checklistResults[item.key] !== undefined) {
+        const val = checklistResults[item.key]
+        return {
+          ...item,
+          status: val === true || val === 'Pass' ? 'Pass' : val === 'Needs review' ? 'Needs review' : 'Fail',
+          resultType: val === true || val === 'Pass' ? 'pass' : val === 'Needs review' ? 'review' : 'fail',
+        }
+      }
+      return item
+    })
+  }
+
+  // Append to review history
+  const historyEntry = {
+    id: `rh-${Date.now()}`,
+    time: 'Just now',
+    title: `${normalizedDecision === 'APPROVE' ? 'Approved' : normalizedDecision === 'REQUEST_CHANGES' ? 'Changes requested for' : normalizedDecision === 'REJECT' ? 'Rejected' : 'Escalated'} ${componentKey}`,
+    actor: 'Jane Ochieng',
+    type: normalizedDecision.toLowerCase(),
+    notes: reason || internalNote || providerMessage || '',
+  }
+  record.reviewHistory = [historyEntry, ...(record.reviewHistory || [])]
+
+  // Append internal note if supplied
+  if (internalNote && internalNote.trim()) {
+    const newNote = {
+      id: `note-${Date.now()}`,
+      authorName: 'Jane Ochieng',
+      authorRole: 'Verification Specialist',
+      text: internalNote.trim(),
+      createdAt: 'Just now',
+    }
+    record.internalNotes = [newNote, ...(record.internalNotes || [])]
+  }
+
+  // Update queue item
+  const queueItem = localQueue.find((r) => r.id === record.id || r.providerId === record.providerId)
+  if (queueItem) {
+    queueItem.status = record.status
+    queueItem.version = nextVersion
+  }
+  recalculateLocalMetrics()
+
+  return {
+    success: true,
+    verificationId: record.id,
+    componentKey,
+    decision: normalizedDecision,
+    status: record.status,
+    version: nextVersion,
+  }
+}
+
+/**
+ * 9. Add Internal Note (ADM-031)
+ *
+ * @param {string} verificationId
+ * @param {string} noteText
+ * @returns {Promise<Object>}
+ */
+export async function addInternalNote(verificationId, noteText) {
+  if (!isVerificationMockMode()) {
+    try {
+      const result = await callAdmin('adminAddVerificationInternalNote', { verificationId, noteText })
+      if (result?.success) {
+        return result
+      }
+    } catch (err) {
+      console.warn(
+        '[verificationService] Cloud Function adminAddVerificationInternalNote failed. Falling back to local store.',
+        err?.message
+      )
+    }
+  }
+
+  let record = localReviewRecords.get(verificationId)
+  if (!record) {
+    record = generateInitialReviewRecord(verificationId)
+    localReviewRecords.set(verificationId, record)
+  }
+
+  const newNote = {
+    id: `note-${Date.now()}`,
+    authorName: 'Jane Ochieng',
+    authorRole: 'Verification Specialist',
+    text: noteText.trim(),
+    createdAt: 'Just now',
+  }
+
+  record.internalNotes = [newNote, ...(record.internalNotes || [])]
+  return {
+    success: true,
+    note: newNote,
+  }
+}
+
+/**
  * Service object export for standard import patterns.
  */
 export const verificationService = {
@@ -642,6 +1292,9 @@ export const verificationService = {
   escalateCase,
   assignReviewer,
   submitVerificationDecision,
+  fetchVerificationDetail,
+  submitComponentDecision,
+  addInternalNote,
   isMockMode: isVerificationMockMode,
   setMockMode: setVerificationMockMode,
 }

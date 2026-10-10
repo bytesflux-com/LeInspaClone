@@ -40,6 +40,9 @@ export {
   adminGetVerificationQueueDetailed,
   adminClaimVerificationCase,
   adminEscalateVerificationCase,
+  adminGetVerificationDetail,
+  adminSubmitComponentDecision,
+  adminAddVerificationInternalNote,
 } from './adminVerification.js'
 
 
