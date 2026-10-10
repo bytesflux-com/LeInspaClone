@@ -1283,6 +1283,445 @@ export async function addInternalNote(verificationId, noteText) {
 }
 
 /**
+ * ============================================================================
+ * ADM-032: IDENTITY DOCUMENTS REVIEW SERVICES & MOCK REPOSITORY
+ * ============================================================================
+ */
+
+const localIdentityRecords = new Map()
+
+function generateInitialIdentityRecord(verificationId) {
+  const baseReview = localReviewRecords.get(verificationId) || localQueue.find((r) => r.id === verificationId || r.providerId === verificationId) || {}
+  const providerCategory = baseReview?.providerCategory || 'INDIVIDUAL'
+  const isSpa = providerCategory === 'SPA_WELLNESS' || verificationId?.includes('spa') || verificationId === 'ver-002' || verificationId === 'SPA-28192'
+  const isHotel = providerCategory === 'HOTEL_RESORT' || verificationId?.includes('hotel') || verificationId === 'ver-003' || verificationId === 'HOTEL-55102'
+
+  let personName = 'Grace Njeri'
+  let docName = 'Grace Wanjiku Njeri'
+  let providerId = 'PR-82941'
+  let businessName = null
+  let representative = null
+  let idNumberMasked = '•••• •••• 4821'
+  let idNumberPlain = '1234 5678 4821'
+  let dobMasked = '••/••/1998'
+  let dobPlain = '14 Mar 1998'
+  let nationality = 'KENYAN'
+  let sex = 'F'
+  let market = { code: 'KE', name: 'Kenya', flag: '🇰🇪' }
+
+  if (isSpa) {
+    personName = 'Mary Wanjiku'
+    docName = 'Mary Wanjiku Kamau'
+    providerId = 'SPA-28192'
+    businessName = 'Serenity Wellness Spa'
+    representative = {
+      name: 'Mary Wanjiku',
+      role: 'Business Owner / Authorized Representative',
+      title: 'Managing Director & Founder',
+      businessName: 'Serenity Wellness Spa',
+      email: 'm.wanjiku@serenityspa.co.ke',
+      phone: '+254 722 998 877',
+      authorizedDocument: 'CR12 Official Company Registry Certificate',
+      mandateVerified: true,
+    }
+    idNumberMasked = '•••• •••• 9102'
+    idNumberPlain = '2481 9021 9102'
+    dobMasked = '••/••/1986'
+    dobPlain = '22 Jun 1986'
+  } else if (isHotel) {
+    personName = 'David Mwangi'
+    docName = 'David Kariuki Mwangi'
+    providerId = 'HOTEL-55102'
+    businessName = 'Savanna Wellness Resort'
+    representative = {
+      name: 'David Mwangi',
+      role: 'Property Administrator',
+      title: 'General Manager & Authorized Signatory',
+      businessName: 'Savanna Wellness Resort',
+      email: 'd.mwangi@marawellness.ke',
+      phone: '+254 733 112 233',
+      authorizedDocument: 'Board Resolution & TRA Hospitality Mandate',
+      mandateVerified: true,
+    }
+    idNumberMasked = '•••• •••• 3319'
+    idNumberPlain = '1982 7492 3319'
+    dobMasked = '••/••/1982'
+    dobPlain = '08 Nov 1982'
+    sex = 'M'
+  }
+
+  return {
+    id: verificationId || 'ver-001',
+    providerId,
+    providerCategory: isSpa ? 'SPA_WELLNESS' : isHotel ? 'HOTEL_RESORT' : 'INDIVIDUAL',
+    name: personName,
+    businessName,
+    representative,
+    type: isSpa ? 'Spa & Wellness Center' : isHotel ? 'Hotel & Wellness Resort' : 'Massage Therapist',
+    market,
+    status: 'AWAITING_REVIEW', // Soft amber badge in snapshot
+    submittedAt: '12 Sep 2026 • 10:42 AM',
+    assignedTo: 'Jane Ochieng',
+    assignedReviewer: {
+      uid: 'reviewer-jane',
+      name: 'Jane Ochieng',
+      avatarUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=80',
+    },
+    version: 2,
+    document: {
+      type: 'National ID',
+      docNumberMasked: idNumberMasked,
+      docNumberPlain: idNumberPlain,
+      nameOnDoc: docName,
+      issuedBy: 'Government of Kenya',
+      issueDate: '14 Mar 2018',
+      expiryDate: 'Not Applicable',
+      uploadedAt: '12 Sep 2026 • 10:42 AM',
+      fileStatus: 'Readable',
+      dobMasked,
+      dobPlain,
+      nationality,
+      sex,
+      frontSideUrl: '/images/mock-kenya-id-front.png',
+      backSideUrl: '/images/mock-kenya-id-back.png',
+      isFrontRevealed: false,
+      isNumberRevealed: false,
+      isDobRevealed: false,
+    },
+    documentSlots: [
+      { id: 'national_id', label: 'National ID', active: true, count: 2, status: 'SUBMITTED' },
+      { id: 'passport', label: 'Passport', active: false, count: 0, status: 'OPTIONAL' },
+      { id: 'supporting_doc', label: 'Supporting Document', active: false, count: 0, status: 'OPTIONAL' },
+    ],
+    comparisonTable: [
+      {
+        id: 'cmp-1',
+        field: 'Full Name',
+        account: personName,
+        document: docName,
+        result: 'Review',
+        resultType: 'review',
+        note: 'Name variation / middle name present',
+      },
+      {
+        id: 'cmp-2',
+        field: 'Country',
+        account: 'Kenya',
+        document: 'Kenya',
+        result: 'Match',
+        resultType: 'match',
+        note: 'Matches operating sovereign jurisdiction',
+      },
+      {
+        id: 'cmp-3',
+        field: 'Date of Birth',
+        account: dobMasked,
+        document: dobPlain,
+        accountPlain: dobPlain,
+        documentPlain: dobPlain,
+        result: 'Match',
+        resultType: 'match',
+        note: 'DOB verified against civil registry',
+      },
+      {
+        id: 'cmp-4',
+        field: 'Document Type',
+        account: 'National ID',
+        document: 'National ID',
+        result: 'Match',
+        resultType: 'match',
+        note: 'Accepted Kenyan National Identification',
+      },
+      {
+        id: 'cmp-5',
+        field: 'Document Number',
+        account: idNumberMasked,
+        document: idNumberMasked,
+        accountPlain: idNumberPlain,
+        documentPlain: idNumberPlain,
+        result: 'Match',
+        resultType: 'match',
+        note: 'National Registration Bureau format confirmed',
+      },
+    ],
+    checklist: [
+      { key: 'documentTypeAccepted', label: 'Document type accepted', status: 'Pass', resultType: 'pass', description: 'Official Republic of Kenya National ID' },
+      { key: 'documentComplete', label: 'Document appears complete', status: 'Pass', resultType: 'pass', description: 'Both front and back sides provided with full borders' },
+      { key: 'isReadable', label: 'Document is readable', status: 'Pass', resultType: 'pass', description: 'High contrast text and biometric facial photo sharp' },
+      { key: 'nameMatches', label: 'Name matches / reasonably corresponds', status: 'Needs review', resultType: 'review', description: 'Middle name present on ID' },
+      { key: 'requiredInfoPresent', label: 'Required information is present', status: 'Pass', resultType: 'pass', description: 'ID number, DOB, sex, and issuance authority verified' },
+      { key: 'isCurrent', label: 'Document is current (not expired)', status: 'Pass', resultType: 'pass', description: 'Perpetual statutory validity under Kenyan Registration law' },
+      { key: 'noTampering', label: 'No obvious tampering concern', status: 'Pass', resultType: 'pass', description: 'Guilloche background, coat of arms, and ghost photo intact' },
+    ],
+    previousSubmissions: [
+      {
+        version: 2,
+        isCurrent: true,
+        submittedAt: '12 Sep 2026 • 10:42 AM',
+        status: 'Under Review',
+        statusType: 'under_review',
+        fileName: 'National_ID_Front_and_Back_v2.pdf',
+        reviewer: 'Jane Ochieng',
+        notes: 'Resubmitted with clear high-resolution back side scan.',
+      },
+      {
+        version: 1,
+        isCurrent: false,
+        submittedAt: '10 Sep 2026 • 9:15 AM',
+        status: 'Changes Requested',
+        statusType: 'changes_requested',
+        fileName: 'National_ID_Scan_v1.pdf',
+        reviewer: 'Jane Ochieng',
+        notes: 'Back side unreadable due to blurriness and glare.',
+      },
+    ],
+    reviewHistory: [
+      { id: 'irh-1', time: '12 Sep 2026 • 11:20 AM', title: 'Review started by Jane Ochieng', actor: 'Jane Ochieng', type: 'review_started' },
+      { id: 'irh-2', time: '12 Sep 2026 • 11:05 AM', title: 'Assigned to Jane Ochieng by System', actor: 'System', type: 'assignment' },
+      { id: 'irh-3', time: '12 Sep 2026 • 10:42 AM', title: `Document submitted by ${personName}`, actor: personName, type: 'submission' },
+      { id: 'irh-4', time: '10 Sep 2026 • 3:02 PM', title: 'Changes requested — Back side unreadable', actor: 'Jane Ochieng', type: 'changes_requested' },
+      { id: 'irh-5', time: '10 Sep 2026 • 2:15 PM', title: 'Identity document submitted', actor: personName, type: 'submission' },
+    ],
+    internalNotes: [
+      {
+        id: 'in-1',
+        authorName: 'Jane Ochieng',
+        authorRole: 'Verification Specialist',
+        createdAt: '12 Sep 2026 • 11:25 AM',
+        text: 'Middle name verified against Kenya National Registration Bureau record format. Resubmitted back scan confirms serial number 2803144.',
+      },
+    ],
+  }
+}
+
+/**
+ * 10. Fetch Identity Verification Detail (ADM-032)
+ */
+export async function fetchIdentityVerificationDetail(verificationId) {
+  if (!isVerificationMockMode()) {
+    try {
+      const result = await callAdmin('adminGetIdentityVerificationDetail', { verificationId })
+      if (result?.verificationId || result?.name) {
+        return result
+      }
+    } catch (err) {
+      console.warn(
+        '[verificationService] Cloud Function adminGetIdentityVerificationDetail failed. Falling back to local store.',
+        err?.message
+      )
+    }
+  }
+
+  if (!localIdentityRecords.has(verificationId)) {
+    const fresh = generateInitialIdentityRecord(verificationId)
+    localIdentityRecords.set(verificationId, fresh)
+    if (fresh.providerId) localIdentityRecords.set(fresh.providerId, fresh)
+    if (fresh.id) localIdentityRecords.set(fresh.id, fresh)
+  }
+
+  return localIdentityRecords.get(verificationId)
+}
+
+/**
+ * 11. Reveal Sensitive Identity Field (ADM-032)
+ */
+export async function revealSensitiveIdentityField(verificationId, fieldName) {
+  if (!isVerificationMockMode()) {
+    try {
+      const result = await callAdmin('adminRevealSensitiveIdentityField', { verificationId, fieldName })
+      if (result?.plainValue) {
+        return result
+      }
+    } catch (err) {
+      console.warn(
+        '[verificationService] Cloud Function adminRevealSensitiveIdentityField failed. Falling back to local unmask.',
+        err?.message
+      )
+    }
+  }
+
+  const record = localIdentityRecords.get(verificationId) || generateInitialIdentityRecord(verificationId)
+  localIdentityRecords.set(verificationId, record)
+
+  let plainValue = ''
+  if (fieldName === 'documentNumber') {
+    plainValue = record.document?.docNumberPlain || '1234 5678 4821'
+    record.document.isNumberRevealed = true
+  } else if (fieldName === 'dob') {
+    plainValue = record.document?.dobPlain || '14 Mar 1998'
+    record.document.isDobRevealed = true
+  }
+
+  // Audit log mock record
+  console.info(`[AUDIT LOG] SENSITIVE_IDENTITY_DATA_REVEALED: ${fieldName} unmasked for ${verificationId} by Jane Ochieng`)
+
+  return {
+    success: true,
+    verificationId,
+    fieldName,
+    plainValue,
+    revealedBy: 'Jane Ochieng',
+    revealedAt: new Date().toISOString(),
+  }
+}
+
+/**
+ * 12. Submit Identity Decision (ADM-032)
+ */
+export async function submitIdentityDecision(payload) {
+  const {
+    verificationId,
+    decision,
+    checklistResults = {},
+    reason = '',
+    providerMessage = '',
+    internalNote = '',
+    expectedVersion,
+  } = payload
+
+  if (!isVerificationMockMode()) {
+    try {
+      const result = await callAdmin('adminSubmitIdentityDecision', payload)
+      if (result?.success) {
+        return result
+      }
+    } catch (err) {
+      console.warn(
+        '[verificationService] Cloud Function adminSubmitIdentityDecision failed. Falling back to local store.',
+        err?.message
+      )
+    }
+  }
+
+  let record = localIdentityRecords.get(verificationId)
+  if (!record) {
+    record = generateInitialIdentityRecord(verificationId)
+    localIdentityRecords.set(verificationId, record)
+  }
+
+  const normalizedDecision = String(decision).toUpperCase()
+  const nextVersion = (record.version || 2) + 1
+  record.version = nextVersion
+
+  const statusMap = {
+    APPROVE: 'APPROVED',
+    REQUEST_CHANGES: 'CHANGES_REQUESTED',
+    REJECT: 'REJECTED',
+    ESCALATE: 'ESCALATED',
+  }
+  const newStatus = statusMap[normalizedDecision] || normalizedDecision
+  record.status = newStatus
+
+  // Update checklist items if provided
+  if (checklistResults && Object.keys(checklistResults).length > 0) {
+    record.checklist = record.checklist.map((item) => {
+      if (checklistResults[item.key] !== undefined) {
+        const val = checklistResults[item.key]
+        return {
+          ...item,
+          status: val === true || val === 'Pass' ? 'Pass' : val === 'Needs review' ? 'Needs review' : 'Fail',
+          resultType: val === true || val === 'Pass' ? 'pass' : val === 'Needs review' ? 'review' : 'fail',
+        }
+      }
+      return item
+    })
+  }
+
+  // Append to review history
+  const historyTitles = {
+    APPROVE: 'Identity document approved by Jane Ochieng',
+    REQUEST_CHANGES: `Changes requested — ${reason || 'New document required'}`,
+    REJECT: `Identity verification rejected — ${reason}`,
+    ESCALATE: `Identity case escalated — ${reason || 'Senior compliance review'}`,
+  }
+
+  const newHistoryItem = {
+    id: `irh-${Date.now()}`,
+    time: 'Just now',
+    title: historyTitles[normalizedDecision] || `Identity decision: ${normalizedDecision}`,
+    actor: 'Jane Ochieng',
+    type: normalizedDecision.toLowerCase(),
+    notes: reason || internalNote || providerMessage || '',
+  }
+  record.reviewHistory = [newHistoryItem, ...record.reviewHistory]
+
+  // If requesting changes, update previous submissions
+  if (normalizedDecision === 'REQUEST_CHANGES') {
+    const updatedSubmissions = record.previousSubmissions.map((sub) => {
+      if (sub.isCurrent) {
+        return {
+          ...sub,
+          isCurrent: false,
+          status: 'Changes Requested',
+          statusType: 'changes_requested',
+          notes: reason || providerMessage || 'Resubmission required',
+        }
+      }
+      return sub
+    })
+    record.previousSubmissions = [
+      {
+        version: nextVersion,
+        isCurrent: true,
+        submittedAt: 'Pending provider resubmission',
+        status: 'Awaiting Resubmission',
+        statusType: 'changes_requested',
+        fileName: 'Pending upload...',
+        reviewer: 'Jane Ochieng',
+        notes: reason || providerMessage,
+      },
+      ...updatedSubmissions,
+    ]
+  }
+
+  // Append internal note if provided
+  if (internalNote && internalNote.trim()) {
+    record.internalNotes = [
+      {
+        id: `in-${Date.now()}`,
+        authorName: 'Jane Ochieng',
+        authorRole: 'Verification Specialist',
+        createdAt: 'Just now',
+        text: internalNote.trim(),
+      },
+      ...record.internalNotes,
+    ]
+  }
+
+  // Synchronize state with ADM-031 review record (localReviewRecords)
+  let parentReview = localReviewRecords.get(verificationId) || localReviewRecords.get(record.providerId)
+  if (parentReview) {
+    parentReview.progressSteps = (parentReview.progressSteps || []).map((step) => {
+      if (step.id === 'IDENTITY' || step.number === 1) {
+        return {
+          ...step,
+          status: newStatus === 'APPROVED' ? 'APPROVED' : newStatus === 'CHANGES_REQUESTED' ? 'CHANGES_REQUESTED' : newStatus === 'REJECTED' ? 'REJECTED' : 'REVIEWING_NOW',
+        }
+      }
+      return step
+    })
+
+    parentReview.componentTabs = (parentReview.componentTabs || []).map((tab) => {
+      if (tab.id === 'IDENTITY') {
+        return {
+          ...tab,
+          status: newStatus === 'APPROVED' ? 'APPROVED' : newStatus === 'CHANGES_REQUESTED' ? 'CHANGES_REQUESTED' : newStatus === 'REJECTED' ? 'REJECTED' : 'PENDING',
+        }
+      }
+      return tab
+    })
+  }
+
+  return {
+    success: true,
+    verificationId: record.id,
+    decision: normalizedDecision,
+    status: newStatus,
+    version: nextVersion,
+  }
+}
+
+/**
  * Service object export for standard import patterns.
  */
 export const verificationService = {
@@ -1295,7 +1734,11 @@ export const verificationService = {
   fetchVerificationDetail,
   submitComponentDecision,
   addInternalNote,
+  fetchIdentityVerificationDetail,
+  revealSensitiveIdentityField,
+  submitIdentityDecision,
   isMockMode: isVerificationMockMode,
   setMockMode: setVerificationMockMode,
 }
+
 

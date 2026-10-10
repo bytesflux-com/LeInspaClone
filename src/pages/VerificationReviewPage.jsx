@@ -109,12 +109,13 @@ export default function VerificationReviewPage() {
 
   // Handle Tab Selection
   const handleSelectTab = (tabId) => {
-    setActiveTabId(tabId)
-    // If switching to identity or other docs, pick corresponding document if available
     if (tabId === 'IDENTITY') {
-      const idDoc = documents.find((d) => d.id === 'doc-102' || d.docType?.includes('ID'))
-      if (idDoc) setActiveDoc(idDoc)
-    } else if (tabId === 'CREDENTIALS' || tabId === 'PREMISES_PERMIT' || tabId === 'HOSPITALITY_LIC') {
+      navigate(`/verifications/identity/${targetId}`)
+      return
+    }
+    setActiveTabId(tabId)
+    // If switching to credentials or other docs, pick corresponding document if available
+    if (tabId === 'CREDENTIALS' || tabId === 'PREMISES_PERMIT' || tabId === 'HOSPITALITY_LIC') {
       const certDoc = documents.find((d) => d.id === 'doc-101' || d.docType?.includes('Certificate') || d.docType?.includes('Permit'))
       if (certDoc) setActiveDoc(certDoc)
     }

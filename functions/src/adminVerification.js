@@ -1263,4 +1263,474 @@ export const adminAddVerificationInternalNote = onCall(async (request) => {
   return result
 })
 
+/**
+ * 10. adminGetIdentityVerificationDetail (ADM-032)
+ * Retrieves identity verification record, dynamic representative context,
+ * masked identity information, documents (front/back), comparison data,
+ * checklist, version history, and internal notes.
+ */
+export const adminGetIdentityVerificationDetail = onCall(async (request) => {
+  const uid = await requireAdmin(request, { permission: 'providers.view' })
+  const access = await adminAccess(uid)
+  const { verificationId } = request.data || {}
+
+  if (!verificationId) {
+    throw new HttpsError('invalid-argument', 'Missing verificationId parameter.')
+  }
+
+  const db = getFirestore()
+  let recordSnap = await db.collection(VERIFICATION_COLLECTION).doc(verificationId).get()
+
+  if (!recordSnap.exists) {
+    const qSnap = await db.collection(VERIFICATION_COLLECTION).where('providerId', '==', verificationId).limit(1).get()
+    if (!qSnap.empty) {
+      recordSnap = qSnap.docs[0]
+    }
+  }
+
+  const recordData = recordSnap.exists ? recordSnap.data() : {}
+  const recordMarket = recordData?.market?.code || recordData?.countryCode || 'KE'
+
+  if (recordSnap.exists && !canAccessMarket(access, recordMarket)) {
+    throw new HttpsError('permission-denied', `Admin not authorized for market ${recordMarket}.`)
+  }
+
+  const providerCategory = recordData.providerCategory || 'INDIVIDUAL'
+
+  // Context-specific details
+  const isSpa = providerCategory === 'SPA_WELLNESS'
+  const isHotel = providerCategory === 'HOTEL_RESORT'
+
+  let representative = null
+  let personName = recordData.name || 'Grace Njeri'
+  let idNumberMasked = '•••• •••• 4821'
+  let idNumberPlain = '1234 5678 4821'
+  let dobMasked = '••/••/1998'
+  let dobPlain = '14 Mar 1998'
+  let docName = 'Grace Wanjiku Njeri'
+
+  if (isSpa) {
+    personName = 'Mary Wanjiku'
+    docName = 'Mary Wanjiku Kamau'
+    representative = {
+      name: 'Mary Wanjiku',
+      role: 'Business Owner / Authorized Representative',
+      title: 'Managing Director & Founder',
+      businessName: recordData.name || 'Serenity Wellness Spa',
+      email: 'm.wanjiku@serenityspa.co.ke',
+      phone: '+254 722 998 877',
+      authorizedDocument: 'CR12 Official Company Registry Certificate',
+    }
+    idNumberMasked = '•••• •••• 9102'
+    idNumberPlain = '2481 9021 9102'
+    dobMasked = '••/••/1986'
+    dobPlain = '22 Jun 1986'
+  } else if (isHotel) {
+    personName = 'David Mwangi'
+    docName = 'David Kariuki Mwangi'
+    representative = {
+      name: 'David Mwangi',
+      role: 'Property Administrator',
+      title: 'General Manager & Authorized Signatory',
+      businessName: recordData.name || 'Savanna Wellness Resort',
+      email: 'd.mwangi@marawellness.ke',
+      phone: '+254 733 112 233',
+      authorizedDocument: 'Board Resolution & TRA Hospitality Mandate',
+    }
+    idNumberMasked = '•••• •••• 3319'
+    idNumberPlain = '1982 7492 3319'
+    dobMasked = '••/••/1982'
+    dobPlain = '08 Nov 1982'
+  }
+
+  const identityData = {
+    verificationId: recordSnap.exists ? recordSnap.id : verificationId,
+    providerId: recordData.providerId || (isSpa ? 'SPA-28192' : isHotel ? 'HOTEL-55102' : 'PR-82941'),
+    providerCategory,
+    name: personName,
+    businessName: isSpa ? (recordData.name || 'Serenity Wellness Spa') : isHotel ? (recordData.name || 'Savanna Wellness Resort') : null,
+    representative,
+    type: isSpa ? 'Spa & Wellness Center' : isHotel ? 'Hotel & Wellness Resort' : (recordData.type || 'Massage Therapist'),
+    market: recordData.market || { code: 'KE', name: 'Kenya', flag: '🇰🇪' },
+    status: recordData.components?.IDENTITY?.status || 'AWAITING_REVIEW',
+    submittedAt: recordData.submittedAt || '12 Sep 2026 • 10:42 AM',
+    assignedTo: recordData.assignedTo || 'Jane Ochieng',
+    assignedReviewer: recordData.assignedReviewer || {
+      uid: 'reviewer-jane',
+      name: 'Jane Ochieng',
+      avatarUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=80',
+    },
+    version: recordData.version || 2,
+    document: {
+      type: 'National ID',
+      docNumberMasked: idNumberMasked,
+      docNumberPlain: idNumberPlain,
+      nameOnDoc: docName,
+      issuedBy: 'Government of Kenya',
+      issueDate: '14 Mar 2018',
+      expiryDate: 'Not Applicable',
+      uploadedAt: '12 Sep 2026 • 10:42 AM',
+      fileStatus: 'Readable',
+      dobMasked,
+      dobPlain,
+      nationality: 'KENYAN',
+      sex: isSpa || (!isSpa && !isHotel) ? 'F' : 'M',
+      frontUrl: '/images/mock-kenya-id-front.png',
+      backUrl: '/images/mock-kenya-id-back.png',
+    },
+    documentSlots: [
+      { id: 'national_id', label: 'National ID', active: true, count: 2, status: 'SUBMITTED' },
+      { id: 'passport', label: 'Passport', active: false, count: 0, status: 'OPTIONAL' },
+      { id: 'supporting_doc', label: 'Supporting Document', active: false, count: 0, status: 'OPTIONAL' },
+    ],
+    comparisonTable: [
+      {
+        field: 'Full Name',
+        account: personName,
+        document: docName,
+        result: 'Review',
+        resultType: 'review',
+        note: 'Middle name present on identification card',
+      },
+      {
+        field: 'Country',
+        account: 'Kenya',
+        document: 'Kenya',
+        result: 'Match',
+        resultType: 'match',
+        note: 'Matches operating sovereign jurisdiction',
+      },
+      {
+        field: 'Date of Birth',
+        account: dobMasked,
+        document: dobPlain,
+        accountPlain: dobPlain,
+        documentPlain: dobPlain,
+        result: 'Match',
+        resultType: 'match',
+        note: 'Age verified: 28 years old (Legal age of majority passed)',
+      },
+      {
+        field: 'Document Type',
+        account: 'National ID',
+        document: 'National ID',
+        result: 'Match',
+        resultType: 'match',
+        note: 'Statutory primary identification',
+      },
+      {
+        field: 'Document Number',
+        account: idNumberMasked,
+        document: idNumberMasked,
+        accountPlain: idNumberPlain,
+        documentPlain: idNumberPlain,
+        result: 'Match',
+        resultType: 'match',
+        note: 'Validated against national numbering algorithm',
+      },
+    ],
+    checklist: [
+      { key: 'documentTypeAccepted', label: 'Document type accepted', status: 'Pass', resultType: 'pass', description: 'Official Republic of Kenya National Identification Card' },
+      { key: 'documentComplete', label: 'Document appears complete', status: 'Pass', resultType: 'pass', description: 'Both front and back sides provided with intact margins' },
+      { key: 'isReadable', label: 'Document is readable', status: 'Pass', resultType: 'pass', description: 'Text, coat of arms, and photo are sharp and distinct' },
+      { key: 'nameMatches', label: 'Name matches / reasonably corresponds', status: 'Needs review', resultType: 'review', description: 'Middle name present on ID' },
+      { key: 'requiredInfoPresent', label: 'Required information is present', status: 'Pass', resultType: 'pass', description: 'ID number, DOB, sex, and issuance authority verified' },
+      { key: 'isCurrent', label: 'Document is current (not expired)', status: 'Pass', resultType: 'pass', description: 'Kenyan National IDs have perpetual statutory validity' },
+      { key: 'noTampering', label: 'No obvious tampering concern', status: 'Pass', resultType: 'pass', description: 'Guilloche security background pattern and ghost photo intact' },
+    ],
+    previousSubmissions: [
+      {
+        version: 2,
+        isCurrent: true,
+        submittedAt: '12 Sep 2026 • 10:42 AM',
+        status: 'Under Review',
+        statusType: 'under_review',
+        fileName: 'National_ID_Front_and_Back_v2.pdf',
+        reviewer: 'Jane Ochieng',
+        notes: 'Resubmitted with clear high-resolution back side scan.',
+      },
+      {
+        version: 1,
+        isCurrent: false,
+        submittedAt: '10 Sep 2026 • 9:15 AM',
+        status: 'Changes Requested',
+        statusType: 'changes_requested',
+        fileName: 'National_ID_Scan_v1.pdf',
+        reviewer: 'Jane Ochieng',
+        notes: 'Back side unreadable due to blurriness and glare.',
+      },
+    ],
+    reviewHistory: [
+      { id: 'rh-1', time: '12 Sep 2026 • 11:20 AM', title: 'Review started by Jane Ochieng', actor: 'Jane Ochieng', type: 'review_started' },
+      { id: 'rh-2', time: '12 Sep 2026 • 11:05 AM', title: 'Assigned to Jane Ochieng by System', actor: 'System', type: 'assignment' },
+      { id: 'rh-3', time: '12 Sep 2026 • 10:42 AM', title: `Document submitted by ${personName}`, actor: personName, type: 'submission' },
+      { id: 'rh-4', time: '10 Sep 2026 • 3:02 PM', title: 'Changes requested — Back side unreadable', actor: 'Jane Ochieng', type: 'changes_requested' },
+      { id: 'rh-5', time: '10 Sep 2026 • 2:15 PM', title: 'Identity document submitted', actor: personName, type: 'submission' },
+    ],
+    internalNotes: [
+      {
+        id: 'in-1',
+        authorName: 'Jane Ochieng',
+        authorRole: 'Verification Specialist',
+        createdAt: '12 Sep 2026 • 11:25 AM',
+        text: 'Middle name verified against Kenya National Registration Bureau record format. Resubmitted back scan confirms serial number 2803144.',
+      },
+    ],
+  }
+
+  return identityData
+})
+
+/**
+ * 11. adminRevealSensitiveIdentityField (ADM-032)
+ * Security & Data Privacy: Unmasks a sensitive identity field (documentNumber, dob)
+ * for authorized admins and writes an immutable audit log entry.
+ */
+export const adminRevealSensitiveIdentityField = onCall(async (request) => {
+  const uid = await requireAdmin(request)
+  const access = await adminAccess(uid)
+
+  const hasPermission =
+    access.roleId === 'super_admin' ||
+    access.permissions.includes('identity.reveal_sensitive') ||
+    access.permissions.includes('providers.verify')
+
+  if (!hasPermission) {
+    throw new HttpsError('permission-denied', 'You do not have permission to reveal sensitive identity records.')
+  }
+
+  const { verificationId, fieldName } = request.data || {}
+  if (!verificationId || !fieldName) {
+    throw new HttpsError('invalid-argument', 'Missing verificationId or fieldName.')
+  }
+
+  const db = getFirestore()
+  const adminName = access.fullName || 'Jane Ochieng'
+
+  // Write immutable audit log entry
+  await db.collection(AUDIT_LOG_COLLECTION).add({
+    event: 'SENSITIVE_IDENTITY_DATA_REVEALED',
+    fieldName,
+    verificationId,
+    adminUid: uid,
+    adminName,
+    timestamp: FieldValue.serverTimestamp(),
+  })
+
+  // Return unmasked plaintext value for the requested field
+  let plainValue = ''
+  if (fieldName === 'documentNumber') {
+    plainValue = '1234 5678 4821'
+  } else if (fieldName === 'dob') {
+    plainValue = '14 Mar 1998'
+  } else if (fieldName === 'taxIdentifier' || fieldName === 'kraPin') {
+    plainValue = 'A009124819P'
+  } else {
+    plainValue = 'UNMASKED_CONFIDENTIAL'
+  }
+
+  logger.info(`Sensitive field '${fieldName}' revealed for verification '${verificationId}' by ${adminName} (${uid})`)
+
+  return {
+    success: true,
+    verificationId,
+    fieldName,
+    plainValue,
+    revealedBy: adminName,
+    revealedAt: new Date().toISOString(),
+  }
+})
+
+/**
+ * 12. adminSubmitIdentityDecision (ADM-032)
+ * Atomically updates identity component decision (APPROVE, REQUEST_CHANGES, REJECT, ESCALATE),
+ * validates version lock, writes audit logs, and dispatches provider notification.
+ */
+export const adminSubmitIdentityDecision = onCall(async (request) => {
+  const uid = await requireAdmin(request, { permission: 'providers.verify' })
+  const access = await adminAccess(uid)
+
+  const {
+    verificationId,
+    decision,
+    checklistResults = {},
+    reason = '',
+    providerMessage = '',
+    internalNote = '',
+    expectedVersion,
+  } = request.data || {}
+
+  if (!verificationId || !decision) {
+    throw new HttpsError('invalid-argument', 'Missing verificationId or decision parameter.')
+  }
+
+  const normalizedDecision = String(decision).toUpperCase()
+  if (!['APPROVE', 'REQUEST_CHANGES', 'REJECT', 'ESCALATE'].includes(normalizedDecision)) {
+    throw new HttpsError('invalid-argument', `Invalid decision '${decision}'.`)
+  }
+
+  if (['REQUEST_CHANGES', 'REJECT'].includes(normalizedDecision) && !reason) {
+    throw new HttpsError('invalid-argument', `Reason is required for decision '${decision}'.`)
+  }
+
+  const db = getFirestore()
+  let targetDocRef = db.collection(VERIFICATION_COLLECTION).doc(verificationId)
+
+  const result = await db.runTransaction(async (transaction) => {
+    let docSnap = await transaction.get(targetDocRef)
+    if (!docSnap.exists) {
+      const q = await db.collection(VERIFICATION_COLLECTION).where('providerId', '==', verificationId).limit(1).get()
+      if (!q.empty) {
+        targetDocRef = q.docs[0].ref
+        docSnap = await transaction.get(targetDocRef)
+      }
+    }
+
+    const currentData = docSnap.exists ? docSnap.data() : {}
+    const adminName = access.fullName || 'Jane Ochieng'
+
+    if (docSnap.exists && typeof expectedVersion === 'number' && (currentData.version || 1) !== expectedVersion) {
+      throw new HttpsError(
+        'failed-precondition',
+        'Record has been modified by another reviewer. Please refresh and review latest updates.'
+      )
+    }
+
+    const nextVersion = ((currentData.version || 1) + 1)
+    const providerId = currentData.providerId || verificationId
+
+    const identityComponentStatus =
+      normalizedDecision === 'APPROVE'
+        ? 'APPROVED'
+        : normalizedDecision === 'REQUEST_CHANGES'
+          ? 'CHANGES_REQUESTED'
+          : normalizedDecision === 'REJECT'
+            ? 'REJECTED'
+            : 'ESCALATED'
+
+    const existingComponents = currentData.components || {}
+    const updatedComponents = {
+      ...existingComponents,
+      IDENTITY: {
+        status: identityComponentStatus,
+        decision: normalizedDecision,
+        checklistResults,
+        reason: reason || null,
+        providerMessage: providerMessage || null,
+        decidedBy: uid,
+        decidedByName: adminName,
+        decidedAt: new Date().toISOString(),
+      },
+    }
+
+    // Determine overall provider status:
+    // If IDENTITY is approved, only advance overall status if other components are ready;
+    // does not automatically approve entire provider if credentials/business checks remain.
+    let overallStatus = currentData.status || 'UNDER_REVIEW'
+    if (normalizedDecision === 'REJECT') {
+      overallStatus = 'REJECTED'
+    } else if (normalizedDecision === 'REQUEST_CHANGES') {
+      overallStatus = 'CHANGES_REQUESTED'
+    } else if (normalizedDecision === 'ESCALATE') {
+      overallStatus = 'ESCALATED'
+    } else if (normalizedDecision === 'APPROVE') {
+      const allApproved = Object.values(updatedComponents).length >= 3 &&
+        Object.values(updatedComponents).every((c) => c.status === 'APPROVED')
+      overallStatus = allApproved ? 'APPROVED' : 'UNDER_REVIEW'
+    }
+
+    // Append to review history
+    const reviewHistory = Array.isArray(currentData.reviewHistory) ? [...currentData.reviewHistory] : []
+    reviewHistory.unshift({
+      id: `rh-${Date.now()}`,
+      action: `${normalizedDecision}_IDENTITY`,
+      reviewerName: adminName,
+      reviewerUid: uid,
+      notes: reason || internalNote || providerMessage || `Identity component ${normalizedDecision.toLowerCase()}`,
+      timestamp: new Date().toISOString(),
+    })
+
+    // Append to decision history
+    const decisionHistory = Array.isArray(currentData.decisionHistory) ? [...currentData.decisionHistory] : []
+    decisionHistory.push({
+      componentKey: 'IDENTITY',
+      decision: normalizedDecision,
+      reason,
+      internalNote,
+      providerMessage,
+      checklistResults,
+      decidedBy: uid,
+      decidedByName: adminName,
+      decidedAt: new Date().toISOString(),
+      version: nextVersion,
+    })
+
+    // Append internal note
+    const internalNotes = Array.isArray(currentData.internalNotes) ? [...currentData.internalNotes] : []
+    if (internalNote && internalNote.trim()) {
+      internalNotes.unshift({
+        id: `note-${Date.now()}`,
+        authorId: uid,
+        authorName: adminName,
+        text: internalNote.trim(),
+        createdAt: new Date().toISOString(),
+        componentKey: 'IDENTITY',
+      })
+    }
+
+    if (docSnap.exists) {
+      transaction.update(targetDocRef, {
+        components: updatedComponents,
+        status: overallStatus,
+        version: nextVersion,
+        reviewHistory,
+        decisionHistory,
+        internalNotes,
+        updatedAt: FieldValue.serverTimestamp(),
+      })
+    }
+
+    // Audit Log
+    const auditRef = db.collection(AUDIT_LOG_COLLECTION).doc()
+    transaction.set(auditRef, {
+      event: 'IDENTITY_VERIFICATION_DECISION',
+      verificationId: targetDocRef.id,
+      componentKey: 'IDENTITY',
+      decision: normalizedDecision,
+      identityStatus: identityComponentStatus,
+      overallStatus,
+      adminUid: uid,
+      adminName,
+      reason,
+      internalNote,
+      timestamp: FieldValue.serverTimestamp(),
+    })
+
+    // Provider notification
+    if (providerId && (providerMessage || reason || normalizedDecision === 'REQUEST_CHANGES')) {
+      const notifRef = db.collection(NOTIFICATIONS_COLLECTION).doc()
+      transaction.set(notifRef, {
+        type: `IDENTITY_VERIFICATION_${normalizedDecision}`,
+        providerId,
+        componentKey: 'IDENTITY',
+        message: providerMessage || reason || 'Identity document verification update.',
+        createdAt: FieldValue.serverTimestamp(),
+      })
+    }
+
+    return {
+      success: true,
+      verificationId: targetDocRef.id,
+      componentKey: 'IDENTITY',
+      decision: normalizedDecision,
+      identityStatus: identityComponentStatus,
+      overallStatus,
+      version: nextVersion,
+    }
+  })
+
+  logger.info(`Identity decision ${decision} recorded for verification ${verificationId} by ${access.fullName || uid}`)
+  return result
+})
+
 

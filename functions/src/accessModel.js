@@ -16,6 +16,7 @@ export const PERMISSIONS = {
   'users.suspend': { name: 'Suspend or reactivate users', category: 'Users', sensitive: true },
   'providers.view': { name: 'View providers, spas and hotels', category: 'Providers', sensitive: false },
   'providers.verify': { name: 'Approve or reject provider verification', category: 'Providers', sensitive: true },
+  'identity.reveal_sensitive': { name: 'Reveal sensitive identity information', category: 'Identity', sensitive: true },
   'bookings.view': { name: 'View bookings', category: 'Bookings', sensitive: false },
   'bookings.manage': { name: 'Change or cancel bookings', category: 'Bookings', sensitive: true },
   'payments.view': { name: 'View payments and wallets', category: 'Finance', sensitive: false },
@@ -46,6 +47,7 @@ export const ROLES = {
       'users.suspend',
       'providers.view',
       'providers.verify',
+      'identity.reveal_sensitive',
       'bookings.view',
       'bookings.manage',
       'payments.view',
@@ -70,7 +72,7 @@ export const ROLES = {
   verification_officer: {
     name: 'Verification Officer',
     description: 'Reviews provider verification documents.',
-    permissions: ['dashboard.view', 'users.view', 'providers.view', 'providers.verify'],
+    permissions: ['dashboard.view', 'users.view', 'providers.view', 'providers.verify', 'identity.reveal_sensitive'],
   },
   support_agent: {
     name: 'Support Agent',
