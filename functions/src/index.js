@@ -30,3 +30,7 @@ export {
   adminAssignQueueItem,
 } from './needsAttention.js'
 export { adminGetBookingDashboard, adminListBookings, adminGetBookingQuickView, adminRevealGuestContact } from './bookings.js'
+
+export { adminGetProviderDashboard } from './providerDashboard.js'
+export { adminListProviders, adminGetProviderDetail } from './providerDirectory.js'
+

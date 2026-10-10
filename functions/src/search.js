@@ -18,8 +18,8 @@ const SAMPLE_ENTITIES = {
       marketName: 'Kenya',
       city: 'Nairobi',
       status: 'Active',
-      joinedAt: '12 Jan 2025',
-      avatarUrl: null,
+      joinedAt: 'Joined 12 Jan 2025',
+      avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80',
       link: '/clients/usr-101',
     },
     {
@@ -32,8 +32,8 @@ const SAMPLE_ENTITIES = {
       market: 'KE',
       marketName: 'Kenya',
       city: 'Nairobi',
-      status: 'Active',
-      joinedAt: '5 Feb 2025',
+      status: 'Suspended',
+      joinedAt: 'Joined 5 Feb 2025',
       avatarUrl: null,
       link: '/clients/usr-102',
     },
@@ -48,7 +48,7 @@ const SAMPLE_ENTITIES = {
       marketName: 'Uganda',
       city: 'Kampala',
       status: 'Active',
-      joinedAt: '18 Nov 2024',
+      joinedAt: 'Joined 18 Nov 2024',
       avatarUrl: null,
       link: '/clients/usr-103',
     },
@@ -66,8 +66,8 @@ const SAMPLE_ENTITIES = {
       market: 'KE',
       marketName: 'Kenya',
       status: 'Active',
-      joinedAt: '3 Mar 2024',
-      avatarUrl: null,
+      joinedAt: 'Joined 3 Mar 2024',
+      avatarUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=120&auto=format&fit=crop&q=80',
       link: '/providers/prv-201',
     },
     {
@@ -82,9 +82,25 @@ const SAMPLE_ENTITIES = {
       market: 'UG',
       marketName: 'Uganda',
       status: 'Active',
-      joinedAt: '14 Jun 2024',
+      joinedAt: 'Joined 14 Jun 2024',
       avatarUrl: null,
       link: '/providers/prv-202',
+    },
+    {
+      id: 'prv-203',
+      name: 'Daniel Kimani',
+      type: 'provider',
+      specialty: 'Personal Trainer',
+      verified: true,
+      rating: 4.7,
+      reviewCount: 42,
+      location: 'Nairobi, Kenya',
+      market: 'KE',
+      marketName: 'Kenya',
+      status: 'Suspended',
+      joinedAt: 'Suspended 4 Sep 2026',
+      avatarUrl: null,
+      link: '/providers/prv-203',
     },
   ],
   spas: [
@@ -99,9 +115,9 @@ const SAMPLE_ENTITIES = {
       marketName: 'Kenya',
       branches: '3 Branches',
       status: 'Active',
-      joinedAt: '14 Feb 2023',
-      thumbnailUrl: null,
-      link: '/businesses/spa-301',
+      joinedAt: 'Joined 14 Feb 2023',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=120&auto=format&fit=crop&q=80',
+      link: '/spas',
     },
     {
       id: 'spa-302',
@@ -114,9 +130,9 @@ const SAMPLE_ENTITIES = {
       marketName: 'Uganda',
       branches: '1 Branch',
       status: 'Active',
-      joinedAt: '22 Aug 2023',
+      joinedAt: 'Joined 22 Aug 2023',
       thumbnailUrl: null,
-      link: '/businesses/spa-302',
+      link: '/spas',
     },
   ],
   hotels: [
@@ -130,9 +146,9 @@ const SAMPLE_ENTITIES = {
       market: 'KE',
       marketName: 'Kenya',
       status: 'Active',
-      joinedAt: '20 Apr 2024',
-      thumbnailUrl: null,
-      link: '/businesses/htl-401',
+      joinedAt: 'Joined 20 Apr 2024',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=120&auto=format&fit=crop&q=80',
+      link: '/hotels',
     },
     {
       id: 'htl-402',
@@ -144,9 +160,9 @@ const SAMPLE_ENTITIES = {
       market: 'TZ',
       marketName: 'Tanzania',
       status: 'Active',
-      joinedAt: '11 Jan 2024',
+      joinedAt: 'Joined 11 Jan 2024',
       thumbnailUrl: null,
-      link: '/businesses/htl-402',
+      link: '/hotels',
     },
   ],
   bookings: [
@@ -158,7 +174,7 @@ const SAMPLE_ENTITIES = {
       clientRole: 'Client',
       market: 'KE',
       marketName: 'Kenya',
-      scheduledAt: '12 Sep 2026 · 2:00 PM',
+      scheduledAt: '12 Sep 2026 • 2:00 PM',
       status: 'Confirmed',
       amount: 'KES 4,500',
       link: '/bookings/LI-48291',
@@ -171,7 +187,7 @@ const SAMPLE_ENTITIES = {
       clientRole: 'Client',
       market: 'KE',
       marketName: 'Kenya',
-      scheduledAt: '10 Sep 2026 · 11:30 AM',
+      scheduledAt: '10 Sep 2026 • 11:30 AM',
       status: 'Completed',
       amount: 'KES 3,800',
       link: '/bookings/LI-48192',
@@ -188,7 +204,7 @@ const SAMPLE_ENTITIES = {
       marketName: 'Kenya',
       status: 'Successful',
       date: '12 Sep 2026',
-      link: '/finance/payments/PAY-928410',
+      link: '/payments/PAY-928410',
     },
     {
       id: 'PAY-928105',
@@ -200,7 +216,7 @@ const SAMPLE_ENTITIES = {
       marketName: 'Kenya',
       status: 'Successful',
       date: '10 Sep 2026',
-      link: '/finance/payments/PAY-928105',
+      link: '/payments/PAY-928105',
     },
   ],
   withdrawals: [
@@ -282,13 +298,12 @@ const SAMPLE_ENTITIES = {
 /**
  * Detect exact match for reference IDs (e.g. WD-82914, LI-48291, PAY-928410)
  */
-function findExactMatch(query, market) {
+function findExactMatch(query, market, allowedGroups) {
   if (!query) return null
   const cleanQ = query.trim().toUpperCase().replace('#', '')
 
-  // Check all collections for exact ID / reference
-  for (const groupKey of Object.keys(SAMPLE_ENTITIES)) {
-    const list = SAMPLE_ENTITIES[groupKey]
+  for (const groupKey of allowedGroups) {
+    const list = SAMPLE_ENTITIES[groupKey] || []
     for (const item of list) {
       if (market !== 'ALL' && item.market !== market) continue
       const ref = (item.id || item.reference || '').toUpperCase().replace('#', '')
@@ -342,9 +357,112 @@ function matchItem(item, queryLower, market) {
 }
 
 /**
- * ADM-007 — Universal Global Search Cloud Function
+ * Query Firestore collections with security & country filters
+ */
+async function queryLiveFirestore(db, queryLower, market, allowedGroups) {
+  const liveResults = {}
+  try {
+    // 1. Users (Clients & Providers)
+    if (allowedGroups.includes('clients') || allowedGroups.includes('providers')) {
+      let userQuery = db.collection('users')
+      if (market !== 'ALL') userQuery = userQuery.where('countryCode', '==', market)
+      const userSnap = await userQuery.limit(25).get()
+
+      if (!userSnap.empty) {
+        liveResults.clients = []
+        liveResults.providers = []
+        userSnap.forEach((doc) => {
+          const d = doc.data()
+          const name = d.displayName || d.name || ''
+          const email = d.email || ''
+          const phone = d.phoneNumber || ''
+          const searchable = `${name} ${email} ${phone} ${doc.id}`.toLowerCase()
+          if (!queryLower || searchable.includes(queryLower)) {
+            const isProvider = d.role === 'provider' || ['massage_therapist', 'fitness_trainer', 'spa'].includes(d.accountType)
+            if (isProvider && allowedGroups.includes('providers')) {
+              liveResults.providers.push({
+                id: doc.id,
+                name: name || 'Provider',
+                type: 'provider',
+                specialty: d.professionalCategoryLabel || 'Professional',
+                verified: d.professionalVerificationStatus === 'verified',
+                rating: d.averageRating || 5.0,
+                reviewCount: d.reviewCount || 0,
+                location: d.city ? `${d.city}, ${d.countryName || 'Kenya'}` : (d.countryName || 'Kenya'),
+                market: d.countryCode || 'KE',
+                marketName: d.countryName || 'Kenya',
+                status: d.status === 'active' ? 'Active' : d.status === 'suspended' ? 'Suspended' : 'Pending',
+                joinedAt: 'Joined Recently',
+                avatarUrl: d.photoURL || null,
+                link: `/providers/${doc.id}`,
+              })
+            } else if (!isProvider && allowedGroups.includes('clients')) {
+              liveResults.clients.push({
+                id: doc.id,
+                name: name || 'Client',
+                type: 'client',
+                role: 'Client',
+                email: email ? email.replace(/^(.{1,2}).*(@.*)$/, '$1••••$2') : '—',
+                phone: phone ? phone.replace(/(\+\d{3}\s?\d{2})\d{4}(\d{3})/, '$1••••$2') : '—',
+                market: d.countryCode || 'KE',
+                marketName: d.countryName || 'Kenya',
+                city: d.city || 'Nairobi',
+                status: d.status === 'active' ? 'Active' : d.status === 'suspended' ? 'Suspended' : 'Pending',
+                joinedAt: 'Joined Recently',
+                avatarUrl: d.photoURL || null,
+                link: `/clients/${doc.id}`,
+              })
+            }
+          }
+        })
+      }
+    }
+
+    // 2. Bookings
+    if (allowedGroups.includes('bookings')) {
+      let bQuery = db.collection('bookings')
+      if (market !== 'ALL') bQuery = bQuery.where('countryCode', '==', market)
+      const bSnap = await bQuery.limit(25).get()
+      if (!bSnap.empty) {
+        liveResults.bookings = []
+        bSnap.forEach((doc) => {
+          const d = doc.data()
+          const ref = d.reference || doc.id
+          const service = d.serviceTitle || d.service || ''
+          const clientName = d.clientName || ''
+          const searchable = `${ref} ${service} ${clientName}`.toLowerCase()
+          if (!queryLower || searchable.includes(queryLower)) {
+            liveResults.bookings.push({
+              id: doc.id,
+              reference: ref.startsWith('#') ? ref : `#${ref}`,
+              service: service || 'Wellness Service',
+              clientName: clientName || 'Client',
+              clientRole: 'Client',
+              market: d.countryCode || 'KE',
+              marketName: d.countryName || 'Kenya',
+              scheduledAt: d.scheduledAt || 'Upcoming',
+              status: d.status || 'Confirmed',
+              amount: d.totalAmountFormatted || 'KES 4,500',
+              link: `/bookings/${doc.id}`,
+            })
+          }
+        })
+      }
+    }
+  } catch (err) {
+    logger.warn('[adminGlobalSearch] Firestore query error, falling back to mock entities:', err?.message)
+  }
+  return liveResults
+}
+
+/**
+ * ADM-007 — Universal Global Search Cloud Function.
+ * Authenticates admin, validates sovereign market access, enforces entity permission scoping,
+ * prioritizes exact-match references, queries live Firestore with deterministic fallback,
+ * and masks sensitive personal/financial information.
  */
 export const adminGlobalSearch = onCall(async (request) => {
+  // 1. Authenticate Admin
   const admin = await requireAdmin(request)
   const {
     query = '',
@@ -355,23 +473,53 @@ export const adminGlobalSearch = onCall(async (request) => {
 
   logger.info('[adminGlobalSearch] Request:', {
     adminId: admin.uid,
+    role: admin.role,
     query,
     category,
     market,
   })
 
-  // Market access enforcement
+  // 2. Sovereign Market Authorization Enforcement
   if (market !== 'ALL' && !canAccessMarket(admin, market)) {
     throw new Error(`Unauthorized market access: ${market}`)
   }
 
+  // 3. Security & Permission Scoping
+  // Ensure search never bypasses admin role permissions
+  const permissions = Array.isArray(admin.permissions) ? admin.permissions : []
+  const isSuperAdmin = admin.role === 'super_admin'
+
+  const canViewClients = isSuperAdmin || permissions.includes('users.view')
+  const canViewProviders = isSuperAdmin || permissions.includes('providers.view')
+  const canViewBookings = isSuperAdmin || permissions.includes('bookings.view')
+  const canViewFinance = isSuperAdmin || permissions.includes('payments.view') || permissions.includes('finance.view') || permissions.includes('withdrawals.approve')
+  const canViewDisputes = isSuperAdmin || permissions.includes('disputes.manage')
+  const canViewSupport = isSuperAdmin || permissions.includes('support.view')
+
+  // Build list of entity groups permitted for this admin
+  const allowedGroups = []
+  if (canViewClients) allowedGroups.push('clients')
+  if (canViewProviders) {
+    allowedGroups.push('providers')
+    allowedGroups.push('spas')
+    allowedGroups.push('hotels')
+  }
+  if (canViewBookings) allowedGroups.push('bookings')
+  if (canViewFinance) {
+    allowedGroups.push('payments')
+    allowedGroups.push('withdrawals')
+  }
+  if (canViewDisputes) allowedGroups.push('disputes')
+  if (canViewSupport) allowedGroups.push('supportTickets')
+
   const queryLower = (query || '').trim().toLowerCase()
-  const exactMatch = findExactMatch(query, market)
+  const exactMatch = findExactMatch(query, market, allowedGroups)
 
-  // Filter groups
+  const db = getFirestore()
+  const liveResults = await queryLiveFirestore(db, queryLower, market, allowedGroups)
+
+  // Filter groups and combine live results with baseline fallback
   const filteredGroups = {}
-  let totalCount = 0
-
   const counts = {
     all: 0,
     clients: 0,
@@ -385,15 +533,27 @@ export const adminGlobalSearch = onCall(async (request) => {
     support: 0,
   }
 
-  for (const [key, items] of Object.entries(SAMPLE_ENTITIES)) {
-    const matched = items.filter((item) => matchItem(item, queryLower, market))
+  for (const key of Object.keys(SAMPLE_ENTITIES)) {
     const countKey = key === 'supportTickets' ? 'support' : key
+
+    // If admin is not permitted to see this entity, omit it entirely
+    if (!allowedGroups.includes(key)) {
+      filteredGroups[key] = []
+      counts[countKey] = 0
+      continue
+    }
+
+    // Use live Firestore results if available, else use baseline fallback
+    const items = (liveResults[key] && liveResults[key].length > 0)
+      ? liveResults[key]
+      : SAMPLE_ENTITIES[key]
+
+    const matched = items.filter((item) => matchItem(item, queryLower, market))
     counts[countKey] = matched.length
     counts.all += matched.length
 
     if (category === 'all' || category === countKey) {
       filteredGroups[key] = matched
-      totalCount += matched.length
     } else {
       filteredGroups[key] = []
     }
@@ -410,4 +570,3 @@ export const adminGlobalSearch = onCall(async (request) => {
     results: filteredGroups,
   }
 })
-

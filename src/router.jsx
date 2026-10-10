@@ -10,6 +10,8 @@ import ClientManagement from './pages/clients/ClientManagement.jsx'
 import AllClients from './pages/clients/AllClients.jsx'
 import ClientProfile from './pages/clients/ClientProfile.jsx'
 import ClientBookings from './pages/clients/ClientBookings.jsx'
+
+import ClientPayments from './pages/clients/ClientPayments.jsx'
 import NeedsAttention from './pages/attention/NeedsAttention.jsx'
 import VerificationDetail from './pages/verifications/VerificationDetail.jsx'
 import WithdrawalDetail from './pages/withdrawals/WithdrawalDetail.jsx'
@@ -24,6 +26,7 @@ import OngoingBookings from './pages/bookings/OngoingBookings.jsx'
 import CompletedBookings from './pages/bookings/CompletedBookings.jsx'
 import CancelledBookings from './pages/bookings/CancelledBookings.jsx'
 import GuestBookings from './pages/bookings/GuestBookings.jsx'
+
 import Placeholder from './pages/Placeholder.jsx'
 import NotFound from './pages/NotFound.jsx'
 import RouteErrorElement from './components/ui/RouteErrorElement.jsx'
@@ -79,6 +82,8 @@ export const router = createBrowserRouter([
           { path: 'clients/:clientId', element: <ClientProfile />, handle: { fullBleed: true } },
           // ADM-013 — Client Bookings (admin view of the shared bookings collection)
           { path: 'clients/:clientId/bookings', element: <ClientBookings />, handle: { fullBleed: true } },
+          // ADM-014 — Client Payments (admin view of the shared payments collection)
+          { path: 'clients/:clientId/payments', element: <ClientPayments />, handle: { fullBleed: true } },
           { path: 'clients/:clientId/:section', element: <ClientProfile />, handle: { fullBleed: true } },
           { path: 'attention', element: <NeedsAttention /> },
           { path: 'spas', element: <Placeholder title="Spas & Wellness Centers" /> },
@@ -87,8 +92,12 @@ export const router = createBrowserRouter([
           { path: 'payments/:paymentId', element: <Placeholder title="Payment Details" /> }, // ADM-056
           { path: 'content', element: <Placeholder title="Content Management" /> },
           { path: 'reports', element: <Placeholder title="Reports" /> },
-          { path: 'market-insights', element: <Placeholder title="Market Insights" /> },
-          { path: 'providers', element: <Placeholder title="Providers & Spas" /> },
+          // ADM-020 — Provider Management Dashboard
+          { path: 'providers', element: <ProviderDashboard />, handle: { fullBleed: true } },
+          // ADM-021 — Provider Directory (Dynamic Master Search & Filter Directory)
+          { path: 'providers/all', element: <ProviderDirectory />, handle: { fullBleed: true } },
+          { path: 'providers/directory', element: <ProviderDirectory />, handle: { fullBleed: true } },
+          { path: 'providers/subscriptions', element: <Placeholder title="Provider Subscriptions" /> },
           { path: 'providers/:providerId', element: <Placeholder title="Provider Admin Profile" /> },
           { path: 'services/:serviceId', element: <Placeholder title="Service Details" /> },
           { path: 'verifications', element: <Placeholder title="Verification & Approvals" /> },
@@ -110,6 +119,8 @@ export const router = createBrowserRouter([
           // FINANCE
           { path: 'finance', element: <Placeholder title="Finance & Wallets" /> },
           { path: 'escrow', element: <Placeholder title="Escrow Custody" /> },
+          { path: 'escrow/:escrowId', element: <Placeholder title="Escrow Details" /> },
+          { path: 'refunds/:refundId', element: <Placeholder title="Refund Details" /> },
           { path: 'withdrawals', element: <Placeholder title="Withdrawal Authorizations" /> },
           { path: 'withdrawals/:id', element: <WithdrawalDetail /> },
 
@@ -124,6 +135,7 @@ export const router = createBrowserRouter([
           { path: 'memberships', element: <Placeholder title="Memberships" /> },
           { path: 'loyalty', element: <Placeholder title="Referrals & Loyalty" /> },
           { path: 'promotions', element: <Placeholder title="Promotions & Campaigns" /> },
+          { path: 'campaigns', element: <Placeholder title="Marketing Campaigns" /> },
 
           // INTELLIGENCE
           { path: 'analytics', element: <Placeholder title="Cross-Market Analytics" /> },

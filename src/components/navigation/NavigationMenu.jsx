@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Link, NavLink, matchPath, useLocation } from 'react-router'
-import { ChevronRight } from 'lucide-react'
+
+import { ChevronDown, User, Users } from 'lucide-react'
+
 import { usePermissions } from '../../hooks/usePermissions'
 import { NAVIGATION_SECTIONS } from '../../constants/navigation'
 import { cn } from '../../lib/utils'
@@ -31,6 +33,7 @@ export default function NavigationMenu({ onNavigate }) {
       return next
     })
 
+
   return (
     <nav className="space-y-3" aria-label="Admin navigation">
       {NAVIGATION_SECTIONS.map((section) => {
@@ -48,6 +51,7 @@ export default function NavigationMenu({ onNavigate }) {
             <div className="space-y-0.5">
               {items.map((item) => {
                 const Icon = item.icon
+
                 if (!item.children) {
                   return (
                     <NavLink
@@ -84,6 +88,58 @@ export default function NavigationMenu({ onNavigate }) {
                       <div id={id} className="space-y-0.5">
                         <GroupChildren item={item} onNavigate={onNavigate} />
                       </div>
+
+                const hasChildren = Boolean(item.children && item.children.length > 0)
+                const isChildActive = hasChildren && item.children.some((c) =>
+                  pathname === c.path || (c.path !== '/' && pathname.startsWith(`${c.path}/`))
+                )
+
+                return (
+                  <div key={item.path + item.label} className="space-y-0.5">
+                    {hasChildren ? (
+                      <NavLink
+                        to={item.children[0].path}
+                        onClick={onNavigate}
+                        className={({ isActive }) =>
+                          cn(
+                            ROW,
+                            'justify-between',
+                            // If children exist, don't double-highlight parent when child is active
+                            !isChildActive && isActive
+                              ? 'bg-[#5c2dd5] font-semibold text-white shadow-md'
+                              : isChildActive
+                              ? 'text-white font-semibold hover:bg-white/10'
+                              : 'text-white/90 hover:bg-white/10 hover:text-white'
+                          )
+                        }
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <Icon className="size-[18px] shrink-0" aria-hidden="true" />
+                          <span>{item.label}</span>
+                        </div>
+                        <ChevronDown className="size-3.5 text-white/60" />
+                      </NavLink>
+                    ) : (
+                      <NavLink
+                        to={item.path}
+                        onClick={onNavigate}
+                        className={({ isActive }) =>
+                          cn(
+                            ROW,
+                            isActive
+                              ? 'bg-[#5c2dd5] font-semibold text-white shadow-md'
+                              : 'text-white/90 hover:bg-white/10 hover:text-white'
+                          )
+                        }
+                      >
+                        <Icon className="size-[18px] shrink-0" aria-hidden="true" />
+                        <span>{item.label}</span>
+                      </NavLink>
+                    )}
+
+                    {/* Sub-menu is open whenever inside its domain */}
+                    {hasChildren && (
+                      <NavLinkChildren item={item} onNavigate={onNavigate} />
                     )}
                   </div>
                 )
@@ -98,6 +154,7 @@ export default function NavigationMenu({ onNavigate }) {
 
 function GroupChildren({ item, onNavigate }) {
   const { pathname } = useLocation()
+
   // ADM-012: while a client profile is open, a "Client Profile" row appears under
   // Clients (the profile lives at /clients/:clientId, not /clients/all).
   const onProfile = Boolean(item.path === '/clients' && matchPath({ path: '/clients/:clientId/*' }, pathname) && !matchPath({ path: '/clients/all/*' }, pathname))
@@ -122,13 +179,79 @@ function GroupChildren({ item, onNavigate }) {
       ))}
       {onProfile && !onBookings && (
         <span aria-current="page" className={cn(CHILD, activeCls)}>Client Profile</span>
+=======
+
+  const { can } = usePermissions()
+
+  // ADM-012: while a client profile is open, a "Client Profile" row appears under Client Management
+  const onProfile = Boolean(
+    item.path === '/clients' &&
+      matchPath({ path: '/clients/:clientId/*' }, pathname) &&
+      !matchPath({ path: '/clients/all/*' }, pathname)
+  )
+  const bookingsMatch =
+    item.path === '/clients'
+      ? matchPath({ path: '/clients/:clientId/bookings' }, pathname)
+      : null
+  const onBookings = Boolean(bookingsMatch && bookingsMatch.params.clientId !== 'all')
+
+  const validChildren = item.children.filter((c) => !c.permission || can(c.permission))
+  return (
+    <ParentActive paths={item.children.map((c) => c.path)} force={onProfile}>
+      {validChildren.map((child) => {
+        const ChildIcon = child.icon
+        return (
+          <NavLink
+            key={child.path + child.label}
+            to={child.path}
+            end={child.path === item.path || child.path === '/providers'}
+            onClick={onNavigate}
+            className={({ isActive }) =>
+              cn(
+                ROW,
+                'pl-[18px]',
+                isActive
+                  ? 'bg-[#5c2dd5] font-semibold text-white shadow-md'
+                  : 'text-white/85 hover:bg-white/10 hover:text-white'
+              )
+            }
+          >
+            <ChildIcon className="size-[17px] shrink-0" aria-hidden="true" />
+            <span>{child.label}</span>
+          </NavLink>
+        )
+      })}
+
+
+      {onProfile && !onBookings && (
+        <span
+          aria-current="page"
+          className={cn(ROW, 'pl-[18px] bg-[#6a4bc4] font-semibold text-white')}
+        >
+          <Users className="size-[17px] shrink-0" aria-hidden="true" />
+          <span>Client Profile</span>
+        </span>
+
       )}
+
       {onBookings && (
         <>
+
           <Link to={`/clients/${bookingsMatch.params.clientId}`} onClick={onNavigate} className={cn(CHILD, idleCls)}>Client Profile</Link>
           <span aria-current="page" className={cn(CHILD, activeCls)}>Client Bookings</span>
+
         </>
       )}
     </>
   )
 }
+
+
+function ParentActive({ paths, force = false, children }) {
+  const { pathname } = useLocation()
+  const open =
+    force ||
+    paths.some((path) => pathname === path || (path !== '/' && pathname.startsWith(`${path}/`)))
+  return open ? <div className="space-y-0.5">{children}</div> : null
+}
+
