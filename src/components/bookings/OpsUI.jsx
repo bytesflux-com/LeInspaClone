@@ -296,7 +296,14 @@ export function AttentionPanel({ title = 'Needs Your Attention', subtitle, items
 
 export function PillTabs({ tabs, value, onChange, label }) {
   return (
-    <div role="tablist" aria-label={label} className="flex gap-1 overflow-x-auto [scrollbar-width:none]">
+    <div
+      role="tablist"
+      aria-label={label}
+      onWheel={(e) => {
+        if (e.deltaY !== 0) e.currentTarget.scrollLeft += e.deltaY
+      }}
+      className="flex gap-1 overflow-x-auto scroll-smooth scrollbar-thin"
+    >
       {tabs.map((t) => {
         const on = t.id === value
         return (

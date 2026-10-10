@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { Link } from 'react-router'
-import { ArrowRight, ChevronDown, CircleAlert, CircleCheck, CircleMinus, CircleX, Eye, MapPin, ShieldAlert, Star, X } from 'lucide-react'
+import { ArrowRight, ChevronDown, ChevronLeft, ChevronRight, CircleAlert, CircleCheck, CircleMinus, CircleX, Eye, MapPin, ShieldAlert, Star, X } from 'lucide-react'
 import Dropdown from '../ui/Dropdown'
 import PersonAvatar from '../ui/PersonAvatar'
 import Skeleton from '../ui/Skeleton'
@@ -472,6 +472,45 @@ export default function BookingQuickView({ bookingId, view, fallback, onClose, o
   const head = q || fallback
   const clientId = q?.guestInfo ? q.guestInfo.linkedClientId : q?.client.id
 
+  const tabsNavRef = useRef(null)
+  const [canScrollLeft, setCanScrollLeft] = useState(false)
+  const [canScrollRight, setCanScrollRight] = useState(false)
+
+  const checkScroll = useCallback(() => {
+    const el = tabsNavRef.current
+    if (!el) return
+    const { scrollLeft, scrollWidth, clientWidth } = el
+    setCanScrollLeft(scrollLeft > 2)
+    setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 2)
+  }, [])
+
+  useEffect(() => {
+    checkScroll()
+    const el = tabsNavRef.current
+    if (!el) return
+    el.addEventListener('scroll', checkScroll, { passive: true })
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(checkScroll) : null
+    ro?.observe(el)
+    window.addEventListener('resize', checkScroll)
+    return () => {
+      el.removeEventListener('scroll', checkScroll)
+      ro?.disconnect()
+      window.removeEventListener('resize', checkScroll)
+    }
+  }, [checkScroll])
+
+  const handleTabsWheel = (e) => {
+    if (e.deltaY !== 0 && tabsNavRef.current) {
+      tabsNavRef.current.scrollLeft += e.deltaY
+      checkScroll()
+    }
+  }
+
+  const scrollTabs = (direction) => {
+    if (!tabsNavRef.current) return
+    tabsNavRef.current.scrollBy({ left: direction * 80, behavior: 'smooth' })
+  }
+
   return (
     <aside aria-label="Booking details" className="flex min-h-full flex-col">
       <div className="sticky top-0 z-10 border-b border-[#ebe7f6] bg-white px-4 pt-3.5">
@@ -486,13 +525,58 @@ export default function BookingQuickView({ bookingId, view, fallback, onClose, o
           {q && headline(q)}
         </div>
         {head?.scheduledStart && <p className="mt-0.5 text-[12px] text-[#4a4466]">{formatStamp(head.scheduledStart, new Date().toISOString(), tz).split(' • ')[0]} • {formatTime(head.scheduledStart, tz)} – {formatTime(head.scheduledEnd, tz)}</p>}
-        <nav role="tablist" aria-label="Booking detail sections" className="mt-2.5 -mb-px flex gap-3 overflow-x-auto [scrollbar-width:none]">
-          {TABS.map((t) => (
-            <button key={t} type="button" role="tab" aria-selected={tab === t} onClick={() => setTab(t)} className={cn('shrink-0 border-b-2 pb-2 text-[12px] font-semibold transition', tab === t ? 'border-[#4125d0] text-[#4125d0]' : 'border-transparent text-[#4a4466] hover:text-[#1b1140]')}>
-              {t}
+        <div className="relative mt-2.5 -mb-px flex items-center">
+          {canScrollLeft && (
+            <button
+              type="button"
+              onClick={() => scrollTabs(-1)}
+              aria-label="Scroll tabs left"
+              className="absolute -left-2 z-10 flex size-5 items-center justify-center rounded-full border border-[#ebe7f6] bg-white/95 text-[#4a4466] shadow-sm backdrop-blur transition hover:bg-[#f4f1fc] hover:text-[#1b1140]"
+            >
+              <ChevronLeft className="size-3" />
             </button>
-          ))}
-        </nav>
+          )}
+
+          <nav
+            ref={tabsNavRef}
+            role="tablist"
+            aria-label="Booking detail sections"
+            onWheel={handleTabsWheel}
+            className="flex w-full gap-2 overflow-x-auto scroll-smooth pb-1 scrollbar-thin"
+          >
+            {TABS.map((t) => (
+              <button
+                key={t}
+                type="button"
+                role="tab"
+                aria-selected={tab === t}
+                onClick={(e) => {
+                  setTab(t)
+                  e.currentTarget.scrollIntoView({ behavior: 'smooth', inline: 'nearest', block: 'nearest' })
+                }}
+                className={cn(
+                  'shrink-0 border-b-2 px-1 pb-1.5 text-[12px] font-semibold whitespace-nowrap transition',
+                  tab === t
+                    ? 'border-[#4125d0] text-[#4125d0]'
+                    : 'border-transparent text-[#4a4466] hover:text-[#1b1140]'
+                )}
+              >
+                {t}
+              </button>
+            ))}
+          </nav>
+
+          {canScrollRight && (
+            <button
+              type="button"
+              onClick={() => scrollTabs(1)}
+              aria-label="Scroll tabs right"
+              className="absolute -right-2 z-10 flex size-5 items-center justify-center rounded-full border border-[#ebe7f6] bg-white/95 text-[#4a4466] shadow-sm backdrop-blur transition hover:bg-[#f4f1fc] hover:text-[#1b1140]"
+            >
+              <ChevronRight className="size-3" />
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="flex-1 space-y-2.5 px-4 py-3">
