@@ -3,6 +3,7 @@ import { buildProviderDashboard } from './mock/providerDashboardMock'
 import { queryProviderDirectory, DIRECTORY_PROVIDERS } from './mock/providerDirectoryMock'
 import { getMockProviderProfile } from './mock/providerProfileMock'
 import { queryMockProviderServices, getMockProviderServices } from './mock/providerServicesMock'
+import { queryMockProviderBookings, getMockProviderBookingsDataset } from './mock/providerBookingsMock'
 
 export const providerService = {
   /**
@@ -377,5 +378,115 @@ export const providerService = {
     }
 
     return { providerId, serviceId, active }
+  },
+
+  /**
+   * ADM-024: Fetch Provider Bookings, Ledger & Earnings Overview.
+   * Calls live Cloud Function `adminGetProviderBookings` with fallback to deterministic mock telemetry.
+   */
+  async getProviderBookings({
+    providerId = 'PR-82941',
+    tab = 'all',
+    search = '',
+    service = 'all',
+    bookingSource = 'all',
+    paymentStatus = 'all',
+    escrowStatus = 'all',
+    dateRange = 'all',
+  } = {}) {
+    try {
+      const result = await callAdmin('adminGetProviderBookings', {
+        providerId,
+        tab,
+        search,
+        service,
+        bookingSource,
+        paymentStatus,
+        escrowStatus,
+        dateRange,
+      })
+
+      if (result && Array.isArray(result.bookings)) {
+        return result
+      }
+    } catch (err) {
+      console.warn(
+        '[providerService] adminGetProviderBookings live function unreachable, fallback:',
+        err?.message || err,
+      )
+    }
+
+    return queryMockProviderBookings(providerId, {
+      tab,
+      search,
+      service,
+      bookingSource,
+      paymentStatus,
+      escrowStatus,
+      dateRange,
+    })
+  },
+
+  /**
+   * ADM-024: Fetch Detailed Single Booking for right-side drawer.
+   */
+  async getProviderBookingDetail(providerId, bookingId) {
+    try {
+      const result = await callAdmin('adminGetProviderBookingDetail', { providerId, bookingId })
+      if (result && result.booking) {
+        return result
+      }
+    } catch (err) {
+      console.warn('[providerService] adminGetProviderBookingDetail error, fallback:', err?.message || err)
+    }
+
+    const dataset = getMockProviderBookingsDataset(providerId)
+    const booking = (dataset.bookings || []).find((b) => b.id === bookingId || b.bookingId === bookingId)
+    return {
+      success: true,
+      booking: booking || dataset.bookings[0],
+    }
+  },
+
+  /**
+   * ADM-024: Fetch Ledger Balances and Transactions.
+   */
+  async getProviderEarningsOverview(providerId) {
+    try {
+      const result = await callAdmin('adminGetProviderEarningsOverview', { providerId })
+      if (result && result.ledger) {
+        return result
+      }
+    } catch (err) {
+      console.warn('[providerService] adminGetProviderEarningsOverview error, fallback:', err?.message || err)
+    }
+
+    const dataset = getMockProviderBookingsDataset(providerId)
+    return {
+      success: true,
+      ledger: dataset.ledger,
+      recentTransactions: dataset.recentTransactions,
+    }
+  },
+
+  /**
+   * ADM-024: Fetch Earnings Performance Chart Time Series Points.
+   */
+  async getProviderEarningsChart(period = '30d') {
+    try {
+      const result = await callAdmin('adminGetProviderEarningsChart', { period })
+      if (result && Array.isArray(result.points)) {
+        return result
+      }
+    } catch (err) {
+      console.warn('[providerService] adminGetProviderEarningsChart error, fallback:', err?.message || err)
+    }
+
+    const { getEarningsChartPoints } = await import('../../functions/src/providerBookingsLogic')
+    return {
+      success: true,
+      period,
+      points: getEarningsChartPoints(period),
+    }
   },
 }

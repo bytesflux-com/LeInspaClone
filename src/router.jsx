@@ -23,6 +23,7 @@ import ProviderDashboard from './pages/providers/ProviderDashboard.jsx'
 import ProviderDirectory from './pages/providers/ProviderDirectory.jsx'
 import ProviderProfile from './pages/providers/ProviderProfile.jsx'
 import ProviderServices from './pages/providers/ProviderServices.jsx'
+import ProviderBookings from './pages/providers/ProviderBookings.jsx'
 import BookingManagement from './pages/bookings/BookingManagement.jsx'
 import ActiveBookings from './pages/bookings/ActiveBookings.jsx'
 import UpcomingBookings from './pages/bookings/UpcomingBookings.jsx'
@@ -105,6 +106,9 @@ export const router = createBrowserRouter([
           // ADM-023 — Provider Services & Pricing (Status: REUSE / ADMIN VIEW)
           { path: 'providers/services', element: <ProviderServices />, handle: { fullBleed: true } },
           { path: 'providers/:providerId/services', element: <ProviderServices />, handle: { fullBleed: true } },
+          // ADM-024 — Provider Bookings & Earnings (Status: REUSE / ADMIN VIEW)
+          { path: 'providers/bookings', element: <ProviderBookings />, handle: { fullBleed: true } },
+          { path: 'providers/:providerId/bookings', element: <ProviderBookings />, handle: { fullBleed: true } },
           // ADM-022 — Provider Admin Profile (Dynamic 360° Profile)
           { path: 'providers/:providerId', element: <ProviderProfile />, handle: { fullBleed: true } },
           { path: 'providers/:providerId/:section', element: <ProviderProfile />, handle: { fullBleed: true } },

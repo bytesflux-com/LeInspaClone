@@ -201,7 +201,7 @@ export default function ProviderProfile() {
 
                 <BookingPerformanceCard
                   profile={profile}
-                  onViewAllBookings={() => handleTabChange('bookings')}
+                  onViewAllBookings={() => navigate(`/providers/${profile.id}/bookings`)}
                 />
 
                 <EarningsSummaryCard

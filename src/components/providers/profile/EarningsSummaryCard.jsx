@@ -58,7 +58,7 @@ export function EarningsSummaryCard({
               </span>
             )}
             <Link
-              to={`/finance?providerId=${profile.id}`}
+              to={`/providers/${profile.id}/bookings`}
               className="inline-flex items-center gap-0.5 text-[11px] font-semibold text-purple-700 hover:text-purple-900"
             >
               <span>View Earnings</span>

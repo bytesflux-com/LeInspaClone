@@ -233,10 +233,10 @@ export function BookingsTabView({ profile }) {
           </p>
         </div>
         <Link
-          to={`/bookings?providerId=${profile.id}`}
+          to={`/providers/${profile.id}/bookings`}
           className="px-3.5 py-2 rounded-xl bg-purple-700 hover:bg-purple-800 text-white text-xs font-semibold shadow-xs transition"
         >
-          View in Booking Center →
+          Manage Bookings & Earnings →
         </Link>
       </div>
 
