@@ -24,6 +24,7 @@
 //   adminGetClientSupport, adminGetSupportCasePreview,
 //   adminReplyToSupportCase, adminAddSupportCaseNote,
 //   adminReassignSupportCase, adminEscalateSupportCase (ADM-018)
+//   adminGetClientAccount, adminApplyClientAccountAction     (ADM-019)
 //
 // Country scope MUST be enforced by those functions (never trust `market`).
 import { callAdmin } from '../lib/adminCall'
@@ -47,6 +48,7 @@ import { queryClientPayments, buildPaymentPreview, addMockPaymentNote } from './
 import { queryClientWallet, buildWalletHistory, buildWalletTransactionPreview, addMockWalletNote } from './mock/clientWalletMock'
 import { buildClientMembership, applyMockMembershipChange, addMockMembershipNote } from './mock/clientMembershipMock'
 import { buildClientLoyalty, queryClientReferrals, buildReferralPreview, addMockLoyaltyNote } from './mock/clientLoyaltyMock'
+import { buildClientAccount, applyAccountAction } from './mock/clientAccountMock'
 import { queryClientSupport, buildSupportCasePreview, addMockCaseMessage, addMockCaseNote, reassignMockCase, escalateMockCase } from './mock/clientSupportMock'
 
 const USE_MOCK = import.meta.env.VITE_USE_MOCK_CLIENTS !== 'false'
@@ -530,6 +532,38 @@ export const clientService = {
     if (!USE_MOCK) return callAdmin('adminEscalateSupportCase', { clientId, caseId })
     await delay(200)
     return escalateMockCase(clientId, caseId)
+  },
+
+  // ADM-019 — one client's account-control state: account status, scoped restrictions, open cases,
+  // upcoming bookings, action history and the notifications sent. Read from the existing `users`,
+  // `account_restrictions`, `account_actions`, `notifications`, `bookings` and case collections
+  // (no second Admin copy of the client account). Account status and restrictions are separate
+  // concepts. The server must validate admin, session, client and country access and return the
+  // set of actions THIS admin may perform (`permitted`) — the UI only reflects it. `perms` is used by
+  // the demo backend only.
+  async getClientAccount(clientId, { market } = {}, perms = {}) {
+    if (!USE_MOCK) return callAdmin('adminGetClientAccount', { clientId, market })
+    await delay(240)
+    const r = MOCK_CLIENTS.find((c) => c.id === clientId)
+    if (!r || (market && market !== 'ALL' && r.country !== market)) {
+      throw new Error('Client not found or outside your authorised markets.')
+    }
+    return buildClientAccount(r, perms)
+  },
+
+  // ADM-019 — the single write path for every account action. The browser only COLLECTS the request:
+  // the callable must re-authenticate the admin, re-check role / permission / country, re-read the
+  // client's LATEST state and restrictions, validate the transition, re-verify the admin for
+  // high-impact actions (callAdmin handles `reverification-required`), apply it transactionally,
+  // preserve the previous state, write `account_actions` / `account_restrictions`, audit-log it,
+  // notify the client and trigger the downstream access changes. It never cancels bookings,
+  // never touches wallet funds, and never deletes an old restriction.
+  async applyClientAccountAction({ clientId, action, ...payload }, perms = {}) {
+    if (!USE_MOCK) return callAdmin('adminApplyClientAccountAction', { clientId, action, ...payload })
+    await delay(520)
+    const r = MOCK_CLIENTS.find((c) => c.id === clientId)
+    if (!r) throw new Error('Client not found or outside your authorised markets.')
+    return applyAccountAction(r, { action, ...payload }, perms)
   },
 
   getCities(country) {

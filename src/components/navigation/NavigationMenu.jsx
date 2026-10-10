@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, NavLink, matchPath, useLocation } from 'react-router'
+import { Crown, Gift, ShieldCheck, Settings, User, Users, Wallet, WalletCards } from 'lucide-react'
 
 import { Crown, Gift, User, Users, Wallet, WalletCards } from 'lucide-react'
 
@@ -119,9 +120,11 @@ function GroupChildren({ item, onNavigate }) {
   // ADM-012: while a client profile is open, a "Client Profile" row appears under
   // Clients (the profile lives at /clients/:clientId, not /clients/all).
   const onProfile = Boolean(item.path === '/clients' && matchPath({ path: '/clients/:clientId/*' }, pathname) && !matchPath({ path: '/clients/all/*' }, pathname))
+  // ADM-013 → ADM-019: inside a client's Bookings, Payments, Wallet, Membership, Loyalty, Support or Account Actions the sidebar shows
+  // Client Profile → Client Bookings → Payments → Wallet → Membership → Referrals & Loyalty → Support & Safety → Account & Actions, with the current one active.
 
   const subMatch = item.path === '/clients' ? matchPath({ path: '/clients/:clientId/:section' }, pathname) : null
-  const sub = subMatch && subMatch.params.clientId !== 'all' && ['bookings', 'payments', 'wallet', 'membership', 'loyalty'].includes(subMatch.params.section) ? subMatch.params.section : null
+  const sub = subMatch && subMatch.params.clientId !== 'all' && ['bookings', 'payments', 'wallet', 'membership', 'loyalty', 'support', 'account'].includes(subMatch.params.section) ? subMatch.params.section : null
   const subClient = subMatch?.params.clientId
 
 
@@ -279,6 +282,8 @@ function GroupChildren({ item, onNavigate }) {
             ['wallet', 'Client Wallet', Wallet],
             ['membership', 'Client Membership', Crown],
             ['loyalty', 'Client Referrals & Loyalty', Gift],
+            ['support', 'Client Support & Safety', ShieldCheck],
+            ['account', 'Client Account & Actions', Settings],
           ].map(([key, label, RowIcon]) =>
             sub === key ? (
               <span key={key} aria-current="page" className={cn(ROW, 'pl-[18px] bg-[#5c2dd5] font-semibold text-white shadow-md')}>
