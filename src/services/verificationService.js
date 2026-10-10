@@ -2234,6 +2234,562 @@ export async function addCredentialInternalNote(verificationId, credentialId = '
 }
 
 /**
+ * -------------------------------------------------------------
+ * ADM-034: Business Documents Review In-Memory Mock Store
+ * -------------------------------------------------------------
+ */
+const localBusinessRecords = new Map()
+
+function generateInitialBusinessRecord(verificationId = 'ver-002', documentId = 'doc-licence') {
+  const baseReview =
+    localVerificationDetails.get(verificationId) ||
+    localQueue.find((q) => q.id === verificationId || q.providerId === verificationId) ||
+    localQueue.find((q) => q.providerCategory === 'SPA_WELLNESS') ||
+    localQueue[1] || {}
+
+  const isHotel = baseReview.providerCategory === 'HOTEL_RESORT'
+  const businessName = isHotel ? (baseReview.name || 'Savanna Wellness Resort') : (baseReview.name || 'Serenity Wellness Spa')
+  const legalEntityName = isHotel ? 'Savanna Wellness Resort Ltd.' : 'Serenity Wellness Ltd.'
+  const providerCode = baseReview.providerId || (isHotel ? 'HOTEL-55102' : 'SPA-28192')
+  const categoryLabel = isHotel ? 'Hotel & Wellness Resort' : 'Spa & Wellness Center'
+  const representativeName = isHotel ? 'David Mwangi' : 'Mary Wanjiku'
+  const representativeRole = isHotel ? 'Property Administrator / General Manager' : 'Managing Director & Founder'
+  const representativeDoc = isHotel ? 'Board Resolution & TRA Mandate' : 'CR12 Official Company Registry Certificate'
+  const representativeId = isHotel ? '•••• •••• 3319' : '•••• •••• 9102'
+
+  const documentRequirements = [
+    {
+      id: 'doc-reg',
+      title: 'Business Registration',
+      subtitle: 'Certificate of Incorporation',
+      status: 'APPROVED',
+      isRequired: true,
+      fileName: isHotel ? 'Savanna_Incorporation_Cert.pdf' : 'Serenity_Incorporation_Cert.pdf',
+      docType: 'Certificate of Incorporation',
+      issuer: 'Business Registration Service (BRS Kenya)',
+      regNumberMasked: '•••• •••• 89412',
+      regNumberPlain: 'CPR/2021/89412',
+      issueDate: '14 Jun 2021',
+      expiryDate: 'Perpetual',
+      uploadedAt: '10 Sep 2026 • 2:15 PM',
+      pageCount: 1,
+    },
+    {
+      id: 'doc-licence',
+      title: 'Operating Licence',
+      subtitle: 'Premises Single Business Permit',
+      status: 'UNDER_REVIEW',
+      isRequired: true,
+      fileName: 'Nairobi_County_Operating_Licence_2025.pdf',
+      docType: 'Single Business Permit (SBP)',
+      issuer: 'Nairobi City County Government',
+      regNumberMasked: '•••• •••• 78421',
+      regNumberPlain: 'NBI/BL/2025/78421',
+      issueDate: '01 Jan 2025',
+      expiryDate: '31 Dec 2025',
+      uploadedAt: '11 Sep 2026 • 3:18 PM',
+      pageCount: 3,
+    },
+    {
+      id: 'doc-tax',
+      title: 'Tax Compliance Certificate',
+      subtitle: 'KRA Corporate Compliance',
+      status: 'CHANGES_REQUESTED',
+      isRequired: true,
+      fileName: 'KRA_Tax_Compliance_Cert_2025.pdf',
+      docType: 'Tax Compliance Certificate (TCC)',
+      issuer: 'Kenya Revenue Authority',
+      regNumberMasked: '•••• •••• 819P',
+      regNumberPlain: 'P051892041M',
+      issueDate: '15 Jan 2025',
+      expiryDate: '15 Jan 2026',
+      uploadedAt: '10 Sep 2026 • 2:20 PM',
+      pageCount: 1,
+    },
+    {
+      id: 'doc-cr12',
+      title: 'Authorized Representative',
+      subtitle: 'Official Company Registry Search',
+      status: 'APPROVED',
+      isRequired: true,
+      fileName: 'Official_CR12_Search_2026.pdf',
+      docType: 'Official Search Form CR12',
+      issuer: 'Business Registration Service',
+      regNumberMasked: '•••• •••• 3109',
+      regNumberPlain: 'CR12/2024/3109',
+      issueDate: '20 Jul 2024',
+      expiryDate: 'Perpetual (Valid)',
+      uploadedAt: '10 Sep 2026 • 2:22 PM',
+      pageCount: 2,
+    },
+  ]
+
+  const activeDocId = documentId || 'doc-licence'
+  const activeDoc = documentRequirements.find((d) => d.id === activeDocId) || documentRequirements[1]
+
+  return {
+    verificationId,
+    providerId: providerCode,
+    providerCategory: baseReview.providerCategory || 'SPA_WELLNESS',
+    tradingName: businessName,
+    legalEntityName,
+    businessCategory: categoryLabel,
+    market: baseReview.market || { code: 'KE', name: 'Kenya', flag: '🇰🇪' },
+    location: 'Westlands, Nairobi',
+    operatingAddress: 'Delta Towers, Ground Floor & Suite 102, Chiromo Road, Westlands, Nairobi',
+    registeredAddress: 'Delta Towers, 4th Floor, Chiromo Road, Westlands, Nairobi, P.O. Box 48192-00100',
+    status: 'UNDER_REVIEW',
+    submittedAt: '11 Sep 2026 • 3:18 PM',
+    assignedTo: 'Jane Ochieng',
+    assignedReviewer: {
+      uid: 'reviewer-jane',
+      name: 'Jane Ochieng',
+      avatarUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=80',
+    },
+    version: 2,
+    progressSummary: {
+      requiredDocuments: 4,
+      submitted: 4,
+      approved: 2,
+      underReview: 1,
+      changesRequested: 1,
+      missing: 0,
+    },
+    representative: {
+      name: representativeName,
+      role: representativeRole,
+      title: 'Managing Director & Authorized Signatory',
+      ownership: '100% Beneficial Shareholder',
+      email: isHotel ? 'd.mwangi@marawellness.ke' : 'm.wanjiku@serenityspa.co.ke',
+      phone: isHotel ? '+254 733 112 233' : '+254 722 998 877',
+      idNumberMasked: representativeId,
+      authorizedDocument: representativeDoc,
+      isIdentityVerified: true,
+      identityReviewId: verificationId,
+    },
+    documents: documentRequirements,
+    activeDocument: {
+      ...activeDoc,
+      activePage: 1,
+      plotNumber: 'Plot 209/18420 Chiromo Rd',
+      businessActivity: 'Spa, Massage Therapy & Wellness Center',
+      signatoryAuthority: 'Chief Licensing Officer, Nairobi City County',
+      watermarkText: 'OFFICIAL COUNTY SEAL VERIFIED',
+      fileSize: '3.1 MB',
+      fileFormat: 'PDF',
+      qualityStatus: 'Readable & High Resolution',
+      validity: {
+        issueDate: activeDoc.issueDate,
+        expiryDate: activeDoc.expiryDate,
+        remainingDays: 264,
+        remainingFormatted: '6 months remaining',
+        isCurrent: true,
+        isExpiringSoon: false,
+      },
+    },
+    addressComparison: {
+      registeredAddress: 'Delta Towers, 4th Floor, Chiromo Road, Westlands, Nairobi, P.O. Box 48192-00100',
+      operatingAddress: 'Delta Towers, Ground Floor & Suite 102, Chiromo Road, Westlands, Nairobi',
+      isMatch: true,
+      matchNote: 'Premises Match Confirmed (Same Commercial Complex / Address Parcel)',
+    },
+    requirementInfo: {
+      mandateTitle: 'Nairobi City County Single Business Permit Mandate',
+      legalReference: 'Nairobi City County Single Business Permit Act (2020) & Lé Inspa Platform Safety Policy',
+      description:
+        'All wellness facilities operating physical massage, hydrotherapy, sauna, or aesthetic treatment premises within Nairobi County must maintain an active Single Business Permit (SBP) displaying the designated wellness activity code.',
+      eligibleServices: [
+        'Therapeutic Massage & Body Treatments',
+        'Hydrotherapy & Water Circuit Operations',
+        'Sauna, Steam & Thermal Suites',
+        'Facials, Skin Care & Esthetics',
+      ],
+    },
+    comparisonTable: [
+      {
+        id: 'cmp-b1',
+        field: 'Business Trading Name',
+        account: businessName,
+        document: legalEntityName,
+        result: 'Review',
+        resultType: 'review',
+        note: 'Informational review: Legal corporate entity registered with BRS vs. public consumer-facing trading brand.',
+      },
+      {
+        id: 'cmp-b2',
+        field: 'Country & Jurisdiction',
+        account: 'Kenya',
+        document: 'Kenya',
+        result: 'Match',
+        resultType: 'match',
+        note: 'National sovereign jurisdiction matches registered platform operating market.',
+      },
+      {
+        id: 'cmp-b3',
+        field: 'Licence / Permit Number',
+        account: activeDoc.regNumberMasked,
+        document: activeDoc.regNumberMasked,
+        accountPlain: activeDoc.regNumberPlain,
+        documentPlain: activeDoc.regNumberPlain,
+        result: 'Match',
+        resultType: 'match',
+        note: 'Validated against county unified licensing registry database.',
+      },
+      {
+        id: 'cmp-b4',
+        field: 'Business & Facility Category',
+        account: categoryLabel,
+        document: `${categoryLabel} (Category 3B)`,
+        result: 'Match',
+        resultType: 'match',
+        note: 'Permit authorizes therapeutic wellness, massage, and hydrotherapy services.',
+      },
+      {
+        id: 'cmp-b5',
+        field: 'Authorized Representative',
+        account: `${representativeName} (${representativeRole.split(' ')[0]})`,
+        document: `${representativeName} (Managing Director)`,
+        result: 'Match',
+        resultType: 'match',
+        note: 'Verified corporate representative corresponds with official CR12 registry.',
+      },
+      {
+        id: 'cmp-b6',
+        field: 'Premises Location',
+        account: 'Westlands, Nairobi',
+        document: 'Plot 209/18420 Chiromo Rd, Westlands',
+        result: 'Match',
+        resultType: 'match',
+        note: 'Physical facility parcel verified against county land mapping database.',
+      },
+    ],
+    checklist: [
+      { key: 'entityLegallyRegistered', label: 'Business entity legally registered', status: 'Pass', resultType: 'pass', description: 'Certificate of Incorporation verified with BRS Kenya' },
+      { key: 'premisesPermitActive', label: 'Premises operating permit active', status: 'Pass', resultType: 'pass', description: 'Single business permit valid for current calendar year' },
+      { key: 'taxComplianceVerified', label: 'Tax compliance verified', status: 'Needs review', resultType: 'review', description: 'KRA Tax compliance certificate renewal requested' },
+      { key: 'operatingAddressMatches', label: 'Operating address matches permit', status: 'Pass', resultType: 'pass', description: 'Plot number and street location match profile' },
+      { key: 'representativeVerified', label: 'Authorized representative verified', status: 'Pass', resultType: 'pass', description: 'Identity and Director status confirmed in ADM-032' },
+      { key: 'signatoryMandateConfirmed', label: 'Signatory mandate confirmed', status: 'Pass', resultType: 'pass', description: 'CR12 document confers official contracting authority' },
+      { key: 'publicHealthCleared', label: 'Public health & hygiene inspection cleared', status: 'Pass', resultType: 'pass', description: 'County health directorate sanitation seal present' },
+      { key: 'noSanctionsFlags', label: 'No sanctions or regulatory flags', status: 'Pass', resultType: 'pass', description: 'Entity in good legal standing across registry databases' },
+    ],
+    previousSubmissions: [
+      {
+        version: 2,
+        isCurrent: true,
+        submittedAt: '11 Sep 2026 • 3:18 PM',
+        fileName: 'Nairobi_County_Operating_Licence_2025.pdf',
+        status: 'Under Review',
+        statusType: 'under_review',
+        reviewer: 'Jane Ochieng',
+        notes: 'Resubmitted with current 2025/2026 calendar year Single Business Permit and paid county receipt.',
+      },
+      {
+        version: 1,
+        isCurrent: false,
+        submittedAt: '05 Sep 2026 • 11:20 AM',
+        fileName: 'County_Permit_2024_Expired.pdf',
+        status: 'Changes Requested',
+        statusType: 'changes_requested',
+        reviewer: 'Jane Ochieng',
+        notes: 'Submitted permit expired on 31 Dec 2024. Current calendar year single business permit required.',
+      },
+    ],
+    reviewHistory: [
+      { id: 'brh-1', time: '11 Sep 2026 • 3:45 PM', title: 'Review started by Jane Ochieng', actor: 'Jane Ochieng', type: 'review_started' },
+      { id: 'brh-2', time: '11 Sep 2026 • 3:30 PM', title: 'Assigned to Jane Ochieng by System', actor: 'System', type: 'assignment' },
+      { id: 'brh-3', time: '11 Sep 2026 • 3:18 PM', title: `Replacement Operating Licence submitted by ${businessName}`, actor: businessName, type: 'submission' },
+      { id: 'brh-4', time: '05 Sep 2026 • 2:10 PM', title: 'Changes requested — Licence expired (Jane Ochieng)', actor: 'Jane Ochieng', type: 'changes_requested' },
+      { id: 'brh-5', time: '05 Sep 2026 • 11:20 AM', title: `Business documents submitted by ${businessName}`, actor: businessName, type: 'submission' },
+    ],
+    internalNotes: [
+      {
+        id: 'bn-1',
+        authorName: 'Jane Ochieng',
+        authorRole: 'Verification Specialist',
+        createdAt: '11 Sep 2026 • 3:50 PM',
+        text: 'Trading name differs from legal entity (Serenity Wellness Spa vs Serenity Wellness Ltd). This is standard under Kenya Business Names Act. CR12 confirms Mary Wanjiku as 100% director.',
+      },
+    ],
+  }
+}
+
+/**
+ * 16. Fetch Business Verification Detail (ADM-034)
+ */
+export async function fetchBusinessVerificationDetail(verificationId, documentId) {
+  if (!isVerificationMockMode()) {
+    try {
+      const result = await callAdmin('adminGetBusinessVerificationDetail', { verificationId, documentId })
+      if (result?.verificationId || result?.tradingName || result?.legalEntityName) {
+        return result
+      }
+    } catch (err) {
+      console.warn(
+        '[verificationService] Cloud Function adminGetBusinessVerificationDetail failed. Falling back to local store.',
+        err?.message
+      )
+    }
+  }
+
+  const cacheKey = `${verificationId || 'ver-002'}_${documentId || 'doc-licence'}`
+  if (!localBusinessRecords.has(cacheKey)) {
+    const record = generateInitialBusinessRecord(verificationId, documentId)
+    localBusinessRecords.set(cacheKey, record)
+  }
+
+  return localBusinessRecords.get(cacheKey)
+}
+
+/**
+ * 17. Reveal Business Document Number (ADM-034)
+ */
+export async function revealBusinessDocumentNumber(verificationId, documentId = 'doc-licence') {
+  if (!isVerificationMockMode()) {
+    try {
+      const result = await callAdmin('adminRevealBusinessDocumentNumber', { verificationId, documentId })
+      if (result?.plainNumber) {
+        return result
+      }
+    } catch (err) {
+      console.warn(
+        '[verificationService] Cloud Function adminRevealBusinessDocumentNumber failed. Falling back to local store.',
+        err?.message
+      )
+    }
+  }
+
+  let plainNumber = 'NBI/BL/2025/78421'
+  if (documentId === 'doc-reg') plainNumber = 'CPR/2021/89412'
+  else if (documentId === 'doc-tax') plainNumber = 'P051892041M'
+  else if (documentId === 'doc-cr12') plainNumber = 'CR12/2024/3109'
+
+  return {
+    success: true,
+    verificationId,
+    documentId,
+    plainNumber,
+    revealedBy: 'Jane Ochieng',
+    revealedAt: new Date().toISOString(),
+  }
+}
+
+/**
+ * 18. Submit Business Document Decision (ADM-034)
+ */
+export async function submitBusinessDocumentDecision(payload) {
+  const {
+    verificationId,
+    documentId = 'doc-licence',
+    decision,
+    checklistResults = {},
+    reason = '',
+    providerMessage = '',
+    internalNote = '',
+    expectedVersion,
+  } = payload
+
+  if (!isVerificationMockMode()) {
+    try {
+      const result = await callAdmin('adminSubmitBusinessDocumentDecision', payload)
+      if (result?.success) {
+        return result
+      }
+    } catch (err) {
+      console.warn(
+        '[verificationService] Cloud Function adminSubmitBusinessDocumentDecision failed. Falling back to local store.',
+        err?.message
+      )
+    }
+  }
+
+  const cacheKey = `${verificationId || 'ver-002'}_${documentId || 'doc-licence'}`
+  let record = localBusinessRecords.get(cacheKey)
+  if (!record) {
+    record = generateInitialBusinessRecord(verificationId, documentId)
+    localBusinessRecords.set(cacheKey, record)
+  }
+
+  const normalizedDecision = String(decision).toUpperCase()
+  const nextVersion = (record.version || 2) + 1
+  record.version = nextVersion
+
+  const statusMap = {
+    APPROVE: 'APPROVED',
+    REQUEST_CHANGES: 'CHANGES_REQUESTED',
+    REJECT: 'REJECTED',
+    ESCALATE: 'ESCALATED',
+  }
+  const newStatus = statusMap[normalizedDecision] || normalizedDecision
+
+  // Update active document status
+  if (record.activeDocument) {
+    record.activeDocument.status = newStatus
+  }
+
+  // Update document in documents array
+  record.documents = record.documents.map((d) => {
+    if (d.id === documentId) {
+      return { ...d, status: newStatus }
+    }
+    return d
+  })
+
+  // Update progress summary counts
+  const approvedCount = record.documents.filter((d) => d.status === 'APPROVED').length
+  const underReviewCount = record.documents.filter((d) => d.status === 'UNDER_REVIEW' || d.status === 'REVIEWING_NOW').length
+  const changesCount = record.documents.filter((d) => d.status === 'CHANGES_REQUESTED').length
+
+  record.progressSummary = {
+    ...record.progressSummary,
+    approved: approvedCount,
+    underReview: underReviewCount,
+    changesRequested: changesCount,
+  }
+
+  // Update checklist if checklistResults passed
+  if (checklistResults && Object.keys(checklistResults).length > 0) {
+    record.checklist = record.checklist.map((item) => {
+      if (checklistResults[item.key] !== undefined) {
+        const val = checklistResults[item.key]
+        return {
+          ...item,
+          status: val === true || val === 'Pass' ? 'Pass' : val === 'Needs review' ? 'Needs review' : 'Fail',
+          resultType: val === true || val === 'Pass' ? 'pass' : val === 'Needs review' ? 'review' : 'fail',
+        }
+      }
+      return item
+    })
+  }
+
+  // Review history entry
+  const historyLabels = {
+    APPROVE: `Approved business document (${record.activeDocument?.title || 'Operating Licence'})`,
+    REQUEST_CHANGES: `Changes requested — ${reason || 'Correction needed'}`,
+    REJECT: `Document rejected — ${reason}`,
+    ESCALATE: `Document escalated to compliance — ${reason}`,
+  }
+
+  const newHistory = {
+    id: `brh-${Date.now()}`,
+    time: 'Just now',
+    title: historyLabels[normalizedDecision] || `Business document decision: ${normalizedDecision}`,
+    actor: 'Jane Ochieng',
+    type: normalizedDecision.toLowerCase(),
+    notes: reason || internalNote || providerMessage || '',
+  }
+  record.reviewHistory = [newHistory, ...record.reviewHistory]
+
+  // If requesting changes, update previous submissions
+  if (normalizedDecision === 'REQUEST_CHANGES') {
+    const updatedPrev = record.previousSubmissions.map((s) => ({
+      ...s,
+      isCurrent: false,
+      status: 'Changes Requested',
+      statusType: 'changes_requested',
+      notes: reason || providerMessage || 'Resubmission required',
+    }))
+    record.previousSubmissions = [
+      {
+        version: nextVersion,
+        isCurrent: true,
+        submittedAt: 'Pending business resubmission',
+        fileName: 'Pending upload...',
+        status: 'Awaiting Resubmission',
+        statusType: 'changes_requested',
+        reviewer: 'Jane Ochieng',
+        notes: reason || providerMessage,
+      },
+      ...updatedPrev,
+    ]
+  }
+
+  // Internal note if provided
+  if (internalNote && internalNote.trim()) {
+    record.internalNotes = [
+      {
+        id: `bn-${Date.now()}`,
+        authorName: 'Jane Ochieng',
+        authorRole: 'Verification Specialist',
+        createdAt: 'Just now',
+        text: internalNote.trim(),
+      },
+      ...record.internalNotes,
+    ]
+  }
+
+  // Propagate to ADM-031 parent review record
+  let parentReview = localReviewRecords.get(verificationId) || localReviewRecords.get(record.providerId)
+  if (parentReview) {
+    const allRequiredApproved = record.documents.filter((d) => d.isRequired).every((d) => d.status === 'APPROVED')
+    const nextParentStatus = allRequiredApproved ? 'APPROVED' : normalizedDecision === 'REQUEST_CHANGES' ? 'CHANGES_REQUESTED' : 'REVIEWING_NOW'
+
+    parentReview.progressSteps = (parentReview.progressSteps || []).map((step) => {
+      if (step.id === 'BUSINESS_DOCS' || step.id === 'PREMISES_PERMIT' || step.number === 2) {
+        return { ...step, status: nextParentStatus }
+      }
+      return step
+    })
+
+    parentReview.componentTabs = (parentReview.componentTabs || []).map((tab) => {
+      if (tab.id === 'BUSINESS_DOCS' || tab.id === 'PREMISES_PERMIT') {
+        return { ...tab, status: nextParentStatus, badgeCount: nextParentStatus === 'APPROVED' ? 0 : 1 }
+      }
+      return tab
+    })
+  }
+
+  return {
+    success: true,
+    verificationId: record.verificationId,
+    documentId,
+    decision: normalizedDecision,
+    status: newStatus,
+    version: nextVersion,
+  }
+}
+
+/**
+ * 19. Add Business Internal Note (ADM-034)
+ */
+export async function addBusinessInternalNote(verificationId, documentId = 'doc-licence', noteText = '') {
+  if (!isVerificationMockMode()) {
+    try {
+      const result = await callAdmin('adminAddBusinessInternalNote', { verificationId, documentId, noteText })
+      if (result?.success) {
+        return result
+      }
+    } catch (err) {
+      console.warn(
+        '[verificationService] Cloud Function adminAddBusinessInternalNote failed. Falling back to local store.',
+        err?.message
+      )
+    }
+  }
+
+  const cacheKey = `${verificationId || 'ver-002'}_${documentId || 'doc-licence'}`
+  let record = localBusinessRecords.get(cacheKey)
+  if (!record) {
+    record = generateInitialBusinessRecord(verificationId, documentId)
+    localBusinessRecords.set(cacheKey, record)
+  }
+
+  const newNote = {
+    id: `bn-${Date.now()}`,
+    authorName: 'Jane Ochieng',
+    authorRole: 'Verification Specialist',
+    createdAt: 'Just now',
+    text: noteText.trim(),
+  }
+
+  record.internalNotes = [newNote, ...(record.internalNotes || [])]
+  return {
+    success: true,
+    note: newNote,
+  }
+}
+
+/**
  * Service object export for standard import patterns.
  */
 export const verificationService = {
@@ -2252,9 +2808,14 @@ export const verificationService = {
   fetchCredentialVerificationDetail,
   submitCredentialDecision,
   addCredentialInternalNote,
+  fetchBusinessVerificationDetail,
+  revealBusinessDocumentNumber,
+  submitBusinessDocumentDecision,
+  addBusinessInternalNote,
   isMockMode: isVerificationMockMode,
   setMockMode: setVerificationMockMode,
 }
+
 
 
 

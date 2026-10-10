@@ -117,6 +117,10 @@ export default function VerificationReviewPage() {
       navigate(`/verifications/credentials/${targetId}`)
       return
     }
+    if (tabId === 'BUSINESS_DOCS' || tabId === 'PREMISES_PERMIT' || tabId === 'BUSINESS_REG' || tabId === 'HOSPITALITY_LIC') {
+      navigate(`/verifications/business/${targetId}`)
+      return
+    }
     setActiveTabId(tabId)
     // If switching to business permits or other docs, pick corresponding document if available
     if (tabId === 'PREMISES_PERMIT' || tabId === 'HOSPITALITY_LIC') {

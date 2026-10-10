@@ -18,6 +18,7 @@ import VerificationQueuePage from './pages/VerificationQueuePage.jsx'
 import VerificationReviewPage from './pages/VerificationReviewPage.jsx'
 import IdentityDocumentsReviewPage from './pages/IdentityDocumentsReviewPage.jsx'
 import ProfessionalCredentialsReviewPage from './pages/ProfessionalCredentialsReviewPage.jsx'
+import BusinessDocumentsReviewPage from './pages/BusinessDocumentsReviewPage.jsx'
 import VerificationDetail from './pages/verifications/VerificationDetail.jsx'
 import WithdrawalDetail from './pages/withdrawals/WithdrawalDetail.jsx'
 import DisputeDetail from './pages/disputes/DisputeDetail.jsx'
@@ -115,6 +116,9 @@ export const router = createBrowserRouter([
           { path: 'verifications/credentials/:id', element: <ProfessionalCredentialsReviewPage />, handle: { fullBleed: true } },
           { path: 'verifications/credentials', element: <ProfessionalCredentialsReviewPage />, handle: { fullBleed: true } },
           { path: 'verifications/review/:id/credentials', element: <ProfessionalCredentialsReviewPage />, handle: { fullBleed: true } },
+          { path: 'verifications/business/:id', element: <BusinessDocumentsReviewPage />, handle: { fullBleed: true } },
+          { path: 'verifications/business', element: <BusinessDocumentsReviewPage />, handle: { fullBleed: true } },
+          { path: 'verifications/review/:id/business', element: <BusinessDocumentsReviewPage />, handle: { fullBleed: true } },
           { path: 'verifications/review/:id', element: <VerificationReviewPage />, handle: { fullBleed: true } },
           { path: 'verifications/:id', element: <VerificationReviewPage />, handle: { fullBleed: true } },
           // ADM-044 → ADM-048 — Booking Operations (views over the shared bookings collection)
