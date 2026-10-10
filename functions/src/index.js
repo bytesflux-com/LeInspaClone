@@ -37,5 +37,9 @@ export {
   adminGetVerificationQueue,
   adminAssignVerificationReviewer,
   adminSubmitVerificationDecision,
+  adminGetVerificationQueueDetailed,
+  adminClaimVerificationCase,
+  adminEscalateVerificationCase,
 } from './adminVerification.js'
+
 
