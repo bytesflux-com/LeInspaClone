@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Link, NavLink, matchPath, useLocation } from 'react-router'
-import { ChevronRight } from 'lucide-react'
+
+import { Crown, Gift, User, Users, Wallet, WalletCards } from 'lucide-react'
+
 import { usePermissions } from '../../hooks/usePermissions'
 import { NAVIGATION_SECTIONS } from '../../constants/navigation'
 import { cn } from '../../lib/utils'
@@ -104,9 +106,45 @@ function GroupChildren({ item, onNavigate }) {
   // ADM-012: while a client profile is open, a "Client Profile" row appears under
   // Clients (the profile lives at /clients/:clientId, not /clients/all).
   const onProfile = Boolean(item.path === '/clients' && matchPath({ path: '/clients/:clientId/*' }, pathname) && !matchPath({ path: '/clients/all/*' }, pathname))
+
+  const subMatch = item.path === '/clients' ? matchPath({ path: '/clients/:clientId/:section' }, pathname) : null
+  const sub = subMatch && subMatch.params.clientId !== 'all' && ['bookings', 'payments', 'wallet', 'membership', 'loyalty'].includes(subMatch.params.section) ? subMatch.params.section : null
+  const subClient = subMatch?.params.clientId
+
+
   // ADM-013: on a client's bookings the sidebar shows Client Profile (link) → Client Bookings (active).
   const bookingsMatch = item.path === '/clients' ? matchPath({ path: '/clients/:clientId/bookings' }, pathname) : null
   const onBookings = Boolean(bookingsMatch && bookingsMatch.params.clientId !== 'all')
+  // ADM-022, ADM-023, ADM-024: while viewing a provider, contextual sub-pages appear under
+  // Provider Management, matching screenshots.
+  const providerServicesMatch = item.path === '/providers' ? matchPath({ path: '/providers/:providerId/services' }, pathname) : null
+  const onProviderServices = Boolean(
+    providerServicesMatch || (item.path === '/providers' && pathname === '/providers/services')
+  )
+
+  const providerBookingsMatch = item.path === '/providers' ? matchPath({ path: '/providers/:providerId/bookings' }, pathname) : null
+  const onProviderBookings = Boolean(
+    providerBookingsMatch || (item.path === '/providers' && pathname === '/providers/bookings')
+  )
+
+  const currentProviderId =
+    providerBookingsMatch?.params?.providerId ||
+    providerServicesMatch?.params?.providerId ||
+    (matchPath({ path: '/providers/:providerId/*' }, pathname)?.params?.providerId) ||
+    'PR-82941'
+
+  const onProviderProfile = Boolean(
+    item.path === '/providers' &&
+    matchPath({ path: '/providers/:providerId/*' }, pathname) &&
+    !matchPath({ path: '/providers/all/*' }, pathname) &&
+    !matchPath({ path: '/providers/directory/*' }, pathname) &&
+    !matchPath({ path: '/providers/subscriptions/*' }, pathname) &&
+    !onProviderServices &&
+    !onProviderBookings
+  )
+
+  const inProviderContext = onProviderProfile || onProviderServices || onProviderBookings
+
   const activeCls = 'bg-[#5c2dd5] font-semibold text-white shadow-md'
   const idleCls = 'text-white/80 hover:bg-white/10 hover:text-white'
 
@@ -115,6 +153,66 @@ function GroupChildren({ item, onNavigate }) {
   return (
     <>
       {validChildren.map((child) => {
+
+        // Insert Provider Profile, Services, Bookings right after "All Providers"
+        const isAllProviders = item.path === '/providers' && child.path === '/providers/all'
+        return (
+          <div key={child.path}>
+            <NavLink
+              to={child.path}
+              end
+              onClick={onNavigate}
+              className={({ isActive }) => cn(CHILD, isActive ? activeCls : idleCls)}
+            >
+              {child.label}
+            </NavLink>
+            {isAllProviders && inProviderContext && (
+              <>
+                {onProviderProfile ? (
+                  <span aria-current="page" className={cn(CHILD, activeCls)}>
+                    Provider Profile
+                  </span>
+                ) : (
+                  <Link
+                    to={`/providers/${currentProviderId}`}
+                    onClick={onNavigate}
+                    className={cn(CHILD, idleCls)}
+                  >
+                    Provider Profile
+                  </Link>
+                )}
+
+                {onProviderServices ? (
+                  <span aria-current="page" className={cn(CHILD, activeCls)}>
+                    Provider Services & Pricing
+                  </span>
+                ) : (
+                  <Link
+                    to={`/providers/${currentProviderId}/services`}
+                    onClick={onNavigate}
+                    className={cn(CHILD, idleCls)}
+                  >
+                    Provider Services & Pricing
+                  </Link>
+                )}
+
+                {onProviderBookings ? (
+                  <span aria-current="page" className={cn(CHILD, activeCls)}>
+                    Provider Bookings & Earnings
+                  </span>
+                ) : (
+                  <Link
+                    to={`/providers/${currentProviderId}/bookings`}
+                    onClick={onNavigate}
+                    className={cn(CHILD, idleCls)}
+                  >
+                    Provider Bookings & Earnings
+                  </Link>
+                )}
+              </>
+            )}
+          </div>
+
         const ChildIcon = child.icon
         return (
           <NavLink
@@ -134,6 +232,7 @@ function GroupChildren({ item, onNavigate }) {
               </span>
             )}
           </NavLink>
+
         )
       })}
       {onProfile && !onBookings && (
@@ -141,8 +240,30 @@ function GroupChildren({ item, onNavigate }) {
       )}
       {onBookings && (
         <>
-          <Link to={`/clients/${bookingsMatch.params.clientId}`} onClick={onNavigate} className={cn(CHILD, idleCls)}>Client Profile</Link>
-          <span aria-current="page" className={cn(CHILD, activeCls)}>Client Bookings</span>
+          <Link to={`/clients/${subClient}`} onClick={onNavigate} className={cn(ROW, 'pl-[18px] text-white/85 hover:bg-white/10 hover:text-white')}>
+            <User className="size-[18px] shrink-0" aria-hidden="true" />
+            <span>Client Profile</span>
+          </Link>
+          {[
+            ['bookings', 'Client Bookings', User],
+            ['payments', 'Client Payments', WalletCards],
+            ['wallet', 'Client Wallet', Wallet],
+            ['membership', 'Client Membership', Crown],
+            ['loyalty', 'Client Referrals & Loyalty', Gift],
+          ].map(([key, label, RowIcon]) =>
+            sub === key ? (
+              <span key={key} aria-current="page" className={cn(ROW, 'pl-[18px] bg-[#5c2dd5] font-semibold text-white shadow-md')}>
+                <RowIcon className="size-[18px] shrink-0" aria-hidden="true" />
+                <span>{label}</span>
+              </span>
+            ) : (
+              <Link key={key} to={`/clients/${subClient}/${key}`} onClick={onNavigate} className={cn(ROW, 'pl-[18px] text-white/85 hover:bg-white/10 hover:text-white')}>
+                <RowIcon className="size-[18px] shrink-0" aria-hidden="true" />
+                <span>{label}</span>
+              </Link>
+            ),
+          )}
+
         </>
       )}
     </>

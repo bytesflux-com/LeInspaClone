@@ -14,6 +14,13 @@
 //   adminGetClientBookings, adminGetBookingPreview     (ADM-013)
 //   adminGetClientPayments, adminGetPaymentPreview,
 //   adminAddPaymentNote                                (ADM-014)
+//   adminGetClientWallet, adminGetWalletBalanceHistory,
+//   adminGetWalletTransactionPreview,
+//   adminAddWalletTransactionNote                      (ADM-015)
+//   adminGetClientMembership, adminChangeClientMembership,
+//   adminAddMembershipNote                             (ADM-016)
+//   adminGetClientLoyalty, adminGetClientReferrals,
+//   adminGetReferralPreview, adminAddLoyaltyNote       (ADM-017)
 //
 // Country scope MUST be enforced by those functions (never trust `market`).
 import { callAdmin } from '../lib/adminCall'
@@ -34,6 +41,9 @@ import { buildDashboard, buildGrowth } from './mock/clientDashboardMock'
 import { buildClientProfile } from './mock/clientProfileMock'
 import { queryClientBookings, buildBookingPreview } from './mock/clientBookingsMock'
 import { queryClientPayments, buildPaymentPreview, addMockPaymentNote } from './mock/clientPaymentsMock'
+import { queryClientWallet, buildWalletHistory, buildWalletTransactionPreview, addMockWalletNote } from './mock/clientWalletMock'
+import { buildClientMembership, applyMockMembershipChange, addMockMembershipNote } from './mock/clientMembershipMock'
+import { buildClientLoyalty, queryClientReferrals, buildReferralPreview, addMockLoyaltyNote } from './mock/clientLoyaltyMock'
 
 const USE_MOCK = import.meta.env.VITE_USE_MOCK_CLIENTS !== 'false'
 const delay = (ms = 160) => new Promise((r) => setTimeout(r, ms))
@@ -326,6 +336,140 @@ export const clientService = {
     if (!USE_MOCK) return callAdmin('adminAddPaymentNote', { clientId, paymentId, text })
     await delay(220)
     return addMockPaymentNote(clientId, paymentId, text)
+  },
+
+  // ADM-015 — one client's wallet, read from the existing `wallets` +
+  // `wallet_transactions` collections (no admin copy). Balance, credits, debits
+  // and status counts are aggregated server-side and must reconcile
+  // (credits − debits = balance); a mismatch is reported, never auto-corrected.
+  // The server must validate admin, finance permission, country and client access,
+  // and keep the Client Wallet separate from Provider / Referral / Platform / Escrow wallets.
+  async getClientWallet(clientId, params = {}) {
+    if (!USE_MOCK) return callAdmin('adminGetClientWallet', { clientId, ...params })
+    await delay(220)
+    const r = MOCK_CLIENTS.find((c) => c.id === clientId)
+    if (!r || (params.market && params.market !== 'ALL' && r.country !== params.market)) {
+      throw new Error('Client not found or outside your authorised markets.')
+    }
+    return queryClientWallet(r, params)
+  },
+
+  // ADM-015 — compact balance-over-time series (7 / 30 / 90 days) for the chart.
+  async getWalletBalanceHistory(clientId, { market, window = 30 } = {}) {
+    if (!USE_MOCK) return callAdmin('adminGetWalletBalanceHistory', { clientId, market, window })
+    await delay(160)
+    const r = MOCK_CLIENTS.find((c) => c.id === clientId)
+    if (!r || (market && market !== 'ALL' && r.country !== market)) {
+      throw new Error('Client not found or outside your authorised markets.')
+    }
+    return buildWalletHistory(r, { window })
+  },
+
+  // ADM-015 — drawer details; permission is revalidated on every open.
+  async getWalletTransactionPreview(txnId, { clientId, market } = {}) {
+    if (!USE_MOCK) return callAdmin('adminGetWalletTransactionPreview', { txnId, clientId, market })
+    await delay(140)
+    const r = MOCK_CLIENTS.find((c) => c.id === clientId)
+    if (!r || (market && market !== 'ALL' && r.country !== market)) {
+      throw new Error('Client not found or outside your authorised markets.')
+    }
+    return buildWalletTransactionPreview(r, txnId)
+  },
+
+  // ADM-015 — internal note only; it never touches balances or financial records.
+  async addWalletTransactionNote({ clientId, txnId, text }) {
+    if (!USE_MOCK) return callAdmin('adminAddWalletTransactionNote', { clientId, txnId, text })
+    await delay(220)
+    return addMockWalletNote(clientId, txnId, text)
+  },
+
+  // ADM-016 — one client's membership, read from `customer_memberships`, the plan
+  // configuration, membership history/events and membership payments (no admin copy).
+  // Price and benefits come from the record / configuration — never from the UI.
+  // The server must validate admin, permission, country and client access, resolve the
+  // membership status separately from the client-account status, and omit payments
+  // and prices when the admin lacks payment-viewing permission.
+  async getClientMembership(clientId, { market } = {}) {
+    if (!USE_MOCK) return callAdmin('adminGetClientMembership', { clientId, market })
+    await delay(240)
+    const r = MOCK_CLIENTS.find((c) => c.id === clientId)
+    if (!r || (market && market !== 'ALL' && r.country !== market)) {
+      throw new Error('Client not found or outside your authorised markets.')
+    }
+    return buildClientMembership(r)
+  },
+
+  // ADM-016 — controlled manual change. Reason is mandatory. The callable must
+  // re-verify the admin where required (callAdmin handles `reverification-required`),
+  // re-read the latest membership, validate the transition / market / Executive
+  // eligibility, update transactionally, preserve the previous record, write the
+  // history event + audit log, notify the client where appropriate and refresh access.
+  // It can never mark a payment successful.
+  async changeClientMembership({ clientId, action, payload, reason, note }) {
+    if (!USE_MOCK) return callAdmin('adminChangeClientMembership', { clientId, action, payload, reason, note })
+    await delay(420)
+    const r = MOCK_CLIENTS.find((c) => c.id === clientId)
+    if (!r) throw new Error('Client not found or outside your authorised markets.')
+    return applyMockMembershipChange(r, { action, payload, reason, note })
+  },
+
+  // ADM-016 — internal note only; it never alters the membership.
+  async addMembershipNote({ clientId, text }) {
+    if (!USE_MOCK) return callAdmin('adminAddMembershipNote', { clientId, text })
+    await delay(220)
+    const r = MOCK_CLIENTS.find((c) => c.id === clientId)
+    if (!r) throw new Error('Client not found or outside your authorised markets.')
+    return addMockMembershipNote(r, text)
+  },
+
+  // ADM-017 — one client's referral identity, referral funnel, loyalty account, loyalty
+  // activity and rewards, read from the existing `users` / `customer_profiles`,
+  // `referrals`, `loyalty_accounts`, `loyalty_transactions` and reward records (no admin
+  // copy, no `admin_referrals` / `admin_loyalty`). Referral success is resolved by the
+  // configured referral rule and the loyalty progress by the configured loyalty rule —
+  // both server-side. The server must validate admin, country and client access, keep
+  // referral and loyalty balances separate, and omit monetary values / transaction links
+  // when the admin lacks payment-viewing permission.
+  async getClientLoyalty(clientId, { market } = {}) {
+    if (!USE_MOCK) return callAdmin('adminGetClientLoyalty', { clientId, market })
+    await delay(240)
+    const r = MOCK_CLIENTS.find((c) => c.id === clientId)
+    if (!r || (market && market !== 'ALL' && r.country !== market)) {
+      throw new Error('Client not found or outside your authorised markets.')
+    }
+    return buildClientLoyalty(r)
+  },
+
+  // ADM-017 — one page of the referral list (tab / search / date / sort / paging are
+  // applied server-side, so the browser only ever holds one page).
+  async getClientReferrals(clientId, params = {}) {
+    if (!USE_MOCK) return callAdmin('adminGetClientReferrals', { clientId, ...params })
+    await delay(200)
+    const r = MOCK_CLIENTS.find((c) => c.id === clientId)
+    if (!r || (params.market && params.market !== 'ALL' && r.country !== params.market)) {
+      throw new Error('Client not found or outside your authorised markets.')
+    }
+    return queryClientReferrals(r, params)
+  },
+
+  // ADM-017 — referral drawer details; permission is revalidated on every open.
+  async getReferralPreview(referralId, { clientId, market } = {}) {
+    if (!USE_MOCK) return callAdmin('adminGetReferralPreview', { referralId, clientId, market })
+    await delay(140)
+    const r = MOCK_CLIENTS.find((c) => c.id === clientId)
+    if (!r || (market && market !== 'ALL' && r.country !== market)) {
+      throw new Error('Client not found or outside your authorised markets.')
+    }
+    return buildReferralPreview(r, referralId)
+  },
+
+  // ADM-017 — internal note only; it never creates, edits or reverses a reward.
+  async addLoyaltyNote({ clientId, text }) {
+    if (!USE_MOCK) return callAdmin('adminAddLoyaltyNote', { clientId, text })
+    await delay(220)
+    const r = MOCK_CLIENTS.find((c) => c.id === clientId)
+    if (!r) throw new Error('Client not found or outside your authorised markets.')
+    return addMockLoyaltyNote(r, text)
   },
 
   getCities(country) {
