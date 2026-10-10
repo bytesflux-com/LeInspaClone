@@ -172,11 +172,13 @@ export default function VerificationQueuePage() {
     setDocumentViewerOpen(true)
   }
 
-  // Start Review (Navigates to ADM-029 workspace)
+
+  // Start Review (Navigates to ADM-031 review workspace)
   const handleStartReview = (record) => {
     const target = record || selectedRecord
     if (target) {
-      navigate(`/verifications?id=${target.id}`)
+      navigate(`/verifications/review/${target.providerId || target.id}`)
+
     }
   }
 

@@ -560,7 +560,9 @@ export default function QueueQuickPreviewDrawer({
         {/* Primary Action Button: Start Review → */}
         <button
           type="button"
-          onClick={() => navigate(`/verifications?id=${record.id}`)}
+
+          onClick={() => navigate(`/verifications/review/${record.providerId || record.id}`)}
+
           className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#6D28D9] py-2.5 text-xs font-bold text-white shadow-sm hover:bg-[#5B21B6] transition"
         >
           <span>Start Review</span>

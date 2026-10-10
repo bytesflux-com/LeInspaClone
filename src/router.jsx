@@ -17,9 +17,21 @@ import ClientMembership from './pages/clients/ClientMembership.jsx'
 
 import ClientLoyalty from './pages/clients/ClientLoyalty.jsx'
 
+import ClientSupport from './pages/clients/ClientSupport.jsx'
+
+
 import NeedsAttention from './pages/attention/NeedsAttention.jsx'
 import VerificationCenterPage from './pages/VerificationCenterPage.jsx'
 import VerificationQueuePage from './pages/VerificationQueuePage.jsx'
+
+import VerificationReviewPage from './pages/VerificationReviewPage.jsx'
+
+import IdentityDocumentsReviewPage from './pages/IdentityDocumentsReviewPage.jsx'
+import ProfessionalCredentialsReviewPage from './pages/ProfessionalCredentialsReviewPage.jsx'
+
+import BusinessDocumentsReviewPage from './pages/BusinessDocumentsReviewPage.jsx'
+
+
 import VerificationDetail from './pages/verifications/VerificationDetail.jsx'
 import WithdrawalDetail from './pages/withdrawals/WithdrawalDetail.jsx'
 import DisputeDetail from './pages/disputes/DisputeDetail.jsx'
@@ -104,6 +116,8 @@ export const router = createBrowserRouter([
           { path: 'clients/:clientId/membership', element: <ClientMembership />, handle: { fullBleed: true } },
           // ADM-017 — Client Referrals & Loyalty (admin view of referrals, loyalty accounts and rewards)
           { path: 'clients/:clientId/loyalty', element: <ClientLoyalty />, handle: { fullBleed: true } },
+          // ADM-018 — Client Support & Safety History (aggregated admin view over support, dispute, safety and report records)
+          { path: 'clients/:clientId/support', element: <ClientSupport />, handle: { fullBleed: true } },
           { path: 'clients/:clientId/:section', element: <ClientProfile />, handle: { fullBleed: true } },
           { path: 'attention', element: <NeedsAttention /> },
           { path: 'spas', element: <Placeholder title="Spas & Wellness Centers" /> },
@@ -130,7 +144,23 @@ export const router = createBrowserRouter([
           { path: 'services/:serviceId', element: <Placeholder title="Service Details" /> },
           { path: 'verifications', element: <VerificationCenterPage />, handle: { fullBleed: true } },
           { path: 'verifications/queue', element: <VerificationQueuePage />, handle: { fullBleed: true } },
-          { path: 'verifications/:id', element: <VerificationDetail /> },
+
+
+          { path: 'verifications/identity/:id', element: <IdentityDocumentsReviewPage />, handle: { fullBleed: true } },
+          { path: 'verifications/identity', element: <IdentityDocumentsReviewPage />, handle: { fullBleed: true } },
+          { path: 'verifications/review/:id/identity', element: <IdentityDocumentsReviewPage />, handle: { fullBleed: true } },
+          { path: 'verifications/credentials/:id', element: <ProfessionalCredentialsReviewPage />, handle: { fullBleed: true } },
+          { path: 'verifications/credentials', element: <ProfessionalCredentialsReviewPage />, handle: { fullBleed: true } },
+          { path: 'verifications/review/:id/credentials', element: <ProfessionalCredentialsReviewPage />, handle: { fullBleed: true } },
+
+          { path: 'verifications/business/:id', element: <BusinessDocumentsReviewPage />, handle: { fullBleed: true } },
+          { path: 'verifications/business', element: <BusinessDocumentsReviewPage />, handle: { fullBleed: true } },
+          { path: 'verifications/review/:id/business', element: <BusinessDocumentsReviewPage />, handle: { fullBleed: true } },
+
+          { path: 'verifications/review/:id', element: <VerificationReviewPage />, handle: { fullBleed: true } },
+          { path: 'verifications/review', element: <VerificationReviewPage />, handle: { fullBleed: true } },
+          { path: 'verifications/:id', element: <VerificationReviewPage />, handle: { fullBleed: true } },
+
           // ADM-044 → ADM-048 — Booking Operations (views over the shared bookings collection)
           { path: 'bookings', element: <BookingManagement />, handle: { fullBleed: true } },
           { path: 'bookings/active', element: <ActiveBookings />, handle: { fullBleed: true } },
@@ -155,8 +185,12 @@ export const router = createBrowserRouter([
 
           // TRUST & SAFETY
           { path: 'disputes', element: <Placeholder title="Disputes & Holds" /> },
-          { path: 'disputes/:id', element: <DisputeDetail /> },
+
+          { path: 'disputes/:disputeId', element: <Placeholder title="Dispute Details" /> },
+
           { path: 'safety', element: <Placeholder title="Safety Incidents" /> },
+          { path: 'safety/:caseId', element: <Placeholder title="Safety Investigation" /> },
+          { path: 'reports/:reportId', element: <Placeholder title="Report Details" /> },
           { path: 'support', element: <Placeholder title="Support Concierge" /> },
           { path: 'support/:id', element: <SupportTicketDetail /> },
 
