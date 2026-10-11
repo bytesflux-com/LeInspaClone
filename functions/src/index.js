@@ -1,57 +1,44 @@
-import {setGlobalOptions} from "firebase-functions/v2";
-import {onCall} from "firebase-functions/v2/https";
-import {initializeApp} from "firebase-admin/app";
-import {requireAdmin} from "./auth.js";
+import { setGlobalOptions } from 'firebase-functions/v2'
+import { onCall } from 'firebase-functions/v2/https'
+import { initializeApp } from 'firebase-admin/app'
+import { requireAdmin } from './auth.js'
 
-initializeApp();
+initializeApp()
 
-setGlobalOptions({region: "us-central1", maxInstances: 10});
+setGlobalOptions({ region: 'us-central1', maxInstances: 10 })
 
 // Health check the admin panel can call to verify the backend is reachable.
-export const adminPing = onCall(async request => {
-  await requireAdmin(request);
-  return {ok: true, time: new Date().toISOString()};
-});
+export const adminPing = onCall(async (request) => {
+  await requireAdmin(request)
+  return { ok: true, time: new Date().toISOString() }
+})
 
-export {
-  adminStartSecondFactor,
-  adminVerifySecondFactor,
-} from "./secondFactor.js";
+export { adminStartSecondFactor, adminVerifySecondFactor } from './secondFactor.js'
 export {
   adminRequestPasswordReset,
   adminVerifyPasswordReset,
   adminCompletePasswordReset,
-} from "./passwordRecovery.js";
-export {
-  adminGetSession,
-  adminVerifySession,
-  adminEndSession,
-} from "./sessionVerification.js";
-export {adminGetDashboardSummary} from "./dashboard.js";
-export {adminGetOperationsSummary} from "./operations.js";
-export {adminGlobalSearch} from "./search.js";
+} from './passwordRecovery.js'
+export { adminGetSession, adminVerifySession, adminEndSession } from './sessionVerification.js'
+export { adminGetDashboardSummary } from './dashboard.js'
+export { adminGetOperationsSummary } from './operations.js'
+export { adminGlobalSearch } from './search.js'
 export {
   adminGetNeedsAttention,
   adminGetReviewItem,
   adminProcessReviewAction,
   adminAssignQueueItem,
-} from "./needsAttention.js";
+} from './needsAttention.js'
 export {
   adminGetBookingDashboard,
   adminListBookings,
   adminGetBookingQuickView,
   adminRevealGuestContact,
-} from "./bookings.js";
+} from './bookings.js'
 
-export {adminGetProviderDashboard} from "./providerDashboard.js";
+export { adminGetProviderDashboard } from './providerDashboard.js'
+export { adminListProviders, adminGetProviderDetail } from './providerDirectory.js'
 export {
-
-  adminListProviders,
-  adminGetProviderDetail,
-} from "./providerDirectory.js";
-export {
-
-
   adminGetProviderProfile,
   adminAddProviderInternalNote,
   adminUpdateProviderContentStatus,
@@ -70,30 +57,11 @@ export {
   adminGetProviderEarningsOverview,
   adminGetProviderEarningsChart,
 } from './providerBookings.js'
-=======
+
+export {
   adminGetVerificationQueue,
   adminAssignVerificationReviewer,
   adminSubmitVerificationDecision,
-  adminGetVerificationQueueDetailed,
-  adminClaimVerificationCase,
-  adminEscalateVerificationCase,
-} from './adminVerification.js'
-
-
-  adminGetVerificationQueue,
-  adminAssignVerificationReviewer,
-  adminSubmitVerificationDecision,
-
-  adminGetVerificationQueueDetailed,
-  adminClaimVerificationCase,
-  adminEscalateVerificationCase,
-  adminGetVerificationDetail,
-  adminSubmitComponentDecision,
-  adminAddVerificationInternalNote,
-} from './adminVerification.js'
-
-
-
   adminGetVerificationQueueDetailed,
   adminClaimVerificationCase,
   adminEscalateVerificationCase,
@@ -110,5 +78,31 @@ export {
   adminRevealBusinessDocumentNumber,
   adminSubmitBusinessDocumentDecision,
   adminAddBusinessInternalNote,
-} from "./adminVerification.js";
+} from './adminVerification.js'
 
+export {
+  adminGetContentQueue,
+  adminGetContentReview,
+  adminStartContentReview,
+  adminContentDecision,
+  adminBulkMediaDecision,
+  adminCompleteGalleryReview,
+  adminAddModerationNote,
+} from './contentModeration.js'
+export { adminProfileFieldDecision, adminPublishProfileChanges, adminServiceDecision } from './changeReview.js'
+export {
+  adminGetInfoRequestWorkspace,
+  adminSaveInfoRequest,
+  adminGetInfoRequest,
+  adminListInfoRequests,
+  adminInfoRequestAction,
+} from './informationRequests.js'
+export {
+  adminGetRejectionWorkspace,
+  adminSubmitRejection,
+  adminGetVerificationDecision,
+  adminSubmitFinalVerificationDecision,
+  adminListApprovalDecisions,
+  adminGetApprovalDecision,
+  adminExportApprovalHistory,
+} from './approvalWorkflows.js'

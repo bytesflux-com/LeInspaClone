@@ -12,7 +12,6 @@ import {
   Banknote,
   CircleAlert,
   FileText,
-  FileCheck,
   Megaphone,
   Gift,
   ShieldCheck,
@@ -23,7 +22,6 @@ import {
   ScrollText,
   HeartPulse,
   Wallet,
-  ListOrdered,
 } from 'lucide-react'
 import { PERMISSIONS } from './permissions.js'
 
@@ -47,8 +45,8 @@ export const NAVIGATION_SECTIONS = [
         path: '/clients',
         permission: PERMISSIONS.USERS_VIEW,
         children: [
-          { label: 'Client Management', path: '/clients' },
-          { label: 'All Clients', path: '/clients/all' },
+          { label: 'Client Management', icon: LayoutDashboard, path: '/clients' },
+          { label: 'All Clients', icon: Users, path: '/clients/all' },
         ],
       },
       {
@@ -58,7 +56,7 @@ export const NAVIGATION_SECTIONS = [
         permission: PERMISSIONS.PROVIDERS_VIEW,
         children: [
           { label: 'Provider Dashboard', icon: LayoutDashboard, path: '/providers' },
-
+          { label: 'All Providers', icon: Users, path: '/providers/all' },
           {
             label: 'Verification Center',
             icon: FileText,
@@ -72,10 +70,27 @@ export const NAVIGATION_SECTIONS = [
               { label: 'Identity Documents', path: '/verifications/identity', icon: FileText },
               { label: 'Professional Credentials', path: '/verifications/credentials', icon: FileText },
               { label: 'Business Documents', path: '/verifications/business', icon: FileText },
+              { label: 'Verification Decision', path: '/verifications/decision', icon: ShieldCheck },
             ],
           },
-
-          { label: 'Content Moderation', icon: FileCheck, path: '/content' },
+          {
+            label: 'Content Moderation',
+            icon: ShieldCheck,
+            path: '/content-approval',
+            permission: PERMISSIONS.CONTENT_MODERATE,
+            children: [
+              { label: 'Content Approval Center', path: '/content-approval' },
+              { label: 'Profile Photo Approval', path: '/content-approval/profile-photos' },
+              { label: 'Gallery & Media Approval', path: '/content-approval/gallery' },
+              { label: 'Profile Information Change', path: '/content-approval/profile-changes' },
+              { label: 'Service Information Approval', path: '/content-approval/services' },
+              { label: 'Request More Information', path: '/information-requests' },
+              { label: 'Reject & Send Reason / Note', path: '/reject' },
+              { label: 'Approval History', path: '/approval-history' },
+              { label: 'Offers & Packages Approval', path: '/content-approval/offers' },
+              { label: 'Business Content Approval', path: '/content-approval/business' },
+            ],
+          },
           { label: 'Withdrawals', icon: Banknote, path: '/withdrawals', permission: PERMISSIONS.WITHDRAWALS_APPROVE },
           { label: 'Provider Subscriptions', icon: CreditCard, path: '/providers/subscriptions' },
           { label: 'Spa & Wellness Centers', icon: Flower2, path: '/spas', permission: PERMISSIONS.PROVIDERS_VIEW },

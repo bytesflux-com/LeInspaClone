@@ -151,7 +151,7 @@ export function SelectBox({ icon: Icon, label, value, options, onChange, width =
 
 // Page-level market control. It drives the same global market context as the
 // top bar, so changing it re-queries every section.
-function MarketMenu() {
+export function MarketMenu() {
   const { selectedMarket, setSelectedMarket, availableMarkets } = useMarketContext()
   return (
     <SelectBox
