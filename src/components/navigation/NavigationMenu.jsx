@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, NavLink, matchPath, useLocation } from 'react-router'
 import { CalendarCheck, ChevronRight, Crown, Gift, ShieldAlert, Sparkles, User, Wallet, WalletCards } from 'lucide-react'
 
+
 import { usePermissions } from '../../hooks/usePermissions'
 import { NAVIGATION_SECTIONS } from '../../constants/navigation'
 import { cn } from '../../lib/utils'
@@ -126,6 +127,7 @@ function GroupChildren({ item, onNavigate }) {
   const { pathname } = useLocation()
   const { can } = usePermissions()
 
+
   // Client context resolution (ADM-012 -> ADM-018)
   const clientSectionMatch = item.path === '/clients' ? matchPath({ path: '/clients/:clientId/:section' }, pathname) : null
   const clientRootMatch = item.path === '/clients' ? matchPath({ path: '/clients/:clientId' }, pathname) : null
@@ -136,6 +138,7 @@ function GroupChildren({ item, onNavigate }) {
     item.path === '/clients' && rawClientId && rawClientId !== 'all'
       ? clientSectionMatch?.params?.section || 'profile'
       : null
+
 
   // Provider context resolution (ADM-022 -> ADM-024)
   const providerServicesMatch = item.path === '/providers' ? matchPath({ path: '/providers/:providerId/services' }, pathname) : null
@@ -256,6 +259,7 @@ function GroupChildren({ item, onNavigate }) {
           </div>
         )
       })}
+
       {item.path === '/clients' &&
         CLIENT_SUB_TABS.map(([key, label, RowIcon]) => {
           const isActive = activeClientSub === key
@@ -273,6 +277,7 @@ function GroupChildren({ item, onNavigate }) {
             </Link>
           )
         })}
+
     </>
   )
 }
