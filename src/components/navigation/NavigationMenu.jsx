@@ -1,17 +1,17 @@
 import { useEffect, useState } from 'react'
 import { Link, NavLink, matchPath, useLocation } from 'react-router'
-
-import { ChevronRight, Crown, Gift, User, Users, Wallet, WalletCards } from 'lucide-react'
+import { ChevronRight, Crown, Gift, ShieldAlert, User, Users, Wallet, WalletCards } from 'lucide-react'
 
 import { usePermissions } from '../../hooks/usePermissions'
 import { NAVIGATION_SECTIONS } from '../../constants/navigation'
 import { cn } from '../../lib/utils'
+import VerificationCenterAccordion from './VerificationCenterAccordion'
 
 const ROW = 'group flex items-center gap-2.5 whitespace-nowrap rounded-xl px-2.5 py-[3px] text-[12.5px] font-medium leading-5 transition-colors'
 const CHILD = 'flex items-center whitespace-nowrap rounded-lg py-[3px] pr-2.5 pl-[38px] text-[12px] leading-5 transition-colors'
 
 // A route is inside a group when it matches the group prefix or any child path.
-const groupPaths = (item) => [item.path, ...item.children.flatMap((c) => (c.children ? groupPaths(c) : [c.path]))]
+const groupPaths = (item) => [item.path, ...(item.children || []).flatMap((c) => (c.children ? groupPaths(c) : [c.path]))]
 const inside = (paths, pathname) => paths.some((p) => pathname === p || pathname.startsWith(`${p}/`))
 
 export default function NavigationMenu({ onNavigate }) {
@@ -49,6 +49,15 @@ export default function NavigationMenu({ onNavigate }) {
 
             <div className="space-y-0.5">
               {items.map((item) => {
+                if (item.path === '/verifications' || item.label === 'Verification Center' || item.isAccordion) {
+                  return (
+                    <VerificationCenterAccordion
+                      key={item.path + item.label}
+                      onNavigate={onNavigate}
+                    />
+                  )
+                }
+
                 const Icon = item.icon
 
                 if (!item.children) {
@@ -108,9 +117,8 @@ function GroupChildren({ item, onNavigate }) {
   const onProfile = Boolean(item.path === '/clients' && matchPath({ path: '/clients/:clientId/*' }, pathname) && !matchPath({ path: '/clients/all/*' }, pathname))
 
   const subMatch = item.path === '/clients' ? matchPath({ path: '/clients/:clientId/:section' }, pathname) : null
-  const sub = subMatch && subMatch.params.clientId !== 'all' && ['bookings', 'payments', 'wallet', 'membership', 'loyalty'].includes(subMatch.params.section) ? subMatch.params.section : null
+  const sub = subMatch && subMatch.params.clientId !== 'all' && ['bookings', 'payments', 'wallet', 'membership', 'loyalty', 'support'].includes(subMatch.params.section) ? subMatch.params.section : null
   const subClient = subMatch?.params.clientId
-
 
   // ADM-013: on a client's bookings the sidebar shows Client Profile (link) → Client Bookings (active).
   const bookingsMatch = item.path === '/clients' ? matchPath({ path: '/clients/:clientId/bookings' }, pathname) : null
@@ -153,19 +161,50 @@ function GroupChildren({ item, onNavigate }) {
   return (
     <>
       {validChildren.map((child) => {
+        if (child.path === '/verifications' || child.label === 'Verification Center' || child.isAccordion) {
+          return (
+            <VerificationCenterAccordion
+              key={child.path + child.label}
+              onNavigate={onNavigate}
+            />
+          )
+        }
+        if (child.path === '/verifications/queue' || child.label === 'Verification Queue') {
+          return null
+        }
+
         // Nested group (e.g. Content Moderation inside Provider Management).
-        if (child.children) return <NestedGroup key={child.path + child.label} item={child} onNavigate={onNavigate} activeCls={activeCls} idleCls={idleCls} />
-        // Insert Provider Profile, Services, Bookings right after "All Providers"
+        if (child.children) {
+          return (
+            <NestedGroup
+              key={child.path + child.label}
+              item={child}
+              onNavigate={onNavigate}
+              activeCls={activeCls}
+              idleCls={idleCls}
+            />
+          )
+        }
+
         const isAllProviders = item.path === '/providers' && child.path === '/providers/all'
+        const ChildIcon = child.icon
         return (
           <div key={child.path}>
             <NavLink
               to={child.path}
               end
               onClick={onNavigate}
-              className={({ isActive }) => cn(CHILD, isActive ? activeCls : idleCls)}
+              className={({ isActive }) => cn(CHILD, 'justify-between', isActive ? activeCls : idleCls)}
             >
-              {child.label}
+              <div className="flex items-center gap-2 min-w-0">
+                {ChildIcon && <ChildIcon className="size-3.5 shrink-0 opacity-80" aria-hidden="true" />}
+                <span className="truncate">{child.label}</span>
+              </div>
+              {child.badge && (
+                <span className="ml-1.5 rounded-full bg-amber-500/90 px-1.5 py-0.2 text-[9.5px] font-bold text-white shadow-xs">
+                  {child.badge}
+                </span>
+              )}
             </NavLink>
             {isAllProviders && inProviderContext && (
               <>
@@ -215,10 +254,10 @@ function GroupChildren({ item, onNavigate }) {
           </div>
         )
       })}
-      {onProfile && !onBookings && (
+      {onProfile && !onBookings && !sub && (
         <span aria-current="page" className={cn(CHILD, activeCls)}>Client Profile</span>
       )}
-      {onBookings && (
+      {(onBookings || sub) && (
         <>
           <Link to={`/clients/${subClient}`} onClick={onNavigate} className={cn(ROW, 'pl-[18px] text-white/85 hover:bg-white/10 hover:text-white')}>
             <User className="size-[18px] shrink-0" aria-hidden="true" />
@@ -230,6 +269,7 @@ function GroupChildren({ item, onNavigate }) {
             ['wallet', 'Client Wallet', Wallet],
             ['membership', 'Client Membership', Crown],
             ['loyalty', 'Client Referrals & Loyalty', Gift],
+            ['support', 'Support & Safety History', ShieldAlert],
           ].map(([key, label, RowIcon]) =>
             sub === key ? (
               <span key={key} aria-current="page" className={cn(ROW, 'pl-[18px] bg-[#5c2dd5] font-semibold text-white shadow-md')}>
@@ -243,7 +283,6 @@ function GroupChildren({ item, onNavigate }) {
               </Link>
             ),
           )}
-
         </>
       )}
     </>

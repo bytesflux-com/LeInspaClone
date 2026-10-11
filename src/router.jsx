@@ -10,15 +10,20 @@ import ClientManagement from './pages/clients/ClientManagement.jsx'
 import AllClients from './pages/clients/AllClients.jsx'
 import ClientProfile from './pages/clients/ClientProfile.jsx'
 import ClientBookings from './pages/clients/ClientBookings.jsx'
-
 import ClientPayments from './pages/clients/ClientPayments.jsx'
 import ClientWallet from './pages/clients/ClientWallet.jsx'
 import ClientMembership from './pages/clients/ClientMembership.jsx'
-
 import ClientLoyalty from './pages/clients/ClientLoyalty.jsx'
+import ClientSupport from './pages/clients/ClientSupport.jsx'
 
 import NeedsAttention from './pages/attention/NeedsAttention.jsx'
-import VerificationDetail from './pages/verifications/VerificationDetail.jsx'
+import VerificationCenterPage from './pages/VerificationCenterPage.jsx'
+import VerificationQueuePage from './pages/VerificationQueuePage.jsx'
+import VerificationReviewPage from './pages/VerificationReviewPage.jsx'
+import IdentityDocumentsReviewPage from './pages/IdentityDocumentsReviewPage.jsx'
+import ProfessionalCredentialsReviewPage from './pages/ProfessionalCredentialsReviewPage.jsx'
+import BusinessDocumentsReviewPage from './pages/BusinessDocumentsReviewPage.jsx'
+
 import WithdrawalDetail from './pages/withdrawals/WithdrawalDetail.jsx'
 import DisputeDetail from './pages/disputes/DisputeDetail.jsx'
 import SupportTicketDetail from './pages/support/SupportTicketDetail.jsx'
@@ -110,13 +115,15 @@ export const router = createBrowserRouter([
           { path: 'clients/:clientId/membership', element: <ClientMembership />, handle: { fullBleed: true } },
           // ADM-017 — Client Referrals & Loyalty (admin view of referrals, loyalty accounts and rewards)
           { path: 'clients/:clientId/loyalty', element: <ClientLoyalty />, handle: { fullBleed: true } },
+          // ADM-018 — Client Support & Safety History (aggregated admin view over support, dispute, safety and report records)
+          { path: 'clients/:clientId/support', element: <ClientSupport />, handle: { fullBleed: true } },
           { path: 'clients/:clientId/:section', element: <ClientProfile />, handle: { fullBleed: true } },
           { path: 'attention', element: <NeedsAttention /> },
           { path: 'spas', element: <Placeholder title="Spas & Wellness Centers" /> },
           { path: 'hotels', element: <Placeholder title="Hotels & Resorts" /> },
           { path: 'payments', element: <Placeholder title="Payments" /> },
           { path: 'payments/:paymentId', element: <Placeholder title="Payment Details" /> }, // ADM-056
-          { path: 'content', element: <Placeholder title="Content Management" /> },
+          { path: 'content', element: <ContentApprovalCenter />, handle: { fullBleed: true } },
           { path: 'reports', element: <Placeholder title="Reports" /> },
           // ADM-020 — Provider Management Dashboard
           { path: 'providers', element: <ProviderDashboard />, handle: { fullBleed: true } },
@@ -134,14 +141,33 @@ export const router = createBrowserRouter([
           { path: 'providers/:providerId', element: <ProviderProfile />, handle: { fullBleed: true } },
           { path: 'providers/:providerId/:section', element: <ProviderProfile />, handle: { fullBleed: true } },
           { path: 'services/:serviceId', element: <Placeholder title="Service Details" /> },
-          { path: 'verifications', element: <Placeholder title="Verification & Approvals" /> },
-          // ADM-035 → ADM-037 — Content moderation (separate from provider verification)
+
+          // ADM-029 → ADM-034 — Verification Center
+          { path: 'verifications', element: <VerificationCenterPage />, handle: { fullBleed: true } },
+          { path: 'verifications/queue', element: <VerificationQueuePage />, handle: { fullBleed: true } },
+          { path: 'verifications/identity/:id', element: <IdentityDocumentsReviewPage />, handle: { fullBleed: true } },
+          { path: 'verifications/identity', element: <IdentityDocumentsReviewPage />, handle: { fullBleed: true } },
+          { path: 'verifications/review/:id/identity', element: <IdentityDocumentsReviewPage />, handle: { fullBleed: true } },
+          { path: 'verifications/credentials/:id', element: <ProfessionalCredentialsReviewPage />, handle: { fullBleed: true } },
+          { path: 'verifications/credentials', element: <ProfessionalCredentialsReviewPage />, handle: { fullBleed: true } },
+          { path: 'verifications/review/:id/credentials', element: <ProfessionalCredentialsReviewPage />, handle: { fullBleed: true } },
+          { path: 'verifications/business/:id', element: <BusinessDocumentsReviewPage />, handle: { fullBleed: true } },
+          { path: 'verifications/business', element: <BusinessDocumentsReviewPage />, handle: { fullBleed: true } },
+          { path: 'verifications/review/:id/business', element: <BusinessDocumentsReviewPage />, handle: { fullBleed: true } },
+          { path: 'verifications/review/:id', element: <VerificationReviewPage />, handle: { fullBleed: true } },
+          { path: 'verifications/review', element: <VerificationReviewPage />, handle: { fullBleed: true } },
+
+          // ADM-042 — Verification Decision (before verifications/:id catch-all)
+          { path: 'verifications/decision', element: <VerificationDecision />, handle: { fullBleed: true } },
+          { path: 'verifications/:verificationId/decision', element: <VerificationDecision />, handle: { fullBleed: true } },
+          { path: 'verifications/:id', element: <VerificationReviewPage />, handle: { fullBleed: true } },
+
+          // ADM-035 → ADM-043 — Content moderation, information requests, reject workflow, approval history
           { path: 'content-approval', element: <ContentApprovalCenter />, handle: { fullBleed: true } },
           { path: 'content-approval/profile-photos', element: <ContentApprovalCenter presetType="profile_photo" title="Profile Photo Approval" />, handle: { fullBleed: true } },
           { path: 'content-approval/profile-photos/:moderationId', element: <ProfilePhotoApproval />, handle: { fullBleed: true } },
           { path: 'content-approval/gallery', element: <ContentApprovalCenter presetType="gallery" title="Gallery & Media Approval" />, handle: { fullBleed: true } },
           { path: 'content-approval/gallery/:moderationId', element: <GalleryMediaApproval />, handle: { fullBleed: true } },
-          // ADM-038 → ADM-040 — profile changes, service information, shared information requests
           { path: 'content-approval/profile-changes', element: <ContentApprovalCenter presetType="profile_change" title="Profile Information Change" />, handle: { fullBleed: true } },
           { path: 'content-approval/profile-changes/:moderationId', element: <ProfileChangeReview />, handle: { fullBleed: true } },
           { path: 'content-approval/services', element: <ContentApprovalCenter presetType="service" title="Service Information Approval" />, handle: { fullBleed: true } },
@@ -149,15 +175,12 @@ export const router = createBrowserRouter([
           { path: 'information-requests', element: <InformationRequests />, handle: { fullBleed: true } },
           { path: 'information-requests/new', element: <RequestMoreInformation />, handle: { fullBleed: true } },
           { path: 'information-requests/:requestId', element: <RequestMoreInformation />, handle: { fullBleed: true } },
-          // ADM-041 → ADM-043 — Reject & Send Reason / Note, Verification Decision, Approval History
           { path: 'reject', element: <RejectDecision />, handle: { fullBleed: true } },
-          { path: 'verifications/decision', element: <VerificationDecision />, handle: { fullBleed: true } },
-          { path: 'verifications/:verificationId/decision', element: <VerificationDecision />, handle: { fullBleed: true } },
           { path: 'approval-history', element: <ApprovalHistory />, handle: { fullBleed: true } },
           { path: 'content-approval/history', element: <ApprovalHistory />, handle: { fullBleed: true } },
           { path: 'content-approval/offers', element: <ContentApprovalCenter presetType="offer" title="Offers & Packages Approval" />, handle: { fullBleed: true } },
           { path: 'content-approval/business', element: <ContentApprovalCenter presetType="business_profile" title="Business Content Approval" />, handle: { fullBleed: true } },
-          { path: 'verifications/:id', element: <VerificationDetail /> },
+
           // ADM-044 → ADM-048 — Booking Operations (views over the shared bookings collection)
           { path: 'bookings', element: <BookingManagement />, handle: { fullBleed: true } },
           { path: 'bookings/active', element: <ActiveBookings />, handle: { fullBleed: true } },
@@ -182,8 +205,10 @@ export const router = createBrowserRouter([
 
           // TRUST & SAFETY
           { path: 'disputes', element: <Placeholder title="Disputes & Holds" /> },
-          { path: 'disputes/:id', element: <DisputeDetail /> },
+          { path: 'disputes/:disputeId', element: <Placeholder title="Dispute Details" /> },
           { path: 'safety', element: <Placeholder title="Safety Incidents" /> },
+          { path: 'safety/:caseId', element: <Placeholder title="Safety Investigation" /> },
+          { path: 'reports/:reportId', element: <Placeholder title="Report Details" /> },
           { path: 'support', element: <Placeholder title="Support Concierge" /> },
           { path: 'support/:id', element: <SupportTicketDetail /> },
 

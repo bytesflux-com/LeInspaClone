@@ -29,7 +29,12 @@ export {
   adminProcessReviewAction,
   adminAssignQueueItem,
 } from './needsAttention.js'
-export { adminGetBookingDashboard, adminListBookings, adminGetBookingQuickView, adminRevealGuestContact } from './bookings.js'
+export {
+  adminGetBookingDashboard,
+  adminListBookings,
+  adminGetBookingQuickView,
+  adminRevealGuestContact,
+} from './bookings.js'
 
 export { adminGetProviderDashboard } from './providerDashboard.js'
 export { adminListProviders, adminGetProviderDetail } from './providerDirectory.js'
@@ -53,6 +58,27 @@ export {
   adminGetProviderEarningsChart,
 } from './providerBookings.js'
 
+export {
+  adminGetVerificationQueue,
+  adminAssignVerificationReviewer,
+  adminSubmitVerificationDecision,
+  adminGetVerificationQueueDetailed,
+  adminClaimVerificationCase,
+  adminEscalateVerificationCase,
+  adminGetVerificationDetail,
+  adminSubmitComponentDecision,
+  adminAddVerificationInternalNote,
+  adminGetIdentityVerificationDetail,
+  adminRevealSensitiveIdentityField,
+  adminSubmitIdentityDecision,
+  adminGetCredentialVerificationDetail,
+  adminSubmitCredentialDecision,
+  adminAddCredentialInternalNote,
+  adminGetBusinessVerificationDetail,
+  adminRevealBusinessDocumentNumber,
+  adminSubmitBusinessDocumentDecision,
+  adminAddBusinessInternalNote,
+} from './adminVerification.js'
 
 export {
   adminGetContentQueue,
@@ -75,9 +101,8 @@ export {
   adminGetRejectionWorkspace,
   adminSubmitRejection,
   adminGetVerificationDecision,
-  adminSubmitVerificationDecision,
+  adminSubmitFinalVerificationDecision,
   adminListApprovalDecisions,
   adminGetApprovalDecision,
   adminExportApprovalHistory,
 } from './approvalWorkflows.js'
-

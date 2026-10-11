@@ -272,7 +272,7 @@ export const adminGetVerificationDecision = onCall(async (request) => {
   }
 })
 
-export const adminSubmitVerificationDecision = onCall(async (request) => {
+export const adminSubmitFinalVerificationDecision = onCall(async (request) => {
   const d = request.data || {}
   const id = String(d.verificationId || '').trim()
   if (!id) throw new HttpsError('invalid-argument', 'Verification ID is required.')

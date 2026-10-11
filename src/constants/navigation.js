@@ -57,8 +57,22 @@ export const NAVIGATION_SECTIONS = [
         children: [
           { label: 'Provider Dashboard', icon: LayoutDashboard, path: '/providers' },
           { label: 'All Providers', icon: Users, path: '/providers/all' },
-          { label: 'Verifications & Approvals', icon: BadgeCheck, path: '/verifications', permission: PERMISSIONS.PROVIDERS_VERIFY },
-          { label: 'Verification Decision', icon: ShieldCheck, path: '/verifications/decision', permission: PERMISSIONS.PROVIDERS_VERIFY },
+          {
+            label: 'Verification Center',
+            icon: FileText,
+            path: '/verifications',
+            permission: PERMISSIONS.PROVIDERS_VERIFY,
+            badge: '428',
+            isAccordion: true,
+            children: [
+              { label: 'Verification Queue', path: '/verifications/queue', icon: FileText },
+              { label: 'Verification Review', path: '/verifications/review', icon: FileText },
+              { label: 'Identity Documents', path: '/verifications/identity', icon: FileText },
+              { label: 'Professional Credentials', path: '/verifications/credentials', icon: FileText },
+              { label: 'Business Documents', path: '/verifications/business', icon: FileText },
+              { label: 'Verification Decision', path: '/verifications/decision', icon: ShieldCheck },
+            ],
+          },
           {
             label: 'Content Moderation',
             path: '/content-approval',
