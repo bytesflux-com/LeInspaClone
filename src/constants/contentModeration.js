@@ -21,6 +21,20 @@ export const INFO_REQUESTS = '/information-requests'
 export const infoRequestPath = (originModule, originRecordId, returnTo) =>
   `${INFO_REQUESTS}/new?module=${encodeURIComponent(originModule)}&record=${encodeURIComponent(originRecordId)}${returnTo ? `&returnTo=${encodeURIComponent(returnTo)}` : ''}`
 
+// ADM-041 — shared Reject & Send Reason / Note.
+export const REJECT_PATH = '/reject'
+export const rejectPath = (originModule, originRecordId, { targetId, returnTo } = {}) =>
+  `${REJECT_PATH}?module=${encodeURIComponent(originModule)}&record=${encodeURIComponent(originRecordId)}${targetId ? `&target=${encodeURIComponent(targetId)}` : ''}${returnTo ? `&returnTo=${encodeURIComponent(returnTo)}` : ''}`
+
+// ADM-042 — Verification Decision (shared across provider categories).
+export const VERIFICATION_DECISION_PATH = '/verifications/decision'
+export const verificationDecisionPath = (verificationId = 'PR-82941') =>
+  `/verifications/${encodeURIComponent(verificationId)}/decision`
+
+// ADM-043 — Approval History ledger.
+export const APPROVAL_HISTORY_PATH = '/approval-history'
+
+
 export const CONTENT_TABS = [
   ['all', 'All Content'],
   ['profile_photo', 'Profile Photos'],

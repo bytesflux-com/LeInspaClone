@@ -71,3 +71,13 @@ export {
   adminListInfoRequests,
   adminInfoRequestAction,
 } from './informationRequests.js'
+export {
+  adminGetRejectionWorkspace,
+  adminSubmitRejection,
+  adminGetVerificationDecision,
+  adminSubmitVerificationDecision,
+  adminListApprovalDecisions,
+  adminGetApprovalDecision,
+  adminExportApprovalHistory,
+} from './approvalWorkflows.js'
+

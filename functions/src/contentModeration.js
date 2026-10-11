@@ -23,6 +23,7 @@ import {
   validateDecision,
 } from './contentModerationLogic.js'
 import { buildFullReview } from './changeReviewLogic.js'
+import { buildEntry, contentDecisionType, effectsFor, ledgerDecision, writeEntry } from './decisionLedger.js'
 
 // ADM-035 Content Approval Center · ADM-036 Profile Photo · ADM-037 Gallery & Media.
 //
@@ -157,6 +158,37 @@ export const adminGetContentReview = onCall(async (request) => {
 // market access and (when given) that the admin saw the current version.
 // `side(tx, out, record)` may read and write related documents; it runs after
 // the record read and before any write, as Firestore transactions require.
+const ledgerKey = (k) => k.replace(/[^A-Za-z0-9]/g, '_')
+
+// Ledger entry for a content moderation decision (see decisionLedger.js).
+export function ledgerEntry(record, raw, { targetId = null, decision, reason, providerMessage, internalNote, subject, version, decisionType, isUpdate, evidenceRefs }, actor, access, now) {
+  const originModule = record.contentType === 'profile_change' ? 'profile_change' : record.contentType === 'service' ? 'service' : 'content'
+  const subjectKey = `${originModule}:${record.id}${targetId ? `:${targetId}` : ''}`
+  const type = decisionType || contentDecisionType(record.contentType, Boolean(targetId) && record.contentType === 'gallery')
+  return buildEntry({
+    originModule,
+    originRecordId: record.id,
+    targetId,
+    decisionType: type,
+    decision,
+    reason: reason || null,
+    providerMessage: providerMessage || null,
+    internalNote: internalNote || null,
+    version: version || `Version ${record.version}`,
+    subject: subject || { type: 'content', name: record.title || record.contentLabel, image: record.media[0]?.url || record.provider.photoUrl || null },
+    provider: record.provider,
+    countryCode: record.countryCode,
+    evidenceRefs: evidenceRefs || [],
+    effects: effectsFor(type, ledgerDecision(decision), { isUpdate }),
+    actor,
+    access,
+    at: now,
+    relatedReviewId: record.contentId,
+    routes: { original: originModule === 'content' ? `/content-approval?c=${record.id}` : null },
+    previousDecisionId: raw?.lastDecisionIds?.[ledgerKey(subjectKey)] || null,
+  })
+}
+
 export async function transact(request, id, expectedVersion, mutate, side = null) {
   const { access, actor, uid } = await adminContext(request)
   const ref = col().doc(id)
@@ -169,9 +201,15 @@ export async function transact(request, id, expectedVersion, mutate, side = null
       throw new HttpsError('failed-precondition', 'The provider submitted a newer version. Reload to review the latest content.', { reason: 'stale-version' })
     }
     const now = Timestamp.now()
-    const out = mutate({ record, raw: snap.data(), actor, now })
+    const raw = snap.data()
+    const ledger = (spec) => ledgerEntry(record, raw, spec, actor, access, now)
+    const out = mutate({ record, raw, actor, now, access, ledger })
     if (side) await side(tx, out, record)
-    if (out.patch) tx.update(ref, out.patch)
+    // ADM-043: record each decision in the ledger and remember it per subject
+    // so the next decision for the same subject can supersede it.
+    const patch = { ...(out.patch || {}) }
+    for (const e of out.ledger || []) patch[`lastDecisionIds.${ledgerKey(e.subjectKey)}`] = writeEntry(tx, e, db())
+    if (Object.keys(patch).length) tx.update(ref, patch)
     for (const h of out.history || []) tx.set(db().collection('content_moderation_history').doc(), h)
     return { record, out }
   })
@@ -218,7 +256,7 @@ export const adminContentDecision = onCall(async (request) => {
   const input = decisionInput(d)
   if (!DECISIONS.includes(input.decision)) throw new HttpsError('invalid-argument', 'Choose a moderation decision.')
 
-  const { uid, record, out } = await transact(request, id, d.version, ({ record, actor, now }) => {
+  const { uid, record, out } = await transact(request, id, d.version, ({ record, actor, now, ledger }) => {
     if (!OPEN_STATUSES.includes(record.status)) throw new HttpsError('failed-precondition', `This content is already ${label(record.status).toLowerCase()}.`)
     // Field-level and eligibility rules live in the dedicated endpoints.
     if (input.decision !== 'escalate' && (record.contentType === 'profile_change' || (record.contentType === 'service' && record.serviceChange))) {
@@ -239,11 +277,11 @@ export const adminContentDecision = onCall(async (request) => {
       if (!['awaiting_review', 'under_review'].includes(current.status)) throw new HttpsError('failed-precondition', 'This media item already has a decision.')
       const res = decideMedia(record.media, d.mediaId, input, actor, now)
       history.push(historyEntry(id, `${current.title}: ${label(res.status)}${input.reason ? ` — ${input.reason}` : ''}`, actor, now, { mediaId: d.mediaId, decision: input.decision, version: current.version }))
-      return { patch: { media: res.media, status: record.status === 'awaiting_review' ? 'under_review' : record.status, assignedTo: record.assignedTo || actor }, history, mediaStatus: res.status }
+      return { patch: { media: res.media, status: record.status === 'awaiting_review' ? 'under_review' : record.status, assignedTo: record.assignedTo || actor }, history, mediaStatus: res.status, ledger: [ledger({ targetId: d.mediaId, ...input, version: `Media version ${current.version}`, subject: { type: 'media', name: current.title, image: current.url }, evidenceRefs: [{ label: current.title, version: current.version, status: res.status }] })] }
     }
     const res = decideRecord(record, input, actor, now)
     history.push(res.history)
-    return { patch: { ...res.patch, ...(input.internalNote ? { internalNote: input.internalNote } : {}) }, history }
+    return { patch: { ...res.patch, ...(input.internalNote ? { internalNote: input.internalNote } : {}) }, history, ledger: [ledger({ ...input, evidenceRefs: record.media.slice(0, 3).map((m) => ({ label: m.title, version: m.version, status: res.patch.status })) })] }
   })
 
   await recordAudit(request, {
@@ -272,22 +310,24 @@ export const adminBulkMediaDecision = onCall(async (request) => {
   const input = decisionInput(d)
   if (!['approve', 'request_changes', 'reject'].includes(input.decision)) throw new HttpsError('invalid-argument', 'Bulk escalation is not supported; escalate items individually.')
 
-  const { uid, record } = await transact(request, id, d.version, ({ record, actor, now }) => {
+  const { uid, record } = await transact(request, id, d.version, ({ record, actor, now, ledger }) => {
     if (record.contentType !== 'gallery') throw new HttpsError('failed-precondition', 'Bulk decisions apply to gallery submissions only.')
     // Bulk approval confirms each item's checklist was reviewed in the UI.
     const error = validateDecision(input.decision === 'approve' ? { ...input, checks: Object.fromEntries(checklistFor('gallery', true).map((c) => [c.id, 'pass'])) } : input, checklistFor('gallery', true))
     if (error) throw new HttpsError('invalid-argument', error)
     let media = record.media
     const history = []
+    const entries = []
     for (const it of items) {
       const current = media.find((m) => m.mediaId === it.mediaId)
       if (!current) throw new HttpsError('not-found', 'A selected media item is no longer part of the submission.')
       if (it.version != null && Number(it.version) !== current.version) throw new HttpsError('failed-precondition', `${current.title} was replaced. Reload before continuing.`, { reason: 'stale-version' })
       if (!['awaiting_review', 'under_review'].includes(current.status)) throw new HttpsError('failed-precondition', `${current.title} already has a decision.`)
       media = decideMedia(media, it.mediaId, input, actor, now).media
+      entries.push(ledger({ targetId: it.mediaId, ...input, version: `Media version ${current.version}`, subject: { type: 'media', name: current.title, image: current.url } }))
     }
     history.push(historyEntry(id, `${items.length} media items: ${label(input.decision === 'approve' ? 'approved' : input.decision === 'reject' ? 'rejected' : 'changes_requested')}${input.reason ? ` — ${input.reason}` : ''}`, actor, now, { mediaIds: items.map((i) => i.mediaId), bulk: true }))
-    return { patch: { media, status: record.status === 'awaiting_review' ? 'under_review' : record.status, assignedTo: record.assignedTo || actor }, history }
+    return { patch: { media, status: record.status === 'awaiting_review' ? 'under_review' : record.status, assignedTo: record.assignedTo || actor }, history, ledger: entries }
   })
   await recordAudit(request, { actorId: uid, action: `content.bulk_${input.decision}`, entityId: id, entityType: 'content_moderation', metadata: { count: items.length, contentType: record.contentType, reason: input.reason } })
   return { ok: true }

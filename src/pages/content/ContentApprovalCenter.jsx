@@ -10,7 +10,7 @@ import { useContentQueue } from '../../hooks/useContentModeration'
 import { contentModerationService } from '../../services/contentModerationService'
 import { PERMISSIONS } from '../../constants/permissions'
 import { PROVIDER_CATEGORY_OPTIONS } from '../../constants/bookingOps'
-import { CONTENT_TABS, PRIORITY, PRIORITY_OPTIONS, STATUS_OPTIONS, SUBMITTED_OPTIONS, TYPE_OPTIONS, reviewPath } from '../../constants/contentModeration'
+import { APPROVAL_HISTORY_PATH, CONTENT_TABS, PRIORITY, PRIORITY_OPTIONS, STATUS_OPTIONS, SUBMITTED_OPTIONS, TYPE_OPTIONS, reviewPath } from '../../constants/contentModeration'
 import { CHECKLISTS, CONTENT_TYPES } from '../../../functions/src/contentModerationLogic.js'
 import { formatNumber } from '../../lib/format'
 import { formatStamp, timeZoneFor } from '../../lib/profileFormat'
@@ -151,6 +151,7 @@ export default function ContentApprovalCenter({ presetType = null, title = 'Cont
           <MarketMenu />
           <SelectBox icon={UsersRound} value={p.pt} options={PROVIDER_CATEGORY_OPTIONS} onChange={(pt) => update({ pt })} width="w-60" />
           <button type="button" onClick={refetch} className="inline-flex h-9 items-center gap-2 rounded-lg border border-[#ddd7ee] bg-white px-3.5 text-[12.5px] font-semibold text-[#1b1140] hover:bg-[#f4f1fc]"><RefreshCw className={cn('size-4', fetching && 'animate-spin')} /> Refresh</button>
+          <Link to={APPROVAL_HISTORY_PATH} className="inline-flex h-9 items-center gap-2 rounded-lg border border-[#ddd7ee] bg-white px-3.5 text-[12.5px] font-semibold text-[#1b1140] hover:bg-[#f4f1fc]"><Clock className="size-4 text-[#4125d0]" /> Approval History</Link>
           <button type="button" onClick={() => setGuidelines(true)} className="inline-flex h-9 items-center gap-2 rounded-lg border-[1.5px] border-[#4125d0] bg-white px-3.5 text-[12.5px] font-semibold text-[#4125d0] hover:bg-[#f4f0ff]"><BookOpen className="size-4" /> Content Guidelines</button>
         </div>
       </header>

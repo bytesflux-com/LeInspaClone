@@ -57,7 +57,7 @@ export const adminProfileFieldDecision = onCall(async (request) => {
   const d = request.data || {}
   const id = requireId(d.moderationId)
   const inp = input(d)
-  const { uid, record } = await transact(request, id, d.version, ({ record, actor, now }) => {
+  const { uid, record } = await transact(request, id, d.version, ({ record, actor, now, ledger }) => {
     if (record.contentType !== 'profile_change') throw new HttpsError('failed-precondition', 'This is not a profile change request.')
     if (!OPEN_STATUSES.includes(record.status)) throw new HttpsError('failed-precondition', `This request is already ${label(record.status).toLowerCase()}.`)
     const fields = (record.profileChange?.fields || []).map(normalizeField)
@@ -75,6 +75,7 @@ export const adminProfileFieldDecision = onCall(async (request) => {
     }
     return {
       reverify,
+      ledger: [ledger({ targetId: field.key, ...inp, version: `Profile version ${record.profileChange?.proposedVersion || record.version}`, subject: { type: 'profile_field', name: `${record.provider.name} — ${field.label}`, image: record.provider.photoUrl } })],
       patch: {
         'profileChange.fields': next,
         status: outcome || (record.status === 'awaiting_review' ? 'under_review' : record.status),
@@ -134,7 +135,7 @@ export const adminServiceDecision = onCall(async (request) => {
   const d = request.data || {}
   const id = requireId(d.moderationId)
   const inp = input(d)
-  const { uid, record } = await transact(request, id, d.version, ({ record, actor, now }) => {
+  const { uid, record } = await transact(request, id, d.version, ({ record, actor, now, ledger }) => {
     if (record.contentType !== 'service' || !record.serviceChange) throw new HttpsError('failed-precondition', 'This is not a service submission.')
     if (!OPEN_STATUSES.includes(record.status)) throw new HttpsError('failed-precondition', `This service is already ${label(record.status).toLowerCase()}.`)
     const proposed = record.serviceChange.proposed || {}
@@ -161,6 +162,7 @@ export const adminServiceDecision = onCall(async (request) => {
         ...(inp.decision === 'escalate' ? { escalation: { team: inp.escalateTo, reason: inp.reason, at: now } } : {}),
       },
       history,
+      ledger: [ledger({ ...inp, isUpdate, version: `Service version ${record.version}`, subject: { type: 'service', name: proposed.name || record.title, image: proposed.imageUrl || record.media[0]?.url || null } })],
       serviceId: record.serviceChange.serviceId,
       servicePatch:
         status === 'approved'

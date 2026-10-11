@@ -58,6 +58,7 @@ export const NAVIGATION_SECTIONS = [
           { label: 'Provider Dashboard', icon: LayoutDashboard, path: '/providers' },
           { label: 'All Providers', icon: Users, path: '/providers/all' },
           { label: 'Verifications & Approvals', icon: BadgeCheck, path: '/verifications', permission: PERMISSIONS.PROVIDERS_VERIFY },
+          { label: 'Verification Decision', icon: ShieldCheck, path: '/verifications/decision', permission: PERMISSIONS.PROVIDERS_VERIFY },
           {
             label: 'Content Moderation',
             path: '/content-approval',
@@ -69,6 +70,8 @@ export const NAVIGATION_SECTIONS = [
               { label: 'Profile Information Change', path: '/content-approval/profile-changes' },
               { label: 'Service Information Approval', path: '/content-approval/services' },
               { label: 'Request More Information', path: '/information-requests' },
+              { label: 'Reject & Send Reason / Note', path: '/reject' },
+              { label: 'Approval History', path: '/approval-history' },
               { label: 'Offers & Packages Approval', path: '/content-approval/offers' },
               { label: 'Business Content Approval', path: '/content-approval/business' },
             ],

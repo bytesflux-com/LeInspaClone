@@ -44,6 +44,9 @@ import ProfileChangeReview from './pages/content/ProfileChangeReview.jsx'
 import ServiceApproval from './pages/content/ServiceApproval.jsx'
 import RequestMoreInformation from './pages/content/RequestMoreInformation.jsx'
 import InformationRequests from './pages/content/InformationRequests.jsx'
+import RejectDecision from './pages/content/RejectDecision.jsx'
+import VerificationDecision from './pages/content/VerificationDecision.jsx'
+import ApprovalHistory from './pages/content/ApprovalHistory.jsx'
 import Placeholder from './pages/Placeholder.jsx'
 import NotFound from './pages/NotFound.jsx'
 import RouteErrorElement from './components/ui/RouteErrorElement.jsx'
@@ -146,6 +149,12 @@ export const router = createBrowserRouter([
           { path: 'information-requests', element: <InformationRequests />, handle: { fullBleed: true } },
           { path: 'information-requests/new', element: <RequestMoreInformation />, handle: { fullBleed: true } },
           { path: 'information-requests/:requestId', element: <RequestMoreInformation />, handle: { fullBleed: true } },
+          // ADM-041 → ADM-043 — Reject & Send Reason / Note, Verification Decision, Approval History
+          { path: 'reject', element: <RejectDecision />, handle: { fullBleed: true } },
+          { path: 'verifications/decision', element: <VerificationDecision />, handle: { fullBleed: true } },
+          { path: 'verifications/:verificationId/decision', element: <VerificationDecision />, handle: { fullBleed: true } },
+          { path: 'approval-history', element: <ApprovalHistory />, handle: { fullBleed: true } },
+          { path: 'content-approval/history', element: <ApprovalHistory />, handle: { fullBleed: true } },
           { path: 'content-approval/offers', element: <ContentApprovalCenter presetType="offer" title="Offers & Packages Approval" />, handle: { fullBleed: true } },
           { path: 'content-approval/business', element: <ContentApprovalCenter presetType="business_profile" title="Business Content Approval" />, handle: { fullBleed: true } },
           { path: 'verifications/:id', element: <VerificationDetail /> },

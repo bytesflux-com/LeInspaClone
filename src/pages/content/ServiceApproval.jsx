@@ -8,7 +8,7 @@ import { usePermissions } from '../../hooks/usePermissions'
 import { useContentReview } from '../../hooks/useContentModeration'
 import { contentModerationService } from '../../services/contentModerationService'
 import { PERMISSIONS } from '../../constants/permissions'
-import { CONTENT_BASE, TYPE_ROUTES, infoRequestPath } from '../../constants/contentModeration'
+import { APPROVAL_HISTORY_PATH, CONTENT_BASE, TYPE_ROUTES, infoRequestPath, rejectPath } from '../../constants/contentModeration'
 import { formatCurrency } from '../../lib/currency'
 import { cn } from '../../lib/utils'
 import { DISC, StatePill } from '../../components/bookings/OpsUI'
@@ -266,6 +266,8 @@ export default function ServiceApproval() {
             <button type="button" onClick={() => setDialog('reverify')} className={cn('flex h-10 flex-1 items-center justify-center gap-1.5 rounded-lg border-[1.5px] text-[12.5px] font-semibold', ACTION_BUTTON.reverify)}><BadgeCheck className="size-4" />Send for Verification Review</button>
             <button type="button" onClick={() => setDialog('escalate')} className={cn('flex h-10 flex-1 items-center justify-center gap-1.5 rounded-lg border-[1.5px] text-[12.5px] font-semibold', ACTION_BUTTON.escalate)}><Users className="size-4" />Escalate to Trust & Safety</button>
             <Link to={infoRequestPath('service', r.id, location.pathname)} className="flex h-10 items-center gap-1.5 rounded-lg border border-dashed border-[#b9a9f0] px-3 text-[12px] font-semibold text-[#4527c8] hover:bg-[#f4f0ff]"><MessageSquarePlus className="size-4" />Request Info</Link>
+            <Link to={rejectPath('service', r.id, { returnTo: location.pathname })} className="flex h-10 items-center gap-1.5 rounded-lg border border-dashed border-[#f2a3a3] bg-[#fff8f8] px-3 text-[12px] font-semibold text-[#b91c1c] hover:bg-[#fde4e4]">Reject & Send Reason</Link>
+            <Link to={APPROVAL_HISTORY_PATH} className="flex h-10 items-center gap-1.5 rounded-lg border border-[#ddd7ee] bg-white px-3 text-[12px] font-semibold text-[#1b1140] hover:bg-[#f4f1fc]"><History className="size-4" />History</Link>
           </div>
         </div>
       )}

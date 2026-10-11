@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, NavLink, matchPath, useLocation } from 'react-router'
 
-import { Crown, Gift, User, Users, Wallet, WalletCards } from 'lucide-react'
+import { ChevronRight, Crown, Gift, User, Users, Wallet, WalletCards } from 'lucide-react'
 
 import { usePermissions } from '../../hooks/usePermissions'
 import { NAVIGATION_SECTIONS } from '../../constants/navigation'
