@@ -1,18 +1,31 @@
 import { useEffect, useState } from 'react'
 import { Link, NavLink, matchPath, useLocation } from 'react-router'
-import { ChevronRight, Crown, Gift, ShieldAlert, User, Users, Wallet, WalletCards } from 'lucide-react'
+import { CalendarCheck, ChevronRight, Crown, Gift, ShieldAlert, Sparkles, User, Wallet, WalletCards } from 'lucide-react'
 
 import { usePermissions } from '../../hooks/usePermissions'
 import { NAVIGATION_SECTIONS } from '../../constants/navigation'
 import { cn } from '../../lib/utils'
 import VerificationCenterAccordion from './VerificationCenterAccordion'
 
-const ROW = 'group flex items-center gap-2.5 whitespace-nowrap rounded-xl px-2.5 py-[3px] text-[12.5px] font-medium leading-5 transition-colors'
-const CHILD = 'flex items-center whitespace-nowrap rounded-lg py-[3px] pr-2.5 pl-[38px] text-[12px] leading-5 transition-colors'
+const ROW = 'group flex items-center gap-2.5 rounded-xl px-2.5 py-[3px] text-[12.5px] font-medium leading-5 transition-colors'
+const CHILD = 'flex items-center rounded-lg py-[3px] pr-2.5 pl-[26px] text-[12px] leading-5 transition-colors'
 
 // A route is inside a group when it matches the group prefix or any child path.
 const groupPaths = (item) => [item.path, ...(item.children || []).flatMap((c) => (c.children ? groupPaths(c) : [c.path]))]
 const inside = (paths, pathname) => paths.some((p) => pathname === p || pathname.startsWith(`${p}/`))
+
+const DEFAULT_CLIENT_ID = 'CL-78421'
+const DEFAULT_PROVIDER_ID = 'PR-82941'
+
+const CLIENT_SUB_TABS = [
+  ['profile', 'Client Profile', User],
+  ['bookings', 'Client Bookings', CalendarCheck],
+  ['payments', 'Client Payments', WalletCards],
+  ['wallet', 'Client Wallet', Wallet],
+  ['membership', 'Client Membership', Crown],
+  ['loyalty', 'Client Referrals & Loyalty', Gift],
+  ['support', 'Support & Safety History', ShieldAlert],
+]
 
 export default function NavigationMenu({ onNavigate }) {
   const { can } = usePermissions()
@@ -20,7 +33,8 @@ export default function NavigationMenu({ onNavigate }) {
 
   // Expandable groups: open while the route is inside them, and toggled by
   // clicking the parent row. Entering a group (e.g. via a link) opens it.
-  const [open, setOpen] = useState(() => new Set())
+  // Default Clients and Provider Management to open so sub-tabs are immediately accessible.
+  const [open, setOpen] = useState(() => new Set(['/clients', '/providers']))
   useEffect(() => {
     const active = NAVIGATION_SECTIONS.flatMap((s) => s.items).filter((i) => i.children && inside(groupPaths(i), pathname))
     if (active.length) setOpen((prev) => (active.every((i) => prev.has(i.path)) ? prev : new Set([...prev, ...active.map((i) => i.path)])))
@@ -71,7 +85,7 @@ export default function NavigationMenu({ onNavigate }) {
                       }
                     >
                       <Icon className="size-[18px] shrink-0" aria-hidden="true" />
-                      <span>{item.label}</span>
+                      <span className="truncate">{item.label}</span>
                     </NavLink>
                   )
                 }
@@ -89,7 +103,7 @@ export default function NavigationMenu({ onNavigate }) {
                       className={cn(ROW, 'w-full', current ? 'bg-white/12 font-semibold text-white' : 'text-white/90 hover:bg-white/10 hover:text-white')}
                     >
                       <Icon className="size-[18px] shrink-0" aria-hidden="true" />
-                      <span>{item.label}</span>
+                      <span className="truncate">{item.label}</span>
                       <ChevronRight className={cn('ml-auto size-4 shrink-0 text-white/70 transition-transform', isOpen && 'rotate-90')} aria-hidden="true" />
                     </button>
                     {isOpen && (
@@ -112,19 +126,18 @@ function GroupChildren({ item, onNavigate }) {
   const { pathname } = useLocation()
   const { can } = usePermissions()
 
-  // ADM-012: while a client profile is open, a "Client Profile" row appears under
-  // Clients (the profile lives at /clients/:clientId, not /clients/all).
-  const onProfile = Boolean(item.path === '/clients' && matchPath({ path: '/clients/:clientId/*' }, pathname) && !matchPath({ path: '/clients/all/*' }, pathname))
+  // Client context resolution (ADM-012 -> ADM-018)
+  const clientSectionMatch = item.path === '/clients' ? matchPath({ path: '/clients/:clientId/:section' }, pathname) : null
+  const clientRootMatch = item.path === '/clients' ? matchPath({ path: '/clients/:clientId' }, pathname) : null
+  const rawClientId = clientSectionMatch?.params?.clientId || clientRootMatch?.params?.clientId
+  const currentClientId = rawClientId && rawClientId !== 'all' ? rawClientId : DEFAULT_CLIENT_ID
 
-  const subMatch = item.path === '/clients' ? matchPath({ path: '/clients/:clientId/:section' }, pathname) : null
-  const sub = subMatch && subMatch.params.clientId !== 'all' && ['bookings', 'payments', 'wallet', 'membership', 'loyalty', 'support'].includes(subMatch.params.section) ? subMatch.params.section : null
-  const subClient = subMatch?.params.clientId
+  const activeClientSub =
+    item.path === '/clients' && rawClientId && rawClientId !== 'all'
+      ? clientSectionMatch?.params?.section || 'profile'
+      : null
 
-  // ADM-013: on a client's bookings the sidebar shows Client Profile (link) → Client Bookings (active).
-  const bookingsMatch = item.path === '/clients' ? matchPath({ path: '/clients/:clientId/bookings' }, pathname) : null
-  const onBookings = Boolean(bookingsMatch && bookingsMatch.params.clientId !== 'all')
-  // ADM-022, ADM-023, ADM-024: while viewing a provider, contextual sub-pages appear under
-  // Provider Management, matching screenshots.
+  // Provider context resolution (ADM-022 -> ADM-024)
   const providerServicesMatch = item.path === '/providers' ? matchPath({ path: '/providers/:providerId/services' }, pathname) : null
   const onProviderServices = Boolean(
     providerServicesMatch || (item.path === '/providers' && pathname === '/providers/services')
@@ -135,23 +148,24 @@ function GroupChildren({ item, onNavigate }) {
     providerBookingsMatch || (item.path === '/providers' && pathname === '/providers/bookings')
   )
 
-  const currentProviderId =
+  const matchedProviderId =
     providerBookingsMatch?.params?.providerId ||
     providerServicesMatch?.params?.providerId ||
-    (matchPath({ path: '/providers/:providerId/*' }, pathname)?.params?.providerId) ||
-    'PR-82941'
+    matchPath({ path: '/providers/:providerId/*' }, pathname)?.params?.providerId
+
+  const reservedProviderPaths = ['all', 'directory', 'subscriptions', 'services', 'bookings']
+  const currentProviderId =
+    matchedProviderId && !reservedProviderPaths.includes(matchedProviderId)
+      ? matchedProviderId
+      : DEFAULT_PROVIDER_ID
 
   const onProviderProfile = Boolean(
     item.path === '/providers' &&
-    matchPath({ path: '/providers/:providerId/*' }, pathname) &&
-    !matchPath({ path: '/providers/all/*' }, pathname) &&
-    !matchPath({ path: '/providers/directory/*' }, pathname) &&
-    !matchPath({ path: '/providers/subscriptions/*' }, pathname) &&
+    matchedProviderId &&
+    !reservedProviderPaths.includes(matchedProviderId) &&
     !onProviderServices &&
     !onProviderBookings
   )
-
-  const inProviderContext = onProviderProfile || onProviderServices || onProviderBookings
 
   const activeCls = 'bg-[#5c2dd5] font-semibold text-white shadow-md'
   const idleCls = 'text-white/80 hover:bg-white/10 hover:text-white'
@@ -189,7 +203,7 @@ function GroupChildren({ item, onNavigate }) {
         const isAllProviders = item.path === '/providers' && child.path === '/providers/all'
         const ChildIcon = child.icon
         return (
-          <div key={child.path}>
+          <div key={child.path} className="space-y-0.5">
             <NavLink
               to={child.path}
               end
@@ -206,85 +220,59 @@ function GroupChildren({ item, onNavigate }) {
                 </span>
               )}
             </NavLink>
-            {isAllProviders && inProviderContext && (
+            {isAllProviders && (
               <>
-                {onProviderProfile ? (
-                  <span aria-current="page" className={cn(CHILD, activeCls)}>
-                    Provider Profile
-                  </span>
-                ) : (
-                  <Link
-                    to={`/providers/${currentProviderId}`}
-                    onClick={onNavigate}
-                    className={cn(CHILD, idleCls)}
-                  >
-                    Provider Profile
-                  </Link>
-                )}
+                <Link
+                  to={`/providers/${currentProviderId}`}
+                  onClick={onNavigate}
+                  aria-current={onProviderProfile ? 'page' : undefined}
+                  className={cn(CHILD, 'gap-2', onProviderProfile ? activeCls : idleCls)}
+                >
+                  <User className="size-3.5 shrink-0 opacity-80" aria-hidden="true" />
+                  <span className="truncate">Provider Profile</span>
+                </Link>
 
-                {onProviderServices ? (
-                  <span aria-current="page" className={cn(CHILD, activeCls)}>
-                    Provider Services & Pricing
-                  </span>
-                ) : (
-                  <Link
-                    to={`/providers/${currentProviderId}/services`}
-                    onClick={onNavigate}
-                    className={cn(CHILD, idleCls)}
-                  >
-                    Provider Services & Pricing
-                  </Link>
-                )}
+                <Link
+                  to={`/providers/${currentProviderId}/services`}
+                  onClick={onNavigate}
+                  aria-current={onProviderServices ? 'page' : undefined}
+                  className={cn(CHILD, 'gap-2', onProviderServices ? activeCls : idleCls)}
+                >
+                  <Sparkles className="size-3.5 shrink-0 opacity-80" aria-hidden="true" />
+                  <span className="truncate">Provider Services & Pricing</span>
+                </Link>
 
-                {onProviderBookings ? (
-                  <span aria-current="page" className={cn(CHILD, activeCls)}>
-                    Provider Bookings & Earnings
-                  </span>
-                ) : (
-                  <Link
-                    to={`/providers/${currentProviderId}/bookings`}
-                    onClick={onNavigate}
-                    className={cn(CHILD, idleCls)}
-                  >
-                    Provider Bookings & Earnings
-                  </Link>
-                )}
+                <Link
+                  to={`/providers/${currentProviderId}/bookings`}
+                  onClick={onNavigate}
+                  aria-current={onProviderBookings ? 'page' : undefined}
+                  className={cn(CHILD, 'gap-2', onProviderBookings ? activeCls : idleCls)}
+                >
+                  <CalendarCheck className="size-3.5 shrink-0 opacity-80" aria-hidden="true" />
+                  <span className="truncate">Provider Bookings & Earnings</span>
+                </Link>
               </>
             )}
           </div>
         )
       })}
-      {onProfile && !onBookings && !sub && (
-        <span aria-current="page" className={cn(CHILD, activeCls)}>Client Profile</span>
-      )}
-      {(onBookings || sub) && (
-        <>
-          <Link to={`/clients/${subClient}`} onClick={onNavigate} className={cn(ROW, 'pl-[18px] text-white/85 hover:bg-white/10 hover:text-white')}>
-            <User className="size-[18px] shrink-0" aria-hidden="true" />
-            <span>Client Profile</span>
-          </Link>
-          {[
-            ['bookings', 'Client Bookings', User],
-            ['payments', 'Client Payments', WalletCards],
-            ['wallet', 'Client Wallet', Wallet],
-            ['membership', 'Client Membership', Crown],
-            ['loyalty', 'Client Referrals & Loyalty', Gift],
-            ['support', 'Support & Safety History', ShieldAlert],
-          ].map(([key, label, RowIcon]) =>
-            sub === key ? (
-              <span key={key} aria-current="page" className={cn(ROW, 'pl-[18px] bg-[#5c2dd5] font-semibold text-white shadow-md')}>
-                <RowIcon className="size-[18px] shrink-0" aria-hidden="true" />
-                <span>{label}</span>
-              </span>
-            ) : (
-              <Link key={key} to={`/clients/${subClient}/${key}`} onClick={onNavigate} className={cn(ROW, 'pl-[18px] text-white/85 hover:bg-white/10 hover:text-white')}>
-                <RowIcon className="size-[18px] shrink-0" aria-hidden="true" />
-                <span>{label}</span>
-              </Link>
-            ),
-          )}
-        </>
-      )}
+      {item.path === '/clients' &&
+        CLIENT_SUB_TABS.map(([key, label, RowIcon]) => {
+          const isActive = activeClientSub === key
+          const to = key === 'profile' ? `/clients/${currentClientId}` : `/clients/${currentClientId}/${key}`
+          return (
+            <Link
+              key={key}
+              to={to}
+              onClick={onNavigate}
+              aria-current={isActive ? 'page' : undefined}
+              className={cn(CHILD, 'gap-2', isActive ? activeCls : idleCls)}
+            >
+              <RowIcon className="size-3.5 shrink-0 opacity-80" aria-hidden="true" />
+              <span className="truncate">{label}</span>
+            </Link>
+          )
+        })}
     </>
   )
 }
@@ -294,22 +282,25 @@ function GroupChildren({ item, onNavigate }) {
 function NestedGroup({ item, onNavigate, activeCls, idleCls }) {
   const { pathname } = useLocation()
   const current = inside(groupPaths(item), pathname)
-  const [open, setOpen] = useState(current)
+  const [open, setOpen] = useState(true)
   useEffect(() => {
     if (current) setOpen(true)
   }, [current])
+  const Icon = item.icon
   return (
     <div className="space-y-0.5">
-      <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} className={cn(CHILD, 'w-full', current ? 'font-semibold text-white' : idleCls)}>
-        {item.label}
+      <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} className={cn(CHILD, 'w-full gap-2', current ? 'font-semibold text-white' : idleCls)}>
+        {Icon && <Icon className="size-3.5 shrink-0 opacity-80" aria-hidden="true" />}
+        <span className="truncate">{item.label}</span>
         <ChevronRight className={cn('ml-auto size-3.5 shrink-0 text-white/60 transition-transform', open && 'rotate-90')} aria-hidden="true" />
       </button>
       {open &&
         item.children.map((child) => (
-          <NavLink key={child.path} to={child.path} end onClick={onNavigate} className={({ isActive }) => cn(CHILD, 'pl-[52px] text-[11.5px]', isActive ? activeCls : idleCls)}>
-            {child.label}
+          <NavLink key={child.path} to={child.path} end onClick={onNavigate} className={({ isActive }) => cn(CHILD, 'pl-[40px] text-[11.5px]', isActive ? activeCls : idleCls)}>
+            <span className="truncate">{child.label}</span>
           </NavLink>
         ))}
     </div>
   )
 }
+

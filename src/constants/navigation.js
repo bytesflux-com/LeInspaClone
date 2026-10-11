@@ -45,8 +45,8 @@ export const NAVIGATION_SECTIONS = [
         path: '/clients',
         permission: PERMISSIONS.USERS_VIEW,
         children: [
-          { label: 'Client Management', path: '/clients' },
-          { label: 'All Clients', path: '/clients/all' },
+          { label: 'Client Management', icon: LayoutDashboard, path: '/clients' },
+          { label: 'All Clients', icon: Users, path: '/clients/all' },
         ],
       },
       {
@@ -75,6 +75,7 @@ export const NAVIGATION_SECTIONS = [
           },
           {
             label: 'Content Moderation',
+            icon: ShieldCheck,
             path: '/content-approval',
             permission: PERMISSIONS.CONTENT_MODERATE,
             children: [

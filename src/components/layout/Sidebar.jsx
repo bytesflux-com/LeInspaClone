@@ -16,7 +16,7 @@ export default function Sidebar({ isOpen, onClose }) {
 
       {/* Sidebar Container */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-56 shrink-0 flex-col bg-linear-to-b from-[#2b1175] via-[#260f6a] to-[#1c0a52] text-white transition-transform duration-300 ease-in-out md:static md:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 flex w-64 shrink-0 flex-col bg-linear-to-b from-[#2b1175] via-[#260f6a] to-[#1c0a52] text-white transition-transform duration-300 ease-in-out md:static md:translate-x-0 ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         } shadow-2xl md:shadow-none select-none`}
       >
@@ -53,7 +53,7 @@ export default function Sidebar({ isOpen, onClose }) {
         </div>
 
         {/* Scrollable Navigation */}
-        <div className="flex-1 overflow-y-auto px-3 py-2 scrollbar-thin scrollbar-thumb-royal-900">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden px-3 py-2 scrollbar-thin scrollbar-thumb-royal-900">
           <NavigationMenu
             onNavigate={() => {
               if (window.innerWidth < 768 && onClose) onClose()
