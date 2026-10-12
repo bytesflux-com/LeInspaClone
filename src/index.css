@@ -1,5 +1,9 @@
 @import 'tailwindcss';
 
+/* The admin panel uses the light theme only: `dark:` utilities apply only under an
+   explicit .dark class (never set), not the operating system's dark mode. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* Lé Inspa Admin design tokens (ADM-001 → ADM-151) */
 @theme {
   --font-sans: 'Poppins', ui-sans-serif, system-ui, sans-serif;
@@ -39,6 +43,10 @@
   --color-danger-700: #b91c1c;
 
   --shadow-card: 0 1px 2px rgb(36 21 71 / 0.04), 0 12px 32px -8px rgb(36 21 71 / 0.12);
+}
+
+html {
+  color-scheme: light;
 }
 
 html,
