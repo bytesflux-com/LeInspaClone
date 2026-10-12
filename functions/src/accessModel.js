@@ -8,15 +8,17 @@ import { newSessionData, sessionPolicy } from './session.js'
 //   admin_sessions/{uid_authTime}     each sign-in that passed 2FA (see session.js)
 // Bump CATALOG_VERSION when permissions or roles change; the next admin login
 // writes the new catalog.
-export const CATALOG_VERSION = 1
+export const CATALOG_VERSION = 2
 
 export const PERMISSIONS = {
   'dashboard.view': { name: 'View dashboard', category: 'Overview', sensitive: false },
   'users.view': { name: 'View users', category: 'Users', sensitive: false },
   'users.suspend': { name: 'Suspend or reactivate users', category: 'Users', sensitive: true },
+  'users.export': { name: 'Export client lists', category: 'Users', sensitive: true },
+  'users.reveal_pii': { name: 'Reveal full client email and phone', category: 'Users', sensitive: true },
+  'memberships.manage': { name: 'Change client memberships', category: 'Users', sensitive: true },
   'providers.view': { name: 'View providers, spas and hotels', category: 'Providers', sensitive: false },
   'providers.verify': { name: 'Approve or reject provider verification', category: 'Providers', sensitive: true },
-  'identity.reveal_sensitive': { name: 'Reveal sensitive identity information', category: 'Identity', sensitive: true },
   'bookings.view': { name: 'View bookings', category: 'Bookings', sensitive: false },
   'bookings.manage': { name: 'Change or cancel bookings', category: 'Bookings', sensitive: true },
   'payments.view': { name: 'View payments and wallets', category: 'Finance', sensitive: false },
@@ -45,9 +47,10 @@ export const ROLES = {
       'dashboard.view',
       'users.view',
       'users.suspend',
+      'users.export',
+      'memberships.manage',
       'providers.view',
       'providers.verify',
-      'identity.reveal_sensitive',
       'bookings.view',
       'bookings.manage',
       'payments.view',
@@ -72,7 +75,7 @@ export const ROLES = {
   verification_officer: {
     name: 'Verification Officer',
     description: 'Reviews provider verification documents.',
-    permissions: ['dashboard.view', 'users.view', 'providers.view', 'providers.verify', 'identity.reveal_sensitive'],
+    permissions: ['dashboard.view', 'users.view', 'providers.view', 'providers.verify'],
   },
   support_agent: {
     name: 'Support Agent',
@@ -175,13 +178,11 @@ export async function adminAccess(uid) {
   const profile = await profileRef(uid).get()
   const roleId = profile.exists ? profile.get('roleId') : BOOTSTRAP_ROLE
   const role = await db().collection('admin_roles').doc(roleId).get()
-  // Super Admin covers every market by definition, whatever the profile lists.
-  const markets = roleId === 'super_admin' || !profile.exists ? [ALL_MARKETS] : (profile.get('markets') ?? [])
   return {
     roleId,
     roleName: role.exists ? role.get('name') : (ROLES[roleId]?.name ?? roleId),
     permissions: [...(await permissionsFor(profile))].sort(),
-    markets,
+    markets: profile.exists ? (profile.get('markets') ?? []) : [ALL_MARKETS],
     fullName: profile.exists ? profile.get('fullName') : null,
   }
 }

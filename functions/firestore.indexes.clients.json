@@ -1,0 +1,20 @@
+{
+  "_comment": "MERGE these into your firestore.indexes.json 'indexes' array, then run: firebase deploy --only firestore:indexes. Equality filters on accountType + countryCode + one sort field need a composite index. If a filter combination is missing, Firestore logs an error with a one-click link to create it.",
+  "indexes": [
+    { "collectionGroup": "users", "queryScope": "COLLECTION", "fields": [ {"fieldPath":"accountType","order":"ASCENDING"}, {"fieldPath":"createdAt","order":"DESCENDING"} ] },
+    { "collectionGroup": "users", "queryScope": "COLLECTION", "fields": [ {"fieldPath":"accountType","order":"ASCENDING"}, {"fieldPath":"countryCode","order":"ASCENDING"}, {"fieldPath":"createdAt","order":"DESCENDING"} ] },
+    { "collectionGroup": "users", "queryScope": "COLLECTION", "fields": [ {"fieldPath":"accountType","order":"ASCENDING"}, {"fieldPath":"countryCode","order":"ASCENDING"}, {"fieldPath":"accountStatus","order":"ASCENDING"}, {"fieldPath":"createdAt","order":"DESCENDING"} ] },
+    { "collectionGroup": "users", "queryScope": "COLLECTION", "fields": [ {"fieldPath":"accountType","order":"ASCENDING"}, {"fieldPath":"countryCode","order":"ASCENDING"}, {"fieldPath":"membershipType","order":"ASCENDING"}, {"fieldPath":"createdAt","order":"DESCENDING"} ] },
+    { "collectionGroup": "users", "queryScope": "COLLECTION", "fields": [ {"fieldPath":"accountType","order":"ASCENDING"}, {"fieldPath":"countryCode","order":"ASCENDING"}, {"fieldPath":"city","order":"ASCENDING"}, {"fieldPath":"createdAt","order":"DESCENDING"} ] },
+    { "collectionGroup": "users", "queryScope": "COLLECTION", "fields": [ {"fieldPath":"accountType","order":"ASCENDING"}, {"fieldPath":"countryCode","order":"ASCENDING"}, {"fieldPath":"successfulBookings","order":"DESCENDING"} ] },
+    { "collectionGroup": "users", "queryScope": "COLLECTION", "fields": [ {"fieldPath":"accountType","order":"ASCENDING"}, {"fieldPath":"countryCode","order":"ASCENDING"}, {"fieldPath":"lastActiveAt","order":"DESCENDING"} ] },
+    { "collectionGroup": "users", "queryScope": "COLLECTION", "fields": [ {"fieldPath":"accountType","order":"ASCENDING"}, {"fieldPath":"countryCode","order":"ASCENDING"}, {"fieldPath":"updatedAt","order":"DESCENDING"} ] },
+    { "collectionGroup": "users", "queryScope": "COLLECTION", "fields": [ {"fieldPath":"accountType","order":"ASCENDING"}, {"fieldPath":"accountStatus","order":"ASCENDING"}, {"fieldPath":"createdAt","order":"DESCENDING"} ] },
+    { "collectionGroup": "users", "queryScope": "COLLECTION", "fields": [ {"fieldPath":"accountType","order":"ASCENDING"}, {"fieldPath":"membershipType","order":"ASCENDING"}, {"fieldPath":"createdAt","order":"DESCENDING"} ] },
+    { "collectionGroup": "users", "queryScope": "COLLECTION", "fields": [ {"fieldPath":"accountType","order":"ASCENDING"}, {"fieldPath":"email","order":"ASCENDING"} ] },
+    { "collectionGroup": "users", "queryScope": "COLLECTION", "fields": [ {"fieldPath":"accountType","order":"ASCENDING"}, {"fieldPath":"fullName","order":"ASCENDING"} ] },
+    { "collectionGroup": "bookings", "queryScope": "COLLECTION", "fields": [ {"fieldPath":"countryCode","order":"ASCENDING"}, {"fieldPath":"bookingStatus","order":"ASCENDING"}, {"fieldPath":"createdAt","order":"ASCENDING"} ] },
+    { "collectionGroup": "payments", "queryScope": "COLLECTION", "fields": [ {"fieldPath":"countryCode","order":"ASCENDING"}, {"fieldPath":"status","order":"ASCENDING"}, {"fieldPath":"createdAt","order":"ASCENDING"} ] }
+  ],
+  "fieldOverrides": []
+}

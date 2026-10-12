@@ -4,7 +4,7 @@ import { AggregateField, Timestamp, getFirestore } from 'firebase-admin/firestor
 import { addDays, format, startOfDay, startOfMonth, subDays } from 'date-fns'
 import { fromZonedTime, toZonedTime } from 'date-fns-tz'
 import { requireAdmin } from './auth.js'
-import { canAccessMarket } from './accessModel.js'
+import { adminAccess, canAccessMarket } from './accessModel.js'
 
 // Known provider types matching the mobile client app
 const PROVIDER_TYPES = [
@@ -43,7 +43,7 @@ const MARKET_METADATA = {
   ZA: { name: 'South Africa', code: 'ZA', currency: 'ZAR' },
 }
 
-export function safeTimeZone(tz) {
+function safeTimeZone(tz) {
   try {
     if (typeof tz === 'string' && tz) {
       new Intl.DateTimeFormat('en', { timeZone: tz })
@@ -55,7 +55,7 @@ export function safeTimeZone(tz) {
   return DEFAULT_TIME_ZONE
 }
 
-export function getDateBounds(dateRange = 'today', customRange = null, timeZone = DEFAULT_TIME_ZONE) {
+function getDateBounds(dateRange = 'today', customRange = null, timeZone = DEFAULT_TIME_ZONE) {
   const zonedNow = toZonedTime(new Date(), timeZone)
 
   let startZoned = startOfDay(zonedNow)
@@ -127,7 +127,8 @@ function toIso(value) {
  * Production-ready callable querying live Firestore collections.
  */
 export const adminGetDashboardSummary = onCall(async (request) => {
-  const { access } = await requireAdmin(request, { permission: 'dashboard.view' })
+  const uid = await requireAdmin(request, { permission: 'dashboard.view' })
+  const access = await adminAccess(uid)
 
   const market = (request.data?.market || 'ALL').toUpperCase()
   const dateRange = request.data?.dateRange || 'today'
