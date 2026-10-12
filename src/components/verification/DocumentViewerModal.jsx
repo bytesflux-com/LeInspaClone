@@ -147,7 +147,7 @@ export default function DocumentViewerModal({
                     {document.issuer || 'Official Accreditation Board'}
                   </h4>
                   <p className="text-[10px] tracking-wider text-amber-800 uppercase">
-                    Republic of {provider?.market?.name || 'Kenya'} • Regulatory Council
+                    {provider?.market?.name || '—'} • Regulatory Council
                   </p>
                   <div className="mx-auto mt-2 h-0.5 w-24 bg-amber-800/40" />
                 </div>
@@ -164,7 +164,7 @@ export default function DocumentViewerModal({
                     <span className="font-semibold text-slate-900">{provider?.type || 'Therapeutic Practice'}</span>.
                   </p>
                   <div className="inline-block rounded border border-amber-800/30 bg-amber-50/60 px-3 py-1 font-mono text-xs font-bold text-amber-900">
-                    Licence No: {document.docNumber || 'REG-2024-••••7281'}
+                    Licence No: {document.docNumber || '—'}
                   </div>
                 </div>
 
@@ -173,7 +173,7 @@ export default function DocumentViewerModal({
                   <div className="text-left">
                     <div className="font-serif text-xs font-bold text-slate-800">Dr. S. K. Chebet</div>
                     <div>Registrar of Council</div>
-                    <div className="mt-0.5 text-[9px] text-slate-500">Issued: {document.issueDate || '15 Jan 2024'}</div>
+                    <div className="mt-0.5 text-[9px] text-slate-500">Issued: {document.issueDate || '—'}</div>
                   </div>
 
                   <div className="flex size-14 items-center justify-center rounded-full border-2 border-amber-700 bg-amber-600/10 text-amber-900">
@@ -184,7 +184,7 @@ export default function DocumentViewerModal({
 
                   <div className="text-right">
                     <div className="font-serif text-xs font-bold text-slate-800">Valid Through</div>
-                    <div className="font-semibold text-slate-900">{document.expiryDate || '15 Jan 2028'}</div>
+                    <div className="font-semibold text-slate-900">{document.expiryDate || '—'}</div>
                     <div className="mt-0.5 text-[9px] text-emerald-700">Digital Registry Verified</div>
                   </div>
                 </div>
@@ -238,7 +238,7 @@ export default function DocumentViewerModal({
                 <div>
                   <span className="text-slate-500">File Size</span>
                   <p className="mt-0.5 font-medium text-slate-800">
-                    {Math.round((document.fileSizeKb || 2048) / 1024 * 10) / 10} MB
+                    {document.fileSizeKb ? `${Math.round((document.fileSizeKb / 1024) * 10) / 10} MB` : '—'}
                   </p>
                 </div>
               </div>

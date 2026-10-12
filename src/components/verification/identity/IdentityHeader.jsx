@@ -8,8 +8,8 @@ import { ArrowLeft, ExternalLink, ShieldCheck } from 'lucide-react'
  */
 export default function IdentityHeader({ verificationId, providerId }) {
   const navigate = useNavigate()
-  const reviewUrl = `/verifications/review/${verificationId || 'ver-001'}`
-  const profileUrl = `/providers/${providerId || 'PR-82941'}`
+  const reviewUrl = `/verifications/review/${verificationId || '—'}`
+  const profileUrl = `/providers/${providerId || '—'}`
 
   return (
     <div className="space-y-3">
@@ -49,7 +49,7 @@ export default function IdentityHeader({ verificationId, providerId }) {
         {/* Action Buttons */}
         <div className="flex flex-wrap items-center gap-2.5">
           <Link
-            to={`/verifications/credentials/${verificationId || 'ver-001'}`}
+            to={`/verifications/credentials/${verificationId || '—'}`}
             className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 transition cursor-pointer"
             title="Inspect professional credentials (ADM-033)"
           >

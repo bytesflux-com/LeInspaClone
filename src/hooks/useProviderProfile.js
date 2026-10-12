@@ -120,62 +120,6 @@ export function useProviderProfile(providerId, initialTab = 'overview') {
     }
   }
 
-  // Update verification status
-  const updateVerification = async ({ checkKey, status, reason, adminNote }) => {
-    if (!profile) return
-    try {
-      await providerService.updateProviderVerificationStatus({
-        providerId: profile.id,
-        checkKey,
-        status,
-        reason,
-        adminNote,
-      })
-      setProfile((prev) => {
-        const next = { ...prev }
-        if (next.verification && next.verification[checkKey]) {
-          next.verification[checkKey] = {
-            ...next.verification[checkKey],
-            status,
-            reason,
-            adminNote,
-          }
-        }
-        return next
-      })
-      return { success: true }
-    } catch (err) {
-      console.error('Error updating verification:', err)
-      throw err
-    }
-  }
-
-  // Update account status / restrictions
-  const updateAccountStatus = async ({ status, restrictionReason, adminNote }) => {
-    if (!profile) return
-    try {
-      await providerService.updateProviderAccountStatus({
-        providerId: profile.id,
-        status,
-        restrictionReason,
-        adminNote,
-      })
-      setProfile((prev) => ({
-        ...prev,
-        status,
-        statusLabel: status.charAt(0).toUpperCase() + status.slice(1),
-        health: {
-          ...prev.health,
-          account: status.charAt(0).toUpperCase() + status.slice(1),
-        },
-      }))
-      return { success: true }
-    } catch (err) {
-      console.error('Error updating account status:', err)
-      throw err
-    }
-  }
-
   return {
     profile,
     loading,
@@ -192,8 +136,6 @@ export function useProviderProfile(providerId, initialTab = 'overview') {
     canVerify,
     addInternalNote,
     moderateContent,
-    updateVerification,
-    updateAccountStatus,
     refetch: fetchProfile,
   }
 }

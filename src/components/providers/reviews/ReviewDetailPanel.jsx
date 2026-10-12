@@ -223,7 +223,6 @@ export function ReviewDetailPanel({ detail, loading, error, onClose, onModerate,
                 <Row label="Report ID">{r.id}{r.target === 'response' && ' (response)'}</Row>
                 <Row label="Reported">{fmtDate(r.createdAt)}</Row>
                 <Row label="Status"><Pill tone={r.open ? 'amber' : 'green'} dot>{r.open ? humanize(r.status) : 'Resolved'}</Pill></Row>
-                <div className="text-right"><Link to={`/reports/${r.id}`} className="inline-flex items-center text-[11.5px] font-semibold text-royal-600">Open Report <ChevronRight className="size-3" /></Link></div>
               </div>
             ))}
             <p className="mt-1.5 flex gap-1.5 text-[11px] text-slate-500"><Info className="size-3.5 shrink-0" />A report is an allegation. Decide on the review, booking and evidence — not the report reason alone.</p>

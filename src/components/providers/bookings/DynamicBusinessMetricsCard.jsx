@@ -40,15 +40,15 @@ export function DynamicBusinessMetricsCard({
             <div className="space-y-1 text-slate-600">
               <div className="flex justify-between">
                 <span>Staff-Assigned</span>
-                <span className="font-mono font-bold text-slate-900">{spa.staffAssignedBookings || 588}</span>
+                <span className="font-mono font-bold text-slate-900">{spa.staffAssignedBookings ?? 0}</span>
               </div>
               <div className="flex justify-between">
                 <span>Unassigned Slots</span>
-                <span className="font-mono font-bold text-amber-700">{spa.unassignedBookings || 14}</span>
+                <span className="font-mono font-bold text-amber-700">{spa.unassignedBookings ?? 0}</span>
               </div>
               <div className="flex justify-between">
                 <span>Front Desk Walk-Ins</span>
-                <span className="font-mono font-bold text-purple-700">{spa.walkInBookings || 40}</span>
+                <span className="font-mono font-bold text-purple-700">{spa.walkInBookings ?? 0}</span>
               </div>
             </div>
           </div>
@@ -57,10 +57,7 @@ export function DynamicBusinessMetricsCard({
           <div className="p-3 rounded-xl bg-white border border-purple-100 space-y-2">
             <span className="font-bold text-slate-800 text-xs block">Branch Revenue Split</span>
             <div className="space-y-1.5 text-slate-600">
-              {(spa.branchRevenue || [
-                { branch: 'Westlands Flagship', revenue: 'KES 2,450,000', bookings: 380 },
-                { branch: 'Karen Branch', revenue: 'KES 1,820,000', bookings: 262 },
-              ]).map((b, i) => (
+              {(spa.branchRevenue || []).map((b, i) => (
                 <div key={i} className="flex justify-between items-center text-[11px]">
                   <span className="truncate pr-2">{b.branch}</span>
                   <span className="font-mono font-bold text-slate-900">{canSeeFinancial ? b.revenue : 'KES —'}</span>
@@ -73,10 +70,7 @@ export function DynamicBusinessMetricsCard({
           <div className="p-3 rounded-xl bg-white border border-purple-100 space-y-2">
             <span className="font-bold text-slate-800 text-xs block">Top Staff Contributors</span>
             <div className="space-y-1 text-slate-600">
-              {(spa.staffRevenueContribution || [
-                { staff: 'Amina K. (Senior)', bookings: 142, revenue: 'KES 780,000' },
-                { staff: 'Brian M. (Rehab)', bookings: 118, revenue: 'KES 640,000' },
-              ]).map((s, i) => (
+              {(spa.staffRevenueContribution || []).map((s, i) => (
                 <div key={i} className="flex justify-between items-center text-[11px]">
                   <span className="truncate pr-2">{s.staff}</span>
                   <span className="font-mono font-bold text-emerald-700">{canSeeFinancial ? s.revenue : 'KES —'}</span>
@@ -94,15 +88,15 @@ export function DynamicBusinessMetricsCard({
             <div className="space-y-1 text-slate-600">
               <div className="flex justify-between">
                 <span>In-Room Suite Bookings</span>
-                <span className="font-mono font-bold text-slate-900">{hotel.inRoomBookings || 245}</span>
+                <span className="font-mono font-bold text-slate-900">{hotel.inRoomBookings ?? 0}</span>
               </div>
               <div className="flex justify-between">
                 <span>Concierge Desk</span>
-                <span className="font-mono font-bold text-purple-700">{hotel.conciergeBookings || 410}</span>
+                <span className="font-mono font-bold text-purple-700">{hotel.conciergeBookings ?? 0}</span>
               </div>
               <div className="flex justify-between">
                 <span>Resort Package Redemptions</span>
-                <span className="font-mono font-bold text-emerald-700">{hotel.packageRedemptions || 157}</span>
+                <span className="font-mono font-bold text-emerald-700">{hotel.packageRedemptions ?? 0}</span>
               </div>
             </div>
           </div>
@@ -110,11 +104,7 @@ export function DynamicBusinessMetricsCard({
           <div className="p-3 rounded-xl bg-white border border-purple-100 space-y-2 col-span-2">
             <span className="font-bold text-slate-800 text-xs block">Wellness Locations Performance</span>
             <div className="grid sm:grid-cols-3 gap-2 pt-0.5">
-              {(hotel.locationPerformance || [
-                { location: 'Lakeside Hydro Pavilion', revenue: 'KES 2,980,000', bookings: 310 },
-                { location: 'Sunset Yoga Deck', revenue: 'KES 1,920,000', bookings: 257 },
-                { location: 'In-Suite Network', revenue: 'KES 1,950,000', bookings: 245 },
-              ]).map((loc, i) => (
+              {(hotel.locationPerformance || []).map((loc, i) => (
                 <div key={i} className="p-2 rounded-lg bg-slate-50 border border-slate-100 space-y-0.5">
                   <p className="font-semibold text-slate-900 truncate text-[11px]">{loc.location}</p>
                   <p className="font-mono font-bold text-purple-700 text-xs">

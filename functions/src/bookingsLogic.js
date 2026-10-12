@@ -1,3 +1,4 @@
+import { providerTypeOf } from './platformData.js'
 // ADM-044 → ADM-048 — Booking Operations: pure logic, no Firestore.
 //
 // Every screen is a view over the shared `bookings` collection. Nothing here
@@ -196,14 +197,37 @@ const iso = (ms) => (ms == null ? null : new Date(ms).toISOString())
 const str = (...values) => values.find((v) => typeof v === 'string' && v.trim())?.trim() || null
 const list = (value) => (Array.isArray(value) ? value.filter(Boolean) : value ? [value] : [])
 
-function scheduledStartOf(d) {
+// Fixed UTC offsets of the markets' local time (no daylight saving in any of them).
+export const MARKET_UTC_OFFSET_MINS = { KE: 180, UG: 180, TZ: 180, RW: 120, ZA: 120, NG: 60 }
+
+// "09:00 AM" / "2:30 pm" / "14:30" → minutes after midnight, or null.
+export function parseClockTime(value) {
+  const m = String(value ?? '').trim().match(/^(\d{1,2})(?::(\d{2}))?\s*([ap]\.?m\.?)?$/i)
+  if (!m) return null
+  let h = Number(m[1])
+  const min = Number(m[2] || 0)
+  const ampm = m[3]?.toLowerCase().replace(/\./g, '')
+  if (ampm === 'pm' && h < 12) h += 12
+  if (ampm === 'am' && h === 12) h = 0
+  return h < 24 && min < 60 ? h * 60 + min : null
+}
+
+function scheduledStartOf(d, countryCode) {
   const direct = toMillis(d.scheduledAt ?? d.bookingDateTime ?? d.startTime ?? d.scheduledStart ?? d.appointmentTime)
   if (direct != null) return direct
-  // Split date + "HH:mm" time as stored by some booking flows.
+  // The mobile app stores bookingDate "YYYY-MM-DD" + bookingTime "09:00 AM" in
+  // the market's local time; convert to an absolute instant.
+  const dateStr = typeof (d.bookingDate ?? d.date) === 'string' ? String(d.bookingDate ?? d.date) : null
+  const offset = (MARKET_UTC_OFFSET_MINS[countryCode] ?? 180) * MINUTE
+  if (dateStr && /^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+    const midnightUtc = Date.parse(`${dateStr}T00:00:00Z`)
+    const mins = parseClockTime(d.bookingTime ?? d.time)
+    return midnightUtc - offset + (mins ?? 0) * MINUTE
+  }
   const day = toMillis(d.bookingDate ?? d.date)
   if (day == null) return null
-  const [h, m] = String(d.bookingTime ?? d.time ?? '').split(':').map(Number)
-  return Number.isFinite(h) ? day + (h * 60 + (Number.isFinite(m) ? m : 0)) * MINUTE : day
+  const mins = parseClockTime(d.bookingTime ?? d.time)
+  return mins == null ? day : day + mins * MINUTE
 }
 
 // Raw Firestore booking → one consistent record. Unknown/missing optional
@@ -211,12 +235,12 @@ function scheduledStartOf(d) {
 export function normalizeBooking(id, d = {}) {
   const rawStatus = String(d.bookingStatus ?? d.status ?? 'pending').toLowerCase()
   const status = STATUS_ALIASES[rawStatus] || (BOOKING_STATUSES.includes(rawStatus) ? rawStatus : 'pending')
-  const providerType = String(d.providerType ?? d.providerCategory ?? '').toLowerCase() || null
+  const providerType = providerTypeOf(d.providerType ?? d.providerCategory) || String(d.providerType ?? d.providerCategory ?? '').toLowerCase() || null
   const category = providerCategory(providerType)
-  const start = scheduledStartOf(d)
+  const countryCode = str(d.countryCode, d.marketId, d.market, d.derivedCountryCode)?.toUpperCase() || null
+  const start = scheduledStartOf(d, countryCode)
   const durationMins = Number(d.durationMinutes ?? d.serviceDuration ?? d.duration ?? d.durationMins) || THRESHOLDS.defaultDuration
   const end = toMillis(d.scheduledEndAt ?? d.endTime ?? d.scheduledEnd) ?? (start != null ? start + durationMins * MINUTE : null)
-  const countryCode = str(d.countryCode, d.marketId, d.market)?.toUpperCase() || null
   const meta = MARKET_META[countryCode]
   const serviceStartedAt = toMillis(d.serviceStartedAt ?? d.startedAt ?? d.checkInAt)
   const providerCompletedAt = toMillis(d.providerCompletedAt ?? d.serviceCompletedAt)
@@ -234,8 +258,10 @@ export function normalizeBooking(id, d = {}) {
     status,
     countryCode,
     marketName: meta?.name || countryCode || '—',
-    currency: str(d.currency) || meta?.currency || null,
-    amount: typeof d.totalPrice === 'number' ? d.totalPrice : typeof d.amount === 'number' ? d.amount : null,
+    // The app stores the client-facing price in local currency under `local`;
+    // `base` is the USD reporting copy.
+    currency: str(d.local?.currency, d.currency) || meta?.currency || null,
+    amount: num(d.local?.totalPrice) ?? num(d.totalPrice) ?? num(d.agreedPrice) ?? num(d.amount),
     client: { id: clientId, name: str(d.customerName, d.clientName, snap.fullName, d.guestName) || 'Client', guest: isGuest },
     guest: isGuest
       ? {
@@ -253,7 +279,7 @@ export function normalizeBooking(id, d = {}) {
           channels: list(d.notificationChannels ?? d.communicationChannels).map(String),
         }
       : null,
-    provider: { id: str(d.providerId, d.businessId), name: str(d.providerName, d.businessName) || 'Provider', type: providerType, typeLabel: PROVIDER_TYPE_LABELS[providerType] || null, rating: num(d.providerRating), reviews: num(d.providerReviewCount) },
+    provider: { id: str(d.providerId, d.businessId), name: str(d.providerName, d.businessName, d.derivedProviderName) || 'Provider', type: providerType, typeLabel: PROVIDER_TYPE_LABELS[providerType] || null, rating: num(d.providerRating), reviews: num(d.providerReviewCount) },
     category,
     service: { id: str(d.serviceId), name: str(d.serviceName, d.service) || 'Service' },
     scheduledStart: start,
@@ -275,8 +301,8 @@ export function normalizeBooking(id, d = {}) {
     payout: str(d.payoutStatus, d.settlementStatus),
     paymentMethod: str(d.paymentMethod, d.paymentProvider),
     transactionId: str(d.transactionId, d.paymentReference, d.paymentId),
-    platformFee: num(d.platformFee),
-    providerAmount: num(d.providerAmount ?? d.providerEarnings),
+    platformFee: num(d.local?.platformFee) ?? num(d.platformFee),
+    providerAmount: num(d.local?.providerEarnings) ?? num(d.providerAmount ?? d.providerEarnings),
     fundsReleasedAt: toMillis(d.escrowReleasedAt ?? d.releasedAt ?? d.fundsReleasedAt),
     settledAt: toMillis(d.settledAt ?? d.payoutAt ?? d.payoutCompletedAt),
     assignmentRaw: normalizeAssignment(d.assignmentStatus),

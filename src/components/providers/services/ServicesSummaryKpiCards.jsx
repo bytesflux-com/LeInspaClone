@@ -43,7 +43,7 @@ export function ServicesSummaryKpiCards({ stats = {}, onSelectTab }) {
     {
       id: 'avg_price',
       title: 'Average Price',
-      value: stats.averagePriceFormatted || 'KES 4,250',
+      value: stats.averagePriceFormatted || '—',
       trend: 'Calculated average',
       trendColor: 'text-slate-400',
       icon: Gem,
@@ -53,7 +53,7 @@ export function ServicesSummaryKpiCards({ stats = {}, onSelectTab }) {
     {
       id: 'min_price',
       title: 'Lowest Price',
-      value: stats.lowestPriceFormatted || 'KES 3,000',
+      value: stats.lowestPriceFormatted || '—',
       trend: 'Entry level pricing',
       trendColor: 'text-slate-400',
       icon: ArrowDown,
@@ -63,7 +63,7 @@ export function ServicesSummaryKpiCards({ stats = {}, onSelectTab }) {
     {
       id: 'max_price',
       title: 'Highest Price',
-      value: stats.highestPriceFormatted || 'KES 6,500',
+      value: stats.highestPriceFormatted || '—',
       trend: 'Premium package',
       trendColor: 'text-slate-400',
       icon: ArrowUp,

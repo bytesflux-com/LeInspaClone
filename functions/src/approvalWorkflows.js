@@ -3,7 +3,9 @@ import { Timestamp, getFirestore } from 'firebase-admin/firestore'
 import { requireAdmin } from './auth.js'
 import { ALL_MARKETS, adminAccess, canAccessMarket } from './accessModel.js'
 import { recordAudit } from './events.js'
-import { CONTENT_TYPES, MARKET_META, historyEntry, normalizeModeration, toMillis } from './contentModerationLogic.js'
+import { PROVIDER_TYPES, providerTypeOf } from './platformData.js'
+import { finalDecisionPatch, isVerificationRequest, verificationCase } from './verificationLogic.js'
+import { CONTENT_TYPES, historyEntry, normalizeModeration, toMillis } from './contentModerationLogic.js'
 import {
   DECISION_TYPES,
   REJECTION_TEMPLATES,
@@ -26,6 +28,34 @@ import {
 // ADM-041 Reject & Send Reason / Note · ADM-042 Verification Decision · ADM-043 Approval History.
 
 const db = () => getFirestore()
+
+// ADM-041 / ADM-042 read the provider's real submission (verification_requests)
+// as a verification case; decisions are written back in the app's format.
+async function loadCase(id, tx = null) {
+  const ref = db().collection('verification_requests').doc(id)
+  const snap = tx ? await tx.get(ref) : await ref.get()
+  if (!snap.exists || !isVerificationRequest(snap.data())) throw new HttpsError('not-found', 'Verification case not found.')
+  const data = snap.data()
+  const uid = data.userId || data.providerId
+  const userRef = uid ? db().collection('users').doc(uid) : null
+  const userSnap = userRef ? (tx ? await tx.get(userRef) : await userRef.get()) : null
+  const user = userSnap?.exists ? userSnap.data() : {}
+  const type = providerTypeOf(data.accountType) || providerTypeOf(user.accountType)
+  const detailRef = type && uid ? db().collection(PROVIDER_TYPES[type].collection).doc(uid) : null
+  const detailSnap = detailRef ? (tx ? await tx.get(detailRef) : await detailRef.get()) : null
+  const infoRequests = tx ? [] : (await db().collection('information_requests').where('originRecordId', '==', id).limit(20).get().catch(() => ({ docs: [] }))).docs.map((x) => ({ id: x.id, ...x.data() }))
+  return { ref, data, user, userRef: userSnap?.exists ? userRef : null, detailRef: detailSnap?.exists ? detailRef : null, vCase: verificationCase(id, data, user, { informationRequests: infoRequests }) }
+}
+
+function writeCaseDecision(tx, c, decision, opts) {
+  const p = finalDecisionPatch(c.data, decision, opts)
+  tx.update(c.ref, p.request)
+  if (p.user && c.userRef) tx.update(c.userRef, p.user)
+  if (p.detail && c.detailRef) tx.update(c.detailRef, p.detail)
+  const uid = c.data.userId || c.data.providerId
+  const message = { approve: 'Your Lé Inspa verification has been approved.', reject: opts.providerMessage || opts.reason || 'Your verification was not approved.', request_info: opts.providerMessage || opts.reason || 'More information is needed to complete your verification.' }[decision]
+  if (uid && message) tx.set(db().collection('notifications').doc(), { userId: uid, title: decision === 'approve' ? 'Verification approved' : decision === 'reject' ? 'Verification not approved' : 'Verification update', message, notificationType: 'verification', relatedId: c.ref.id, isRead: false, read: false, createdAt: Timestamp.now() })
+}
 const iso = (v) => {
   const ms = toMillis(v)
   return ms ? new Date(ms).toISOString() : null
@@ -90,9 +120,8 @@ export const adminGetRejectionWorkspace = onCall(async (request) => {
   }
 
   // Verification / document rejection
-  const snap = await db().collection('verification_cases').doc(id).get()
-  const data = snap.exists ? snap.data() : null
-  const countryCode = String(data?.countryCode || 'KE').toUpperCase()
+  const { vCase } = await loadCase(id)
+  const countryCode = vCase.countryCode
   assertMarket(access, countryCode)
   const decisionType = ['identity', 'credentials', 'business_documents'].includes(originModule) ? originModule : 'verification'
   return {
@@ -103,17 +132,17 @@ export const adminGetRejectionWorkspace = onCall(async (request) => {
       decisionType,
       decisionTypeLabel: DECISION_TYPES[decisionType] || 'Verification',
       reviewType: `${DECISION_TYPES[decisionType] || 'Verification'} Review`,
-      reviewId: data?.caseId || id,
-      subjectTitle: data?.subjectTitle || data?.provider?.name || id,
+      reviewId: vCase.caseId,
+      subjectTitle: vCase.provider.name,
       subjectId: targetId || id,
-      subjectImage: data?.provider?.photoUrl || null,
-      submittedAt: iso(data?.submittedAt) || new Date().toISOString(),
-      status: data?.status || 'under_review',
-      version: data?.version || 1,
+      subjectImage: vCase.provider.photoUrl || null,
+      submittedAt: vCase.submittedAt,
+      status: vCase.status,
+      version: vCase.version,
       isUpdate: false,
-      provider: data?.provider || { id, ref: id, name: 'Provider', typeLabel: 'Individual Provider', countryCode },
+      provider: { ...vCase.provider, countryCode },
       countryCode,
-      marketName: MARKET_META[countryCode]?.name || countryCode,
+      marketName: vCase.marketName,
     },
     reasons: reasonsForDecisionType(decisionType),
     templates: REJECTION_TEMPLATES,
@@ -188,11 +217,10 @@ export const adminSubmitRejection = onCall(async (request) => {
       tx.set(db().collection('content_moderation_history').doc(), historyEntry(id, `Rejected — ${d.reason || d.reasonCode}`, actor, now, { decision: 'reject', ledgerId }))
     })
   } else {
-    const ref = db().collection('verification_cases').doc(id)
     await db().runTransaction(async (tx) => {
-      const snap = await tx.get(ref)
-      const data = snap.exists ? snap.data() : {}
-      const countryCode = String(data?.countryCode || 'KE').toUpperCase()
+      const c = await loadCase(id, tx)
+      const data = c.vCase
+      const countryCode = data.countryCode
       assertMarket(access, countryCode)
       const decisionType = ['identity', 'credentials', 'business_documents'].includes(originModule) ? originModule : 'verification'
       const entry = buildEntry({
@@ -204,32 +232,21 @@ export const adminSubmitRejection = onCall(async (request) => {
         reason: d.reason || d.reasonCode,
         providerMessage: d.providerMessage,
         internalNote: d.internalNote,
-        version: `Version ${data?.version || 1}`,
-        subject: { type: decisionType, name: data?.provider?.name || id, subtitle: data?.provider?.typeLabel || 'Provider', image: data?.provider?.photoUrl || null },
-        provider: data?.provider || { id, ref: id, name: id },
+        version: `Version ${data.version || 1}`,
+        subject: { type: decisionType, name: data.provider.name || id, subtitle: data.provider.typeLabel || 'Provider', image: data.provider.photoUrl || null },
+        provider: data.provider,
         countryCode,
         effects: effectsFor(decisionType, 'rejected'),
         actor,
         access,
         at: now,
-        relatedReviewId: data?.caseId || id,
+        relatedReviewId: data.caseId,
         routes: { original: `/verifications/${id}/decision` },
-        previousDecisionId: data?.lastDecisionId || null,
+        previousDecisionId: c.data.lastDecisionId || null,
       })
       ledgerId = writeEntry(tx, entry, db())
-      if (snap.exists) {
-        tx.update(ref, {
-          status: 'rejected',
-          decision: 'rejected',
-          reason: d.reason || d.reasonCode,
-          providerMessage: d.providerMessage,
-          internalNote: d.internalNote,
-          resubmissionAllowed: d.allowResubmission !== false,
-          decidedBy: actor,
-          decidedAt: now,
-          lastDecisionId: ledgerId,
-        })
-      }
+      writeCaseDecision(tx, c, 'reject', { reason: d.reason || d.reasonCode, providerMessage: d.providerMessage, actor, now: now.toMillis() })
+      tx.update(c.ref, { lastDecisionId: ledgerId, resubmissionAllowed: d.allowResubmission !== false })
     })
   }
 
@@ -251,24 +268,30 @@ export const adminGetVerificationDecision = onCall(async (request) => {
   const { verificationId } = request.data || {}
   const uid = await requireAdmin(request, { permission: 'providers.verify' })
   const access = await adminAccess(uid)
-  const id = String(verificationId || '').trim()
-  if (!id) throw new HttpsError('invalid-argument', 'Verification ID is required.')
-
-  const snap = await db().collection('verification_cases').doc(id).get()
-  if (!snap.exists) throw new HttpsError('not-found', 'Verification case not found.')
-  const data = snap.data()
-  assertMarket(access, data.countryCode)
-  const readiness = evaluateVerificationReadiness(data)
+  // Open cases for the case switcher (scoped to the admin's markets).
+  const openSnap = await db().collection('verification_requests').where('status', 'in', ['pending', 'reviewed']).limit(200).get()
+  const users = new Map()
+  for (const x of openSnap.docs) if (x.get('userId')) users.set(x.get('userId'), null)
+  const userSnaps = users.size ? await db().getAll(...[...users.keys()].slice(0, 300).map((u) => db().collection('users').doc(u))) : []
+  for (const u of userSnaps) users.set(u.id, u.exists ? u.data() : {})
+  const available = openSnap.docs
+    .filter((x) => isVerificationRequest(x.data()))
+    .map((x) => verificationCase(x.id, x.data(), users.get(x.get('userId')) || {}))
+    .filter((c) => (c.countryCode ? canAccessMarket(access, c.countryCode) : access.markets.includes(ALL_MARKETS)))
+  const id = String(verificationId || '').trim() || available[0]?.verificationId
+  if (!id) throw new HttpsError('not-found', 'There are no verification cases awaiting a decision.')
+  const { vCase } = await loadCase(id)
+  assertMarket(access, vCase.countryCode)
   return {
-    verificationId: snap.id,
-    ...data,
-    readiness,
+    ...vCase,
+    readiness: evaluateVerificationReadiness(vCase),
     impacts: {
       approve: verificationImpactFor('approve'),
       request_info: verificationImpactFor('request_info'),
       reject: verificationImpactFor('reject'),
       escalate: verificationImpactFor('escalate'),
     },
+    availableCases: available.slice(0, 50).map((c) => ({ verificationId: c.verificationId, caseId: c.caseId, name: c.provider.name, category: c.provider.category, categoryLabel: c.provider.categoryLabel, typeLabel: c.provider.typeLabel, ready: evaluateVerificationReadiness(c).ready })),
   }
 })
 
@@ -276,28 +299,22 @@ export const adminSubmitFinalVerificationDecision = onCall(async (request) => {
   const d = request.data || {}
   const id = String(d.verificationId || '').trim()
   if (!id) throw new HttpsError('invalid-argument', 'Verification ID is required.')
-  const uid = await requireAdmin(request, { permission: 'providers.verify' })
+  const uid = await requireAdmin(request, { permission: 'providers.verify', fresh: true })
   const access = await adminAccess(uid)
   const actor = { id: uid, name: access.fullName || 'Admin' }
-
-  const ref = db().collection('verification_cases').doc(id)
   const now = Timestamp.now()
   let ledgerId = null
 
   await db().runTransaction(async (tx) => {
-    const snap = await tx.get(ref)
-    if (!snap.exists) throw new HttpsError('not-found', 'Verification case not found.')
-    const vCase = snap.data()
+    const c = await loadCase(id, tx)
+    const vCase = c.vCase
     assertMarket(access, vCase.countryCode)
     if (d.version != null && Number(d.version) !== Number(vCase.version || 1)) {
       throw new HttpsError('failed-precondition', 'Verification case was updated by another reviewer. Reload and try again.', { reason: 'stale-version' })
     }
+    if (!vCase.open) throw new HttpsError('failed-precondition', `This verification is already ${vCase.status.replace(/_/g, ' ')}.`)
     const err = validateVerificationDecision(vCase, d)
     if (err) throw new HttpsError('failed-precondition', err)
-
-    const readiness = evaluateVerificationReadiness(vCase)
-    const statusMap = { approve: 'approved', escalate: 'escalated', reject: 'rejected', request_info: 'more_information_needed' }
-    const nextStatus = statusMap[d.decision] || 'under_review'
 
     const entry = buildEntry({
       originModule: 'verification',
@@ -308,44 +325,28 @@ export const adminSubmitFinalVerificationDecision = onCall(async (request) => {
       providerMessage: d.providerMessage || null,
       internalNote: d.note || null,
       version: `Verification Case v${vCase.version || 1}`,
-      subject: { type: 'provider', name: vCase.provider?.name, subtitle: vCase.provider?.typeLabel, image: vCase.provider?.photoUrl },
+      subject: { type: 'provider', name: vCase.provider.name, subtitle: vCase.provider.typeLabel, image: vCase.provider.photoUrl },
       provider: vCase.provider,
       countryCode: vCase.countryCode,
-      evidenceRefs: (vCase.evidence || []).map((e) => ({ label: e.title, version: e.version || 1, status: e.status || 'approved' })),
+      evidenceRefs: vCase.evidence.map((e) => ({ label: e.title, version: e.version || 1, status: e.status || 'pending' })),
       effects: effectsFor('verification', ledgerDecision(d.decision)),
       actor,
       access,
       at: now,
-      relatedReviewId: vCase.caseId || id,
+      relatedReviewId: vCase.caseId,
       routes: { original: `/verifications/${id}/decision` },
-      previousDecisionId: vCase.lastDecisionId || null,
+      previousDecisionId: c.data.lastDecisionId || null,
     })
     ledgerId = writeEntry(tx, entry, db())
-
-    tx.update(ref, {
-      status: nextStatus,
-      finalDecision: d.decision,
-      finalNote: d.note || null,
-      requirementsSnapshot: readiness.components,
-      decidedBy: actor,
-      decidedAt: now,
-      lastDecisionId: ledgerId,
-    })
-
-    if (vCase.provider?.id && d.decision === 'approve') {
-      const pRef = db().collection('providers').doc(vCase.provider.id)
-      const pSnap = await tx.get(pRef)
-      if (pSnap.exists) {
-        tx.update(pRef, { verificationStatus: 'verified', verified: true, verifiedAt: now })
-      }
-    }
+    writeCaseDecision(tx, c, d.decision, { reason: d.reason || null, note: d.note || null, providerMessage: d.providerMessage || null, actor, now: now.toMillis() })
+    tx.update(c.ref, { lastDecisionId: ledgerId })
   })
 
   await recordAudit(request, {
     actorId: uid,
     action: `verification.final_${d.decision}`,
     entityId: id,
-    entityType: 'verification_case',
+    entityType: 'verification_request',
     metadata: { decision: d.decision, ledgerId },
   })
   return { ok: true, ledgerId }

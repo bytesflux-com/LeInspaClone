@@ -9,17 +9,7 @@ export default function IdentityChecklistCard({
   checklist = [],
   onChecklistChange,
 }) {
-  const defaultItems = [
-    { key: 'documentTypeAccepted', label: 'Document type accepted', status: 'Pass', resultType: 'pass', description: 'Official Republic of Kenya National ID' },
-    { key: 'documentComplete', label: 'Document appears complete', status: 'Pass', resultType: 'pass', description: 'Both front and back sides provided' },
-    { key: 'isReadable', label: 'Document is readable', status: 'Pass', resultType: 'pass', description: 'High contrast text, coat of arms, and photo clear' },
-    { key: 'nameMatches', label: 'Name matches / reasonably corresponds', status: 'Needs review', resultType: 'review', description: 'Middle name present on ID' },
-    { key: 'requiredInfoPresent', label: 'Required information is present', status: 'Pass', resultType: 'pass', description: 'ID number, DOB, sex, and issuance authority verified' },
-    { key: 'isCurrent', label: 'Document is current (not expired)', status: 'Pass', resultType: 'pass', description: 'Perpetual statutory validity under Kenyan Registration law' },
-    { key: 'noTampering', label: 'No obvious tampering concern', status: 'Pass', resultType: 'pass', description: 'Guilloche security background pattern and ghost photo intact' },
-  ]
-
-  const items = checklist.length > 0 ? checklist : defaultItems
+  const items = checklist
 
   // Cycle through statuses on click: Pass -> Needs review -> Fail -> Pass
   const handleToggle = (key, currentStatus) => {

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { X, Check, AlertTriangle, Image as ImageIcon, Send, ShieldCheck } from 'lucide-react'
+import { AVATAR_PLACEHOLDER } from '../../../lib/placeholders'
 
 const REASON_CODES = [
   { code: 'IMAGE_QUALITY', label: 'Image resolution too low or blurry' },
@@ -28,7 +29,7 @@ export function ContentModerationModal({
   const pendingItem = profile.gallery?.pendingApproval || {
     previewUrl: profile.avatar,
     title: 'Profile photo submitted',
-    submittedAt: '10 Sep 2026, 02:18 PM',
+    submittedAt: null,
   }
 
   const selectedReason = REASON_CODES.find((r) => r.code === reasonCode)?.label || reasonCode
@@ -104,14 +105,14 @@ export function ContentModerationModal({
             src={
               pendingItem.previewUrl ||
               profile.avatar ||
-              'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=500'
+              AVATAR_PLACEHOLDER
             }
             alt="Submitted content preview"
             className="mx-auto max-h-52 object-cover rounded-lg"
           />
           <div className="p-2 text-[11px] text-slate-500 flex items-center justify-between px-3">
             <span>Item: Profile Photo</span>
-            <span>Submitted: {pendingItem.submittedAt || '10 Sep 2026, 02:18 PM'}</span>
+            <span>Submitted: {pendingItem.submittedAt || '—'}</span>
           </div>
         </div>
 

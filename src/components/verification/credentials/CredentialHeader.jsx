@@ -8,9 +8,9 @@ import { ArrowLeft, ExternalLink, Award, ShieldCheck, UserCheck } from 'lucide-r
  */
 export default function CredentialHeader({ verificationId, providerId }) {
   const navigate = useNavigate()
-  const reviewUrl = `/verifications/review/${verificationId || 'ver-001'}`
-  const profileUrl = `/providers/${providerId || 'PR-82941'}`
-  const identityUrl = `/verifications/identity/${verificationId || 'ver-001'}`
+  const reviewUrl = `/verifications/review/${verificationId || '—'}`
+  const profileUrl = `/providers/${providerId || '—'}`
+  const identityUrl = `/verifications/identity/${verificationId || '—'}`
 
   return (
     <div className="space-y-3">

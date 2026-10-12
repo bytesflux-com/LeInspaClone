@@ -5,6 +5,7 @@ import { CalendarCheck, ChevronRight, CreditCard, Crown, Gift, ShieldAlert, Shie
 
 import { usePermissions } from '../../hooks/usePermissions'
 import { NAVIGATION_SECTIONS } from '../../constants/navigation'
+import AttentionBadge from './AttentionBadge'
 import { cn } from '../../lib/utils'
 import VerificationCenterAccordion from './VerificationCenterAccordion'
 
@@ -15,8 +16,8 @@ const CHILD = 'flex items-center rounded-lg py-[3px] pr-2.5 pl-[26px] text-[12px
 const groupPaths = (item) => [item.path, ...(item.children || []).flatMap((c) => (c.children ? groupPaths(c) : [c.path]))]
 const inside = (paths, pathname) => paths.some((p) => pathname === p || pathname.startsWith(`${p}/`))
 
-const DEFAULT_CLIENT_ID = 'CL-78421'
-const DEFAULT_PROVIDER_ID = 'PR-82941'
+// Demo mode has a sample provider; live mode only links to a real provider in context.
+const DEFAULT_PROVIDER_ID = import.meta.env.VITE_USE_MOCK_PROVIDERS === 'true' ? 'PR-82941' : null
 
 const CLIENT_SUB_TABS = [
   ['profile', 'Client Profile', User],
@@ -143,7 +144,8 @@ function GroupChildren({ item, onNavigate }) {
   const clientSectionMatch = item.path === '/clients' ? matchPath({ path: '/clients/:clientId/:section' }, pathname) : null
   const clientRootMatch = item.path === '/clients' ? matchPath({ path: '/clients/:clientId' }, pathname) : null
   const rawClientId = clientSectionMatch?.params?.clientId || clientRootMatch?.params?.clientId
-  const currentClientId = rawClientId && rawClientId !== 'all' ? rawClientId : DEFAULT_CLIENT_ID
+  // Client tabs only appear while a client is open (they are views of that client).
+  const currentClientId = rawClientId && rawClientId !== 'all' ? rawClientId : null
 
   const activeClientSub =
     item.path === '/clients' && rawClientId && rawClientId !== 'all'
@@ -166,6 +168,8 @@ function GroupChildren({ item, onNavigate }) {
     matchedProviderId && !reservedProviderPaths.includes(matchedProviderId)
       ? matchedProviderId
       : DEFAULT_PROVIDER_ID
+  // Provider tabs only appear while a provider is open (or for the demo provider).
+  const showProviderTabs = Boolean(currentProviderId)
 
   const onProviderProfile = Boolean(
     item.path === '/providers' &&
@@ -221,13 +225,9 @@ function GroupChildren({ item, onNavigate }) {
                 {ChildIcon && <ChildIcon className="size-3.5 shrink-0 opacity-80" aria-hidden="true" />}
                 <span className="truncate">{child.label}</span>
               </div>
-              {child.badge && (
-                <span className="ml-1.5 rounded-full bg-amber-500/90 px-1.5 py-0.2 text-[9.5px] font-bold text-white shadow-xs">
-                  {child.badge}
-                </span>
-              )}
+              {child.badgeKey && <AttentionBadge category={child.badgeKey} className="ml-1.5" />}
             </NavLink>
-            {isAllProviders && (
+            {isAllProviders && showProviderTabs && (
               <>
                 <Link
                   to={`/providers/${currentProviderId}`}
@@ -258,6 +258,7 @@ function GroupChildren({ item, onNavigate }) {
       })}
 
       {item.path === '/clients' &&
+        currentClientId &&
         CLIENT_SUB_TABS.map(([key, label, RowIcon]) => {
           const isActive = activeClientSub === key
           const to = key === 'profile' ? `/clients/${currentClientId}` : `/clients/${currentClientId}/${key}`

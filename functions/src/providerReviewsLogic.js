@@ -45,28 +45,31 @@ export const DEFAULT_REVIEW_POLICY = {
 const REPORT_OPEN = ['open', 'under_review', 'escalated']
 
 export function normalizeReview(id, r = {}) {
-  const response = r.providerResponse && r.providerResponse.text
+  // The app stores the reply as providerReply/repliedAt; older shapes use providerResponse.
+  const replyText = r.providerResponse?.text || r.providerReply || null
+  const response = replyText
     ? {
-        text: String(r.providerResponse.text),
-        status: lower(r.providerResponse.status || 'published'),
-        respondedAt: toMillis(r.providerResponse.respondedAt),
-        reported: Boolean(r.providerResponse.reported),
+        text: String(replyText),
+        status: lower(r.providerResponse?.status || r.providerReplyStatus || 'published'),
+        respondedAt: toMillis(r.providerResponse?.respondedAt || r.repliedAt),
+        reported: Boolean(r.providerResponse?.reported || r.replyReported),
       }
     : null
   const status = lower(r.status || 'published')
+  const context = r.context || (r.branchId || r.staffId || r.assignedStaffId ? { branchId: r.branchId || null, staffId: r.staffId || r.assignedStaffId || null, branchName: r.branchName || null, specialistName: r.staffName || null } : null)
   return {
     id: r.reviewId || id,
     docId: id,
     providerId: r.providerId || null,
-    clientId: r.clientId || null,
-    clientName: r.clientName || 'Client',
+    clientId: r.clientId || r.customerId || null,
+    clientName: r.clientName || r.customerName || 'Client',
     bookingId: r.bookingId || null,
     serviceName: r.serviceName || null,
     rating: Math.max(1, Math.min(5, Number(r.rating) || 0)),
-    text: String(r.text || r.comment || ''),
+    text: String(r.text || r.reviewText || r.comment || ''),
     status: REVIEW_STATUSES.includes(status) ? status : 'published',
     submittedAt: toMillis(r.submittedAt || r.createdAt),
-    publishedAt: toMillis(r.publishedAt),
+    publishedAt: toMillis(r.publishedAt || r.createdAt),
     media: Array.isArray(r.media) ? r.media.map((m, i) => ({
       id: m.id || `m${i}`,
       url: m.url || null,
@@ -75,12 +78,20 @@ export function normalizeReview(id, r = {}) {
       reported: Boolean(m.reported),
     })) : [],
     providerResponse: response,
-    context: r.context || null,
+    context,
     moderation: r.moderation || null,
     deviceHash: r.deviceHash || null,
     marketCode: r.marketCode || null,
     version: Number(r.version) || 0,
+    // App-side report flag (reviews.isReported) — surfaced as an open report.
+    flaggedReport: r.isReported ? { reportedAt: toMillis(r.reportedAt), reason: r.reportReason || r.reportedReason || null, by: r.reportedBy || null } : null,
   }
+}
+
+/** Open report derived from the app's isReported flag (when no admin report record exists). */
+export function reportFromFlag(review) {
+  if (!review.flaggedReport) return null
+  return { id: `flag-${review.docId}`, docId: `flag-${review.docId}`, reviewId: review.id, target: 'review', reportedByType: review.flaggedReport.by ? lower(review.flaggedReport.by) : 'client', reportedById: null, reasonLabel: review.flaggedReport.reason || 'Reported in app', status: 'open', createdAt: review.flaggedReport.reportedAt, assignedTo: null, fromFlag: true }
 }
 
 export function normalizeReport(id, r = {}) {

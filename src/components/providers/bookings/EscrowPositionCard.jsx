@@ -1,20 +1,22 @@
+import { useNavigate } from 'react-router'
 import { Shield, ChevronRight, CheckCircle2, Clock, AlertTriangle, RotateCcw } from 'lucide-react'
 
 export function EscrowPositionCard({
   escrowPositions,
   canSeeFinancial = true,
-  onShowToast,
 }) {
+  const navigate = useNavigate()
   const e = escrowPositions || {}
 
+  const cur = e.currency || ''
   const fmt = (val) =>
-    canSeeFinancial ? (typeof val === 'number' ? `KES ${val.toLocaleString()}` : val || 'KES —') : 'KES —'
+    canSeeFinancial ? (typeof val === 'number' ? `${cur} ${val.toLocaleString()}` : val || '—') : '—'
 
   const tiles = [
     {
       id: 'held',
       label: 'Held',
-      value: fmt(e.held ?? 98200),
+      value: fmt(e.held ?? 0),
       icon: Clock,
       color: 'text-purple-700',
       bgColor: 'bg-purple-100',
@@ -22,7 +24,7 @@ export function EscrowPositionCard({
     {
       id: 'released',
       label: 'Released',
-      value: fmt(e.released ?? 870300),
+      value: fmt(e.released ?? 0),
       icon: CheckCircle2,
       color: 'text-emerald-700',
       bgColor: 'bg-emerald-100',
@@ -30,7 +32,7 @@ export function EscrowPositionCard({
     {
       id: 'disputed',
       label: 'Disputed',
-      value: fmt(e.disputed ?? 12000),
+      value: fmt(e.disputed ?? 0),
       icon: AlertTriangle,
       color: 'text-amber-700',
       bgColor: 'bg-amber-100',
@@ -38,7 +40,7 @@ export function EscrowPositionCard({
     {
       id: 'refunded',
       label: 'Refunded',
-      value: fmt(e.refunded ?? 15500),
+      value: fmt(e.refunded ?? 0),
       icon: RotateCcw,
       color: 'text-rose-700',
       bgColor: 'bg-rose-100',
@@ -59,7 +61,7 @@ export function EscrowPositionCard({
 
           <button
             type="button"
-            onClick={() => onShowToast?.('Navigating to Shared Escrow Custody Hub')}
+            onClick={() => navigate('/bookings/active')}
             className="text-xs font-semibold text-purple-700 hover:underline flex items-center gap-0.5"
           >
             <span>View Escrow</span>

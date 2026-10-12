@@ -1,15 +1,17 @@
-import { Link } from 'react-router'
+import { useNavigate, useParams } from 'react-router'
 import { Wallet, ChevronRight } from 'lucide-react'
 
 export function EarningsOverviewCard({
   financials,
   canSeeFinancial = true,
-  onShowToast,
 }) {
+  const navigate = useNavigate()
+  const { providerId: routeProviderId } = useParams()
   const f = financials || {}
 
+  const cur = f.currency || ''
   const fmt = (val) =>
-    canSeeFinancial ? (typeof val === 'number' ? `KES ${val.toLocaleString()}` : val || 'KES —') : 'KES —'
+    canSeeFinancial ? (typeof val === 'number' ? `${cur} ${val.toLocaleString()}` : val || '—') : '—'
 
   return (
     <div className="p-4 sm:p-5 rounded-2xl border border-slate-200 bg-white shadow-2xs flex flex-col justify-between">
@@ -25,7 +27,7 @@ export function EarningsOverviewCard({
 
           <button
             type="button"
-            onClick={() => onShowToast?.('Opening detailed provider ledger statement')}
+            onClick={() => navigate(`/providers/${routeProviderId}/earnings`)}
             className="text-xs font-semibold text-purple-700 hover:underline flex items-center gap-0.5"
           >
             <span>View Details</span>
@@ -40,7 +42,7 @@ export function EarningsOverviewCard({
               Gross Service Value
             </span>
             <span className="font-mono font-bold text-slate-900 text-sm sm:text-base mt-0.5 block">
-              {fmt(f.grossServiceValue ?? 1140000)}
+              {fmt(f.grossServiceValue ?? 0)}
             </span>
           </div>
 
@@ -49,7 +51,7 @@ export function EarningsOverviewCard({
               Provider Earnings
             </span>
             <span className="font-mono font-bold text-purple-700 text-sm sm:text-base mt-0.5 block">
-              {fmt(f.providerEarnings ?? 1026500)}
+              {fmt(f.providerEarnings ?? 0)}
             </span>
           </div>
 
@@ -58,7 +60,7 @@ export function EarningsOverviewCard({
               Platform Fees
             </span>
             <span className="font-mono font-bold text-slate-600 text-sm sm:text-base mt-0.5 block">
-              {fmt(f.platformFees ?? 113500)}
+              {fmt(f.platformFees ?? 0)}
             </span>
           </div>
         </div>
@@ -70,7 +72,7 @@ export function EarningsOverviewCard({
               Pending Escrow
             </span>
             <span className="font-mono font-bold text-amber-700 text-sm sm:text-base mt-0.5 block">
-              {fmt(f.pendingEscrow ?? 98200)}
+              {fmt(f.pendingEscrow ?? 0)}
             </span>
           </div>
 
@@ -79,7 +81,7 @@ export function EarningsOverviewCard({
               Available Balance
             </span>
             <span className="font-mono font-bold text-emerald-700 text-sm sm:text-base mt-0.5 block">
-              {fmt(f.availableBalance ?? 342800)}
+              {fmt(f.availableBalance ?? 0)}
             </span>
           </div>
 
@@ -88,7 +90,7 @@ export function EarningsOverviewCard({
               Paid Out
             </span>
             <span className="font-mono font-bold text-slate-900 text-sm sm:text-base mt-0.5 block">
-              {fmt(f.paidOut ?? 586300)}
+              {fmt(f.paidOut ?? 0)}
             </span>
           </div>
         </div>

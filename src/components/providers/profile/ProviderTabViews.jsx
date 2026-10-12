@@ -19,9 +19,11 @@ import {
   EyeOff,
   Filter,
 } from 'lucide-react'
-import { Link } from 'react-router'
+import { Link, useNavigate } from 'react-router'
+import { IMAGE_PLACEHOLDER } from '../../../lib/placeholders'
 
 export function VerificationTabView({ profile, onOpenContentReview, onShowToast }) {
+  const navigate = useNavigate()
   const ver = profile?.verification || {}
 
   return (
@@ -44,7 +46,7 @@ export function VerificationTabView({ profile, onOpenContentReview, onShowToast 
 
         <button
           type="button"
-          onClick={() => onShowToast?.('Opening full verification dossier')}
+          onClick={() => navigate(`/verifications?providerId=${profile.id}`)}
           className="px-4 py-2 rounded-xl bg-purple-700 hover:bg-purple-800 text-white text-xs font-semibold shadow-xs transition"
         >
           Review Verification Dossier
@@ -193,7 +195,7 @@ export function ServicesTabView({ profile, onShowToast }) {
             >
               <div className="col-span-5 flex items-center gap-3">
                 <img
-                  src={srv.image || 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=120'}
+                  src={srv.image || IMAGE_PLACEHOLDER}
                   alt={srv.name}
                   className="size-10 rounded-lg object-cover border border-slate-200 shrink-0"
                 />
@@ -226,7 +228,7 @@ export function BookingsTabView({ profile }) {
       <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs flex items-center justify-between">
         <div>
           <h2 className="text-base font-bold text-slate-900">
-            Booking Operations History ({profile.bookingPerformance?.total || 284})
+            Booking Operations History ({profile.bookingPerformance?.total ?? 0})
           </h2>
           <p className="text-xs text-slate-500">
             Real-time appointments, upcoming client requests, and fulfilment status.
@@ -305,7 +307,7 @@ export function EarningsTabView({ profile, canSeeFinancial }) {
             </button>
           )}
           <Link
-            to={`/withdrawals?providerId=${profile.id}`}
+            to={`/providers/${profile.id}/earnings`}
             className="px-3.5 py-2 rounded-xl bg-purple-700 hover:bg-purple-800 text-white text-xs font-semibold shadow-xs transition"
           >
             Review Withdrawals →
@@ -351,7 +353,7 @@ export function SubscriptionTabView({ profile }) {
       <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs flex items-center justify-between">
         <div>
           <h2 className="text-base font-bold text-slate-900">
-            Subscription & Platform Tier ({sub.plan || 'Professional Plan'})
+            Subscription & Platform Tier ({sub.plan || 'No plan'})
           </h2>
           <p className="text-xs text-slate-500">
             Current billing period: {sub.currentPeriod} • Renewal: {sub.nextRenewal}
@@ -365,12 +367,7 @@ export function SubscriptionTabView({ profile }) {
       <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-xs space-y-3">
         <h3 className="font-bold text-slate-900 text-sm">Included Plan Features</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-          {(sub.features || [
-            'Unlimited Booking Requests',
-            'Featured in Search Radius',
-            'Zero Lé Inspa Processing Commission on First 20 Bookings',
-            'Dedicated Priority SLA Support',
-          ]).map((feat, i) => (
+          {(sub.features || []).map((feat, i) => (
             <div key={i} className="flex items-center gap-2 p-2 rounded-lg bg-slate-50 border border-slate-100">
               <CheckCircle2 className="size-4 text-emerald-600 shrink-0" />
               <span className="text-slate-800 font-medium">{feat}</span>
@@ -390,7 +387,7 @@ export function ReviewsTabView({ profile }) {
       <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs flex items-center justify-between">
         <div>
           <h2 className="text-base font-bold text-slate-900">
-            Client Reviews & Ratings ({reviews.reviewCount || 126} Reviews)
+            Client Reviews & Ratings ({reviews.reviewCount ?? 0} Reviews)
           </h2>
           <p className="text-xs text-slate-500">
             Verified feedback left by completed booking clients.
@@ -403,24 +400,7 @@ export function ReviewsTabView({ profile }) {
       </div>
 
       <div className="rounded-xl border border-slate-200 bg-white shadow-xs p-4 space-y-3">
-        {(reviews.list || [
-          {
-            id: 'rev-1',
-            clientName: 'James K.',
-            rating: 5,
-            date: '08 Oct 2026',
-            comment: 'Amazing experience! Very professional and skilled. Highly recommend.',
-            service: 'Deep Tissue Massage',
-          },
-          {
-            id: 'rev-2',
-            clientName: 'Beatrice Wangari',
-            rating: 5,
-            date: '02 Oct 2026',
-            comment: 'Prompt arrival with sanitized hydraulic table and calming aromatherapy.',
-            service: 'Sports Massage',
-          },
-        ]).map((rev) => (
+        {(reviews.list || []).map((rev) => (
           <div key={rev.id} className="p-3.5 rounded-xl bg-slate-50/70 border border-slate-100 space-y-1.5">
             <div className="flex items-center justify-between text-xs">
               <span className="font-bold text-slate-900">{rev.clientName}</span>

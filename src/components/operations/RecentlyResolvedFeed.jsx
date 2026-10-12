@@ -12,7 +12,7 @@ export default function RecentlyResolvedFeed({ items = [] }) {
             <h3 className="text-sm font-bold text-gray-900">Resolved Recently</h3>
           </div>
           <Link
-            to="/audit-logs"
+            to="/approval-history"
             className="inline-flex items-center gap-0.5 text-xs font-semibold text-[#5c2dd5] hover:text-[#4922ab] transition-colors"
           >
             <span>View All</span>

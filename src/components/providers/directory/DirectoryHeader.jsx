@@ -1,6 +1,6 @@
 import { Download, Plus } from 'lucide-react'
 
-export function DirectoryHeader({ totalProviders = 24860, onExport, onAddProvider }) {
+export function DirectoryHeader({ totalProviders = 0, onExport, onAddProvider }) {
   return (
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
       <div>

@@ -22,6 +22,7 @@ export {
 export { adminGetSession, adminVerifySession, adminEndSession } from './sessionVerification.js'
 export { adminGetDashboardSummary } from './dashboard.js'
 export { adminGetOperationsSummary } from './operations.js'
+export { adminGetMarketDashboardData } from './marketDashboard.js'
 export { adminGlobalSearch } from './search.js'
 export {
   adminGetNeedsAttention,
@@ -36,14 +37,14 @@ export {
   adminRevealGuestContact,
 } from './bookings.js'
 
-export { adminGetProviderDashboard } from './providerDashboard.js'
-export { adminListProviders, adminGetProviderDetail } from './providerDirectory.js'
+// ADM-020 → ADM-022 — provider dashboard, directory and 360° profile
 export {
+  adminGetProviderDashboard,
+  adminListProviders,
+  adminGetProviderDetail,
   adminGetProviderProfile,
   adminAddProviderInternalNote,
   adminUpdateProviderContentStatus,
-  adminUpdateProviderVerificationStatus,
-  adminUpdateProviderAccountStatus,
 } from './providerProfile.js'
 export {
   adminGetProviderServices,
@@ -71,6 +72,7 @@ export {
   adminAddProviderAccountNote,
 } from './providerAccount.js'
 
+// ADM-029 → ADM-034 — Verification Center over verification_requests
 export {
   adminGetVerificationQueue,
   adminAssignVerificationReviewer,
@@ -91,7 +93,7 @@ export {
   adminRevealBusinessDocumentNumber,
   adminSubmitBusinessDocumentDecision,
   adminAddBusinessInternalNote,
-} from './adminVerification.js'
+} from './verificationCenter.js'
 
 export {
   adminGetContentQueue,
@@ -119,3 +121,42 @@ export {
   adminGetApprovalDecision,
   adminExportApprovalHistory,
 } from './approvalWorkflows.js'
+// ADM-010 → ADM-019 — Client Management
+export {
+  adminGetClientDashboard,
+  adminGetClientGrowth,
+  adminListClients,
+  adminGetClientPreview,
+  adminGetClientActivity,
+  adminGetClientNotes,
+  adminAddClientNote,
+  adminExportClients,
+  adminBulkNotifyClients,
+  adminBulkTagClients,
+  adminGetClientProfile,
+  adminRevealClientContact,
+  adminGetClientBookings,
+  adminGetBookingPreview,
+  adminGetClientPayments,
+  adminGetPaymentPreview,
+  adminAddPaymentNote,
+  adminGetClientWallet,
+  adminGetWalletBalanceHistory,
+  adminGetWalletTransactionPreview,
+  adminAddWalletTransactionNote,
+  adminGetClientMembership,
+  adminChangeClientMembership,
+  adminAddMembershipNote,
+  adminGetClientLoyalty,
+  adminGetClientReferrals,
+  adminGetReferralPreview,
+  adminAddLoyaltyNote,
+  adminGetClientSupport,
+  adminGetSupportCasePreview,
+  adminReplyToSupportCase,
+  adminAddSupportCaseNote,
+  adminReassignSupportCase,
+  adminEscalateSupportCase,
+  adminGetClientAccount,
+  adminApplyClientAccountAction,
+} from './clients.js'

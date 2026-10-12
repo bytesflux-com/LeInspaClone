@@ -21,7 +21,7 @@ export default function VerificationKPIs({ kpis = {} }) {
       id: 'awaiting',
       title: 'Awaiting Review',
       count: awaitingReview.count,
-      subtext: awaitingReview.subtext || '34 urgent',
+      subtext: awaitingReview.subtext || '—',
       icon: Clock,
       iconClass: 'bg-amber-50 text-amber-600 border border-amber-100',
       badgeClass: 'bg-amber-50 text-amber-700 border border-amber-200',

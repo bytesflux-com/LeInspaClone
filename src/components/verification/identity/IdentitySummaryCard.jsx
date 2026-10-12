@@ -1,4 +1,5 @@
 import { Check, Clock, UserCheck, Shield, Building2, Hotel } from 'lucide-react'
+import { AVATAR_PLACEHOLDER, IMAGE_PLACEHOLDER } from '../../../lib/placeholders'
 
 /**
  * ADM-032: IdentitySummaryCard
@@ -53,10 +54,10 @@ export default function IdentitySummaryCard({ data }) {
   }
 
   const defaultAvatar = isSpa
-    ? 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=150&auto=format&fit=crop&q=80'
+    ? IMAGE_PLACEHOLDER
     : isHotel
-      ? 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=150&auto=format&fit=crop&q=80'
-      : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'
+      ? IMAGE_PLACEHOLDER
+      : AVATAR_PLACEHOLDER
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 rounded-2xl border border-slate-200/90 bg-white p-5 shadow-sm">
@@ -115,17 +116,17 @@ export default function IdentitySummaryCard({ data }) {
               </div>
             ) : (
               <p className="text-xs font-medium text-slate-500 flex items-center gap-1.5">
-                <span className="font-mono text-purple-700 font-semibold">{data.providerId || 'PR-82941'}</span>
+                <span className="font-mono text-purple-700 font-semibold">{data.providerId || '—'}</span>
                 <span>•</span>
                 <span>{data.type || 'Massage Therapist'}</span>
                 <span>•</span>
-                <span>{data.market?.flag || '🇰🇪'} {data.market?.name || 'Kenya'}</span>
+                <span>{data.market?.flag || ''} {data.market?.name || '—'}</span>
               </p>
             )}
 
             <div className="flex items-center gap-2 text-[11px] text-slate-400 pt-0.5">
               <Clock className="size-3.5 text-slate-400" />
-              <span>Submitted: {data.submittedAt || '12 Sep 2026 • 10:42 AM'}</span>
+              <span>Submitted: {data.submittedAt || '—'}</span>
             </div>
           </div>
         </div>
@@ -136,7 +137,7 @@ export default function IdentitySummaryCard({ data }) {
             <img
               src={
                 data.assignedReviewer?.avatarUrl ||
-                'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=80'
+                AVATAR_PLACEHOLDER
               }
               alt={data.assignedTo || 'Reviewer'}
               className="size-6 rounded-full border border-purple-200 object-cover"
@@ -188,8 +189,8 @@ export default function IdentitySummaryCard({ data }) {
           <div className="rounded-xl border border-slate-100 bg-slate-50/70 p-2.5">
             <p className="text-[11px] font-medium text-slate-500">Market</p>
             <p className="text-xs font-bold text-slate-900 mt-0.5 flex items-center gap-1">
-              <span>{data.market?.flag || '🇰🇪'}</span>
-              <span>{data.market?.name || 'Kenya'}</span>
+              <span>{data.market?.flag || ''}</span>
+              <span>{data.market?.name || '—'}</span>
             </p>
           </div>
 

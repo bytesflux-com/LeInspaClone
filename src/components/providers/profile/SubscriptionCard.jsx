@@ -41,7 +41,7 @@ export function SubscriptionCard({
           <div className="flex items-center justify-between py-1">
             <span className="text-slate-500 font-medium">Plan</span>
             <span className="font-bold text-slate-900">
-              {sub.plan || profile.subscriptionPlan || 'Professional Plan'}
+              {sub.plan || profile.subscriptionPlan || 'No plan'}
             </span>
           </div>
 
@@ -49,7 +49,7 @@ export function SubscriptionCard({
           <div className="flex items-center justify-between py-1">
             <span className="text-slate-500 font-medium">Current Period</span>
             <span className="font-medium text-slate-800">
-              {sub.currentPeriod || '12 Sep – 12 Oct 2026'}
+              {sub.currentPeriod || '—'}
             </span>
           </div>
 
@@ -57,7 +57,7 @@ export function SubscriptionCard({
           <div className="flex items-center justify-between py-1">
             <span className="text-slate-500 font-medium">Next Renewal</span>
             <span className="font-semibold text-purple-900">
-              {sub.nextRenewal || profile.subscriptionRenewal || '12 Oct 2026'}
+              {sub.nextRenewal || profile.subscriptionRenewal || '—'}
             </span>
           </div>
 

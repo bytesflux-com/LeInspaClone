@@ -171,8 +171,8 @@ export default function WalletDrawer({ txn: t, preview, loading, error, client, 
             <section className={CARD}>
               <h3 className={H3}>Funding Source</h3>
               <div className="mb-1 flex items-center gap-2 py-1 text-[13px] font-bold text-[#1b1140]">
-                <MethodGlyph kind={preview.funding.method.kind} />
-                {preview.funding.method.label}
+                {preview.funding.method && <MethodGlyph kind={preview.funding.method.kind} />}
+                {preview.funding.method?.label || 'Method not recorded'}
               </div>
               <ul>
                 <Row label="Payment ID">

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router'
+import { Link, matchPath, useLocation, useNavigate } from 'react-router'
 import { FileText, ChevronRight } from 'lucide-react'
 import { cn } from '../../lib/utils'
+import AttentionBadge from './AttentionBadge'
 
 /**
  * ADM Verification Center Expandable Accordion Menu
@@ -39,41 +40,29 @@ export default function VerificationCenterAccordion({ onNavigate }) {
     setIsVerificationOpen((prev) => !prev)
   }
 
+  // The review steps belong to one case: they only appear (linked to that case) while it is open.
+  const caseId =
+    matchPath('/verifications/review/:id/*', location.pathname)?.params.id ||
+    matchPath('/verifications/review/:id', location.pathname)?.params.id ||
+    matchPath('/verifications/:kind/:id', location.pathname)?.params.id ||
+    null
+  const decisionId = matchPath('/verifications/:id/decision', location.pathname)?.params.id
+  const openCase = decisionId || (['identity', 'credentials', 'business'].includes(caseId) ? null : caseId)
   const childLinks = [
     {
       label: 'Verification Queue',
       path: '/verifications/queue',
       isActive: (pathname) => pathname === '/verifications/queue' || pathname === '/verifications',
     },
-    {
-      label: 'Verification Review',
-      path: '/verifications/review',
-      isActive: (pathname) =>
-        (pathname === '/verifications/review' || pathname.startsWith('/verifications/review/')) &&
-        !pathname.includes('/identity') &&
-        !pathname.includes('/credentials') &&
-        !pathname.includes('/business'),
-    },
-    {
-      label: 'Identity Documents',
-      path: '/verifications/identity',
-      isActive: (pathname) => pathname.startsWith('/verifications/identity') || pathname.includes('/identity'),
-    },
-    {
-      label: 'Professional Credentials',
-      path: '/verifications/credentials',
-      isActive: (pathname) => pathname.startsWith('/verifications/credentials') || pathname.includes('/credentials'),
-    },
-    {
-      label: 'Business Documents',
-      path: '/verifications/business',
-      isActive: (pathname) => pathname.startsWith('/verifications/business') || pathname.includes('/business'),
-    },
-    {
-      label: 'Verification Decision',
-      path: '/verifications/decision',
-      isActive: (pathname) => pathname.includes('/decision'),
-    },
+    ...(openCase
+      ? [
+          { label: 'Case Review', path: `/verifications/review/${openCase}`, isActive: (pathname) => pathname === `/verifications/review/${openCase}` },
+          { label: 'Identity Documents', path: `/verifications/identity/${openCase}`, isActive: (pathname) => pathname.includes('/identity') },
+          { label: 'Professional Credentials', path: `/verifications/credentials/${openCase}`, isActive: (pathname) => pathname.includes('/credentials') },
+          { label: 'Business Documents', path: `/verifications/business/${openCase}`, isActive: (pathname) => pathname.includes('/business') },
+          { label: 'Verification Decision', path: `/verifications/${openCase}/decision`, isActive: (pathname) => pathname.includes('/decision') },
+        ]
+      : []),
   ]
 
   return (
@@ -102,9 +91,7 @@ export default function VerificationCenterAccordion({ onNavigate }) {
         </div>
 
         <div className="flex items-center gap-1.5 shrink-0">
-          <span className="rounded-full bg-amber-500/90 px-1.5 py-0.2 text-[9.5px] font-bold text-white shadow-xs">
-            428
-          </span>
+          <AttentionBadge category="verification" />
           <span
             onClick={handleChevronToggle}
             className="p-0.5 hover:bg-white/10 rounded-sm transition cursor-pointer"

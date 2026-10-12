@@ -10,27 +10,27 @@ export default function FinancialPosition({ financial }) {
   const items = [
     {
       label: 'Customer Payments',
-      value: formatDisplayCurrency(financial.customerPayments ?? 18430500, currency),
+      value: formatDisplayCurrency(financial.customerPayments ?? 0, currency),
       valueClass: 'text-emerald-600 font-bold',
     },
     {
       label: 'In Escrow',
-      value: formatDisplayCurrency(financial.inEscrow ?? 6912400, currency),
+      value: formatDisplayCurrency(financial.inEscrow ?? 0, currency),
       valueClass: 'text-gray-900 font-bold',
     },
     {
       label: 'Provider Payable',
-      value: formatDisplayCurrency(financial.providerPayable ?? 5482300, currency),
+      value: formatDisplayCurrency(financial.providerPayable ?? 0, currency),
       valueClass: 'text-gray-900 font-bold',
     },
     {
       label: 'Platform Revenue',
-      value: formatDisplayCurrency(financial.platformRevenue ?? 3482120, currency),
+      value: formatDisplayCurrency(financial.platformRevenue ?? 0, currency),
       valueClass: 'text-gray-900 font-bold',
     },
     {
       label: 'Pending Withdrawals',
-      value: formatDisplayCurrency(financial.pendingWithdrawals ?? 1204800, currency),
+      value: formatDisplayCurrency(financial.pendingWithdrawals ?? 0, currency),
       valueClass: 'text-amber-600 font-bold',
     },
   ]
@@ -57,10 +57,10 @@ export default function FinancialPosition({ financial }) {
 
       <div className="mt-4 pt-3 border-t border-gray-50 text-center">
         <Link
-          to="/finance"
+          to="/attention?tab=finance"
           className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#5c2dd5] hover:text-[#4922ab] transition-colors"
         >
-          <span>View Finance</span>
+          <span>Review Finance Queue</span>
           <ArrowRight className="size-3.5" />
         </Link>
       </div>

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useParams } from 'react-router'
+import { Link, useParams, Navigate } from 'react-router'
 import { FileSearch } from 'lucide-react'
 import { providerTrustService } from '../../services/providerTrustService'
 import { useProviderTrustData } from '../../hooks/useProviderTrust'
@@ -28,7 +28,13 @@ import { AssessmentDrawer, ScoreExplanationDrawer } from '../../components/provi
 // Signal → Context → Evidence → Human Review → Decision.
 export default function ProviderQualityRisk() {
   const { providerId: routeId } = useParams()
-  const providerId = routeId || 'PR-82941'
+  // Without a provider in the URL, demo mode shows its sample provider; live mode opens the directory.
+  const providerId = routeId || (providerTrustService.isMock ? 'PR-82941' : null)
+  if (!providerId) return <Navigate to="/providers/all" replace />
+  return <ProviderQualityRiskScreen key={providerId} providerId={providerId} />
+}
+
+function ProviderQualityRiskScreen({ providerId }) {
   const toast = useToast()
   const [period, setPeriod] = useState('30d')
   const { ctx, data, error, refetch, fetching } = useProviderTrustData((c) => providerTrustService.getQualityRisk(providerId, period, c), `${providerId}|${period}`)
@@ -70,8 +76,8 @@ export default function ProviderQualityRisk() {
           <DynamicUnitsCard dynamic={data.dynamic} />
           <div className="grid items-start gap-4 lg:grid-cols-3">
             <ComplianceCard compliance={data.compliance} />
-            <FinancialSignalsCard financial={data.financial} />
-            <SafetyCard safety={data.safety} />
+            <FinancialSignalsCard financial={data.financial} providerId={providerId} />
+            <SafetyCard safety={data.safety} providerId={providerId} />
           </div>
           <div className="grid items-start gap-4 lg:grid-cols-[1.2fr_1fr_1fr]">
             <RiskTimelineCard timeline={data.timeline} />

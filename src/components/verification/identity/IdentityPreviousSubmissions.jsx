@@ -27,30 +27,7 @@ export default function IdentityPreviousSubmissions({
   const [noteText, setNoteText] = useState('')
   const [isSubmittingNote, setIsSubmittingNote] = useState(false)
 
-  const defaultSubmissions = [
-    {
-      version: 2,
-      isCurrent: true,
-      submittedAt: '12 Sep 2026 • 10:42 AM',
-      status: 'Under Review',
-      statusType: 'under_review',
-      fileName: 'National_ID_Front_and_Back_v2.pdf',
-      reviewer: 'Jane Ochieng',
-      notes: 'Resubmitted with clear high-resolution back side scan.',
-    },
-    {
-      version: 1,
-      isCurrent: false,
-      submittedAt: '10 Sep 2026 • 9:15 AM',
-      status: 'Changes Requested',
-      statusType: 'changes_requested',
-      fileName: 'National_ID_Scan_v1.pdf',
-      reviewer: 'Jane Ochieng',
-      notes: 'Back side unreadable due to blurriness and glare.',
-    },
-  ]
-
-  const items = submissions.length > 0 ? submissions : defaultSubmissions
+  const items = submissions
 
   const handleCreateNote = async (e) => {
     e.preventDefault()

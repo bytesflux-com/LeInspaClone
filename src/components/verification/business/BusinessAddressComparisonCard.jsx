@@ -13,10 +13,10 @@ import {
  */
 export default function BusinessAddressComparisonCard({
   addressComparison = {
-    registeredAddress: 'Delta Towers, 4th Floor, Chiromo Road, Westlands, Nairobi, P.O. Box 48192-00100',
-    operatingAddress: 'Delta Towers, Ground Floor & Suite 102, Chiromo Road, Westlands, Nairobi',
-    isMatch: true,
-    matchNote: 'Premises Match Confirmed (Same Commercial Complex / Address Parcel)',
+    registeredAddress: null,
+    operatingAddress: null,
+    isMatch: null,
+    matchNote: null,
   },
 }) {
   const { registeredAddress, operatingAddress, isMatch, matchNote } = addressComparison

@@ -38,23 +38,9 @@ export default function DocumentViewerCanvas({
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [isMasked, setIsMasked] = useState(true)
 
-  const doc = activeDoc || documents[0] || {
-    title: 'Professional Certificate',
-    fileName: 'Professional_Certificate.pdf',
-    docType: 'Professional Certificate',
-    nameOnDoc: 'Grace Njeri',
-    docNumber: '•••• 7281',
-    unmaskedDocNumber: 'KMF-2024-7281',
-    issuer: 'International Wellness Institute',
-    issueDate: '15 Jan 2024',
-    expiryDate: '15 Jan 2028',
-    uploadedAt: '12 Sep 2026 • 10:42 AM',
-    fileStatus: 'Readable',
-    pageCount: 2,
-    ocrStatus: 'SUCCESS',
-  }
+  const doc = activeDoc || documents[0] || { title: 'No document uploaded', fileName: null, docType: null, nameOnDoc: null, docNumber: null, unmaskedDocNumber: null, issuer: null, issueDate: null, expiryDate: null, uploadedAt: null, fileStatus: null, pageCount: 1, ocrStatus: null }
 
-  const totalPages = doc.pageCount || 2
+  const totalPages = doc.pageCount || 1
 
   const handleZoomIn = () => setZoomLevel((z) => Math.min(z + 25, 200))
   const handleZoomOut = () => setZoomLevel((z) => Math.max(z - 25, 50))
@@ -282,7 +268,7 @@ export default function DocumentViewerCanvas({
                   {/* Recipient Name & Award */}
                   <div className="relative text-center my-3 py-2 border-y border-amber-200/60 bg-amber-50/20">
                     <h4 className="font-serif text-xl font-extrabold text-[#5B21B6] tracking-wide">
-                      {doc.nameOnDoc || 'Grace Njeri'}
+                      {doc.nameOnDoc || '—'}
                     </h4>
                     <p className="mt-1 text-[11px] font-semibold text-slate-700 uppercase tracking-wider">
                       PROFESSIONAL MASSAGE THERAPY & CLINICAL PRACTICE
@@ -303,7 +289,7 @@ export default function DocumentViewerCanvas({
                       <p className="text-[8px] uppercase tracking-wider text-slate-500 pt-0.5">
                         Dean of Faculty
                       </p>
-                      <p className="text-[8px] font-mono text-slate-400">{doc.issueDate || '15 Jan 2024'}</p>
+                      <p className="text-[8px] font-mono text-slate-400">{doc.issueDate || '—'}</p>
                     </div>
 
                     {/* Center Gold Embossed Seal */}
@@ -327,7 +313,7 @@ export default function DocumentViewerCanvas({
                       <p className="text-[8px] uppercase tracking-wider text-slate-500 pt-0.5">
                         Director of Registry
                       </p>
-                      <p className="text-[8px] font-mono text-slate-400">Valid to: {doc.expiryDate || '15 Jan 2028'}</p>
+                      <p className="text-[8px] font-mono text-slate-400">Valid to: {doc.expiryDate || '—'}</p>
                     </div>
                   </div>
                 </>
@@ -388,7 +374,7 @@ export default function DocumentViewerCanvas({
 
               <div>
                 <span className="text-[11px] text-slate-400 font-medium">Name on Document</span>
-                <p className="font-semibold text-slate-800">{doc.nameOnDoc || 'Grace Njeri'}</p>
+                <p className="font-semibold text-slate-800">{doc.nameOnDoc || '—'}</p>
               </div>
 
               <div>
@@ -416,17 +402,17 @@ export default function DocumentViewerCanvas({
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <span className="text-[11px] text-slate-400 font-medium">Issue Date</span>
-                  <p className="font-semibold text-slate-800">{doc.issueDate || '15 Jan 2024'}</p>
+                  <p className="font-semibold text-slate-800">{doc.issueDate || '—'}</p>
                 </div>
                 <div>
                   <span className="text-[11px] text-slate-400 font-medium">Expiry Date</span>
-                  <p className="font-semibold text-slate-800">{doc.expiryDate || '15 Jan 2028'}</p>
+                  <p className="font-semibold text-slate-800">{doc.expiryDate || '—'}</p>
                 </div>
               </div>
 
               <div>
                 <span className="text-[11px] text-slate-400 font-medium">Uploaded</span>
-                <p className="font-semibold text-slate-700">{doc.uploadedAt || '12 Sep 2026 • 10:42 AM'}</p>
+                <p className="font-semibold text-slate-700">{doc.uploadedAt || '—'}</p>
               </div>
             </div>
           </div>

@@ -10,14 +10,7 @@ export default function ReviewStepper({
   activeStepId,
   onSelectStep,
 }) {
-  const defaultSteps = [
-    { id: 'IDENTITY', label: 'Identity Verification', status: 'APPROVED', number: 1 },
-    { id: 'CREDENTIALS', label: 'Professional Credentials', status: 'REVIEWING_NOW', number: 2 },
-    { id: 'PROFILE', label: 'Profile Information', status: 'PENDING', number: 3 },
-    { id: 'FINAL', label: 'Final Verification', status: 'PENDING', number: 4 },
-  ]
-
-  const displaySteps = steps.length > 0 ? steps : defaultSteps
+  const displaySteps = steps
 
   const getStatusBadge = (status) => {
     switch (status) {

@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import {
   Activity,
   CalendarCheck,
@@ -8,45 +9,6 @@ import {
   ArrowRight,
 } from 'lucide-react'
 import { Link } from 'react-router'
-
-const DEFAULT_OPERATIONS = [
-  {
-    id: 'op-1',
-    type: 'booking',
-    title: 'Booking Confirmed',
-    subtitle: 'Deep Tissue Massage',
-    meta: 'Kenya • Just now',
-  },
-  {
-    id: 'op-2',
-    type: 'provider',
-    title: 'Provider Approved',
-    subtitle: 'Massage Therapist',
-    meta: 'Kenya • 4 minutes ago',
-  },
-  {
-    id: 'op-3',
-    type: 'withdrawal',
-    title: 'Withdrawal Submitted',
-    subtitle: 'KES 24,500 • Awaiting Review',
-    meta: 'Kenya • 8 minutes ago',
-  },
-  {
-    id: 'op-4',
-    type: 'safety',
-    title: 'Safety Report Received',
-    priority: 'High Priority',
-    subtitle: 'Inappropriate content',
-    meta: 'Uganda • 12 minutes ago',
-  },
-  {
-    id: 'op-5',
-    type: 'client',
-    title: 'New Client Registration',
-    subtitle: 'From Mobile App',
-    meta: 'Tanzania • 15 minutes ago',
-  },
-]
 
 function getOperationVisuals(type) {
   switch (type) {
@@ -80,7 +42,15 @@ function getOperationVisuals(type) {
 }
 
 export default function LiveOperations({ operations = [] }) {
-  const items = operations.length > 0 ? operations : DEFAULT_OPERATIONS
+  const items = operations
+  const [now] = useState(() => Date.now())
+  const ago = (at) => {
+    if (!at) return ''
+    const mins = Math.max(0, Math.round((now - at) / 60000))
+    if (mins < 60) return `${mins} min ago`
+    if (mins < 1440) return `${Math.round(mins / 60)} h ago`
+    return new Date(at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+  }
 
   return (
     <div className="flex flex-col justify-between rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
@@ -100,6 +70,7 @@ export default function LiveOperations({ operations = [] }) {
         </div>
 
         <div className="space-y-3.5">
+          {items.length === 0 && <p className="py-6 text-center text-xs text-gray-500">No activity in this market yet.</p>}
           {items.map((item) => {
             const visuals = getOperationVisuals(item.type)
             const Icon = visuals.icon
@@ -121,7 +92,7 @@ export default function LiveOperations({ operations = [] }) {
                     )}
                   </div>
                   <p className="text-xs text-gray-600 truncate">{item.subtitle}</p>
-                  <p className="text-[11px] text-gray-400 mt-0.5">{item.meta}</p>
+                  <p className="text-[11px] text-gray-400 mt-0.5">{[item.meta, ago(item.at)].filter(Boolean).join(' • ')}</p>
                 </div>
               </div>
             )

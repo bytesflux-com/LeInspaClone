@@ -19,11 +19,13 @@ import {
   normalizeReport,
   normalizeReview,
   planReviewModeration,
+  reportFromFlag,
 } from './providerReviewsLogic.js'
 
 // ADM-025 — Provider Reviews (REUSE / ADMIN VIEW).
 // Reads the shared review records the client and provider apps already use:
-//   provider_reviews          the reviews (original text/rating never modified)
+//   reviews                   the app's reviews (original text/rating never modified;
+//                             app report flags isReported/reportedAt surface as reports)
 //   review_reports            reports against a review or a provider response
 //   review_moderation_events  append-only moderation history
 //   bookings                  booking linkage for verification
@@ -37,13 +39,16 @@ async function reviewPolicy() {
 
 async function loadReviewSet(provider) {
   const [reviews, reports, bookings] = await Promise.all([
-    docsForProvider('provider_reviews', provider, 'reviews', { limit: 5000 }),
+    docsForProvider('reviews', provider, 'reviews', { limit: 5000 }),
     docsForProvider('review_reports', provider, 'review reports', { limit: 3000 }),
     docsForProvider('bookings', provider, 'bookings', { limit: 5000 }),
   ])
+  const normalized = reviews.docs.map((d) => normalizeReview(d.id, d))
+  const recorded = reports.docs.map((d) => normalizeReport(d.id, d))
+  const reported = new Set(recorded.map((r) => r.reviewId))
   return {
-    reviews: reviews.docs.map((d) => normalizeReview(d.id, d)),
-    reports: reports.docs.map((d) => normalizeReport(d.id, d)),
+    reviews: normalized,
+    reports: [...recorded, ...normalized.filter((r) => !reported.has(r.id)).map(reportFromFlag).filter(Boolean)],
     bookings: bookings.docs.map((d) => normalizeBooking(d.id, d)),
     truncated: reviews.truncated || bookings.truncated,
   }
@@ -66,7 +71,7 @@ export const adminGetProviderReviews = onCall(async (request) => {
 })
 
 async function findReview(provider, reviewId) {
-  const col = db().collection('provider_reviews')
+  const col = db().collection('reviews')
   let snap = await col.doc(reviewId).get()
   if (!snap.exists) {
     const q = await col.where('reviewId', '==', reviewId).limit(1).get()
@@ -83,7 +88,7 @@ async function loadReviewContext(provider, review) {
   const [reports, events, siblings, booking] = await Promise.all([
     safeDocs(db().collection('review_reports').where('reviewId', '==', review.id), 'review reports', 100),
     safeDocs(db().collection('review_moderation_events').where('reviewId', '==', review.id), 'review history', 200),
-    docsForProvider('provider_reviews', provider, 'sibling reviews', { limit: 5000 }),
+    docsForProvider('reviews', provider, 'sibling reviews', { limit: 5000 }),
     review.bookingId ? db().collection('bookings').doc(review.bookingId).get() : null,
   ])
   let bookingRecord = booking?.exists ? normalizeBooking(booking.id, booking.data()) : null
@@ -91,8 +96,9 @@ async function loadReviewContext(provider, review) {
     const q = await safeDocs(db().collection('bookings').where('bookingId', '==', review.bookingId), 'booking by id', 1)
     if (q.docs[0]) bookingRecord = normalizeBooking(q.docs[0].id, q.docs[0])
   }
+  const recorded = reports.docs.map((d) => normalizeReport(d.id, d))
   return {
-    reports: reports.docs.map((d) => normalizeReport(d.id, d)),
+    reports: recorded.length ? recorded : [reportFromFlag(review)].filter(Boolean),
     events: events.docs,
     siblings: siblings.docs.map((d) => normalizeReview(d.id, d)),
     booking: bookingRecord,
@@ -133,13 +139,16 @@ export const adminModerateProviderReview = onCall(async (request) => {
       const fresh = await tx.get(ref)
       const review = normalizeReview(fresh.id, fresh.data())
       const reportSnap = await tx.get(db().collection('review_reports').where('reviewId', '==', review.id).limit(100))
-      const reports = reportSnap.docs.map((doc) => normalizeReport(doc.id, doc.data()))
+      const recorded = reportSnap.docs.map((doc) => normalizeReport(doc.id, doc.data()))
+      const reports = recorded.length ? recorded : [reportFromFlag(review)].filter(Boolean)
 
       const plan = planReviewModeration({ review, reports, input: d, actor, now: Date.now() })
       if (plan.error) throw new HttpsError(plan.code || 'invalid-argument', plan.error)
 
-      tx.update(ref, plan.reviewPatch)
-      for (const u of plan.reportUpdates) tx.update(db().collection('review_reports').doc(u.id), u.patch)
+      const flagResolved = plan.reportUpdates.some((u) => u.id.startsWith('flag-') && u.patch.status === 'resolved')
+      // Moderation state is stored on the review as admin fields; text and rating are never changed.
+      tx.update(ref, { ...plan.reviewPatch, ...(plan.audit.target === 'response' ? { providerReplyStatus: plan.newStatus } : {}), ...(flagResolved ? { isReported: false, reportResolvedAt: Date.now(), reportOutcome: plan.newStatus } : {}) })
+      for (const u of plan.reportUpdates) if (!u.id.startsWith('flag-')) tx.update(db().collection('review_reports').doc(u.id), u.patch)
       for (const e of plan.events) {
         tx.set(db().collection('review_moderation_events').doc(), {
           ...e,

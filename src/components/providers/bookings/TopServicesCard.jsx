@@ -1,16 +1,14 @@
+import { useNavigate, useParams } from 'react-router'
 import { Sparkles, ChevronRight } from 'lucide-react'
 
 export function TopServicesCard({
   topServices = [],
-  providerId = 'PR-82941',
+  providerId = null,
   canSeeFinancial = true,
-  onShowToast,
 }) {
-  const list = topServices && topServices.length > 0 ? topServices : [
-    { name: 'Deep Tissue Massage', bookings: 84, revenue: 378000, revenueFormatted: 'KES 378,000' },
-    { name: 'Swedish Massage', bookings: 72, revenue: 252000, revenueFormatted: 'KES 252,000' },
-    { name: 'Sports Massage', bookings: 51, revenue: 306000, revenueFormatted: 'KES 306,000' },
-  ]
+  const navigate = useNavigate()
+  const { providerId: routeProviderId } = useParams()
+  const list = topServices || []
 
   return (
     <div className="p-4 sm:p-5 rounded-2xl border border-slate-200 bg-white shadow-2xs flex flex-col justify-between">
@@ -26,7 +24,7 @@ export function TopServicesCard({
 
           <button
             type="button"
-            onClick={() => onShowToast?.('Opening detailed service performance catalogue')}
+            onClick={() => navigate(`/providers/${providerId || routeProviderId}/services`)}
             className="text-xs font-semibold text-purple-700 hover:underline flex items-center gap-0.5"
           >
             <span>View All</span>

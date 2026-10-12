@@ -1,5 +1,6 @@
-import { useState, useMemo, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router'
+import { useState, useEffect } from 'react'
+import { Navigate, useParams, useNavigate } from 'react-router'
+import { providerService } from '../../services/providerService'
 import { AlertCircle, CheckCircle2, X } from 'lucide-react'
 
 import { useProviderServices } from '../../hooks/useProviderServices'
@@ -9,38 +10,17 @@ import { ServiceFilterBar } from '../../components/providers/services/ServiceFil
 import { ServicesTable } from '../../components/providers/services/ServicesTable'
 import { ServiceDetailDrawer } from '../../components/providers/services/ServiceDetailDrawer'
 import { ServiceModerationModal } from '../../components/providers/services/ServiceModerationModal'
-import { PROVIDER_SERVICES_DATASETS } from '../../services/mock/providerServicesMock'
 
 export default function ProviderServices() {
   const { providerId: routeProviderId } = useParams()
   const navigate = useNavigate()
 
-  // Default to PR-82941 (Grace Njeri) if route is /providers/services or param is undefined
-  const providerId = routeProviderId && routeProviderId !== 'services' ? routeProviderId : 'PR-82941'
+  // /providers/services without a provider opens the directory (demo mode keeps its sample provider).
+  const providerId = routeProviderId && routeProviderId !== 'services' ? routeProviderId : providerService.isMock ? 'PR-82941' : null
 
-  // Retrieve matching provider metadata for header
-  const providerMetadata = useMemo(() => {
-    const dataset = PROVIDER_SERVICES_DATASETS[providerId] || PROVIDER_SERVICES_DATASETS['PR-82941']
-    return {
-      id: providerId,
-      name: dataset.providerName,
-      providerType: dataset.providerType,
-      typeLabel: dataset.providerTypeLabel,
-      city: dataset.city,
-      country: dataset.country,
-      flag: dataset.flag,
-      rating: dataset.rating,
-      reviewCount: dataset.reviewCount,
-      joinedDate: dataset.joinedDate,
-      lastActive: dataset.lastActive,
-      avatar: dataset.avatar,
-      isVerified: dataset.isVerified,
-      status: dataset.status,
-      availableNow: dataset.availableNow,
-    }
-  }, [providerId])
 
   const {
+    provider,
     services,
     stats,
     loading,
@@ -73,6 +53,9 @@ export default function ProviderServices() {
     toggleServiceStatus,
   } = useProviderServices(providerId)
 
+  // Header data comes from the backend's provider record.
+  const providerMetadata = provider ? { ...provider, id: providerId } : { id: providerId }
+
   // Moderation Modal state
   const [moderatingService, setModeratingService] = useState(null)
 
@@ -99,6 +82,8 @@ export default function ProviderServices() {
   const handleModerateSubmit = async (payload) => {
     await moderateService(payload)
   }
+
+  if (!providerId) return <Navigate to="/providers/all" replace />
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 pb-16">
@@ -136,11 +121,11 @@ export default function ProviderServices() {
         />
 
         {/* 2. Top Summary KPI Cards */}
-        <ServicesSummaryKpiCards stats={stats} />
+        <ServicesSummaryKpiCards stats={stats || {}} />
 
         {/* 3. Filter Bar (Status Tabs, Search, Filters) */}
         <ServiceFilterBar
-          stats={stats}
+          stats={stats || {}}
           activeTab={activeTab}
           onTabChange={setActiveTab}
           searchQuery={searchQuery}
@@ -180,7 +165,7 @@ export default function ProviderServices() {
                 onPageChange={setPage}
                 pageSize={pageSize}
                 onPageSizeChange={setPageSize}
-                totalCount={stats.totalCount}
+                totalCount={stats?.totalCount ?? 0}
                 onShowToast={showToast}
               />
             )}

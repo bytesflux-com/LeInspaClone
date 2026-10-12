@@ -75,10 +75,10 @@ test('summary is derived from the same item list without fabricating counts for 
     normal: 1,
     resolvedToday: 0,
     verification: 1,
-    content: null,
+    content: 0, // sourced from verification_requests content submissions
     finance: 1,
     disputes: 1,
-    safety: null,
+    safety: 0, // sourced from safety_reports
     support: 0,
     bookingIssues: null,
   })

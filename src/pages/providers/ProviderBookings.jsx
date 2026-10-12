@@ -1,5 +1,6 @@
-import { useState, useMemo, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router'
+import { useState, useEffect } from 'react'
+import { Navigate, useParams, useNavigate } from 'react-router'
+import { providerService } from '../../services/providerService'
 import { AlertCircle, CheckCircle2, X } from 'lucide-react'
 
 import { useProviderBookings } from '../../hooks/useProviderBookings'
@@ -16,40 +17,17 @@ import { BookingPerformanceCard } from '../../components/providers/bookings/Book
 import { TopServicesCard } from '../../components/providers/bookings/TopServicesCard'
 import { RecentTransactionsCard } from '../../components/providers/bookings/RecentTransactionsCard'
 import { DynamicBusinessMetricsCard } from '../../components/providers/bookings/DynamicBusinessMetricsCard'
-import { PROVIDER_BOOKINGS_DATASETS } from '../../services/mock/providerBookingsMock'
 
 export default function ProviderBookings() {
   const { providerId: routeProviderId } = useParams()
   const navigate = useNavigate()
 
-  // Default to PR-82941 (Grace Njeri) if route is /providers/bookings or param is undefined
-  const providerId = routeProviderId && routeProviderId !== 'bookings' ? routeProviderId : 'PR-82941'
+  // /providers/bookings without a provider opens the directory (demo mode keeps its sample provider).
+  const providerId = routeProviderId && routeProviderId !== 'bookings' ? routeProviderId : providerService.isMock ? 'PR-82941' : null
 
-  // Retrieve provider metadata for header
-  const providerMetadata = useMemo(() => {
-    const dataset = PROVIDER_BOOKINGS_DATASETS[providerId] || PROVIDER_BOOKINGS_DATASETS['PR-82941']
-    return {
-      id: providerId,
-      name: dataset.providerName,
-      providerType: dataset.providerType,
-      typeLabel: dataset.providerTypeLabel,
-      city: dataset.city,
-      country: dataset.country,
-      flag: dataset.flag,
-      rating: dataset.rating,
-      reviewCount: dataset.reviewCount,
-      joinedDate: dataset.joinedDate,
-      lastActive: dataset.lastActive,
-      avatar: dataset.avatar,
-      isVerified: dataset.isVerified,
-      status: dataset.status,
-      availableNow: dataset.availableNow,
-      dynamicSpaContext: dataset.dynamicSpaContext,
-      dynamicHotelContext: dataset.dynamicHotelContext,
-    }
-  }, [providerId])
 
   const {
+    provider,
     bookings,
     paginatedBookings,
     summary,
@@ -89,6 +67,9 @@ export default function ProviderBookings() {
     canSeeFinancial,
   } = useProviderBookings(providerId)
 
+  // Header data comes from the backend's provider record.
+  const providerMetadata = provider ? { ...provider, id: providerId } : { id: providerId }
+
   // Auto-open first canonical booking (#LI-48291) on desktop initial render to match mockup screenshot
   useEffect(() => {
     if (!selectedBooking && bookings.length > 0) {
@@ -111,6 +92,8 @@ export default function ProviderBookings() {
   const handleExport = () => {
     showToast(`Exported ${bookings.length} provider booking records to CSV.`, 'success')
   }
+
+  if (!providerId) return <Navigate to="/providers/all" replace />
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 pb-16">

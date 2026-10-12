@@ -9,55 +9,7 @@ export default function IdentityComparisonTable({
   isNumberRevealed = false,
   isDobRevealed = false,
 }) {
-  const defaultRows = [
-    {
-      id: 'cmp-1',
-      field: 'Full Name',
-      account: 'Grace Njeri',
-      document: 'Grace Wanjiku Njeri',
-      result: 'Review',
-      resultType: 'review',
-      note: 'Name variation / middle name present on ID',
-    },
-    {
-      id: 'cmp-2',
-      field: 'Country',
-      account: 'Kenya',
-      document: 'Kenya',
-      result: 'Match',
-      resultType: 'match',
-      note: 'Operating market confirmed',
-    },
-    {
-      id: 'cmp-3',
-      field: 'Date of Birth',
-      account: isDobRevealed ? '14 Mar 1998' : '••/••/1998',
-      document: isDobRevealed ? '14 Mar 1998' : '••/••/1998',
-      result: 'Match',
-      resultType: 'match',
-      note: 'Legal majority verified (28y)',
-    },
-    {
-      id: 'cmp-4',
-      field: 'Document Type',
-      account: 'National ID',
-      document: 'National ID',
-      result: 'Match',
-      resultType: 'match',
-      note: 'Recognized official Kenyan ID',
-    },
-    {
-      id: 'cmp-5',
-      field: 'Document Number',
-      account: isNumberRevealed ? '1234 5678 4821' : '•••• •••• 4821',
-      document: isNumberRevealed ? '1234 5678 4821' : '•••• •••• 4821',
-      result: 'Match',
-      resultType: 'match',
-      note: 'National Registration Bureau format',
-    },
-  ]
-
-  const rows = comparisonRows.length > 0 ? comparisonRows : defaultRows
+  const rows = comparisonRows
 
   return (
     <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-sm space-y-4">
@@ -101,11 +53,11 @@ export default function IdentityComparisonTable({
               let documentVal = row.document
 
               if (row.field === 'Document Number') {
-                accountVal = isNumberRevealed ? row.accountPlain || '1234 5678 4821' : '•••• •••• 4821'
-                documentVal = isNumberRevealed ? row.documentPlain || '1234 5678 4821' : '•••• •••• 4821'
+                accountVal = isNumberRevealed ? row.accountPlain || '—' : row.account || '—'
+                documentVal = isNumberRevealed ? row.documentPlain || '—' : row.document || '—'
               } else if (row.field === 'Date of Birth') {
-                accountVal = isDobRevealed ? row.accountPlain || '14 Mar 1998' : '••/••/1998'
-                documentVal = isDobRevealed ? row.documentPlain || '14 Mar 1998' : '14 Mar 1998'
+                accountVal = isDobRevealed ? row.accountPlain || '—' : row.account || '—'
+                documentVal = isDobRevealed ? row.documentPlain || '—' : row.document || '—'
               }
 
               return (

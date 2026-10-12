@@ -1,4 +1,5 @@
 import { Image as ImageIcon, AlertCircle, ChevronRight, CheckCircle2 } from 'lucide-react'
+import { AVATAR_PLACEHOLDER, IMAGE_PLACEHOLDER } from '../../../lib/placeholders'
 
 export function ProviderPhotoGalleryCard({
   profile,
@@ -42,7 +43,7 @@ export function ProviderPhotoGalleryCard({
               src={
                 gallery.mainPhoto ||
                 profile.avatar ||
-                'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=500'
+                AVATAR_PLACEHOLDER
               }
               alt="Main Provider Photo"
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
@@ -60,7 +61,7 @@ export function ProviderPhotoGalleryCard({
             <img
               src={
                 gallery.thumbnails?.[0] ||
-                'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=400'
+                IMAGE_PLACEHOLDER
               }
               alt="Gallery item 1"
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
@@ -75,13 +76,13 @@ export function ProviderPhotoGalleryCard({
             <img
               src={
                 gallery.thumbnails?.[1] ||
-                'https://images.unsplash.com/photo-1519823551278-64ac92734fb1?w=400'
+                IMAGE_PLACEHOLDER
               }
               alt="Gallery item 2"
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             />
             <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-2xs flex flex-col items-center justify-center text-white transition-colors group-hover:bg-slate-900/70">
-              <span className="font-bold text-sm">+{gallery.totalCount ? gallery.totalCount - 3 : 12}</span>
+              <span className="font-bold text-sm">+{gallery.totalCount ? Math.max(gallery.totalCount - 3, 0) : 0}</span>
               <span className="text-[10px] text-white/90 font-medium">Photos</span>
             </div>
           </div>

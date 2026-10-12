@@ -23,12 +23,7 @@ export default function FinalVerificationModal({
 
   if (!isOpen || !record) return null
 
-  const steps = record.progressSteps || [
-    { label: 'Identity Verification', status: 'APPROVED' },
-    { label: 'Professional Credentials', status: 'APPROVED' },
-    { label: 'Profile Information', status: 'APPROVED' },
-    { label: 'Final Verification', status: 'APPROVED' },
-  ]
+  const steps = record.progressSteps || []
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs">
@@ -72,7 +67,7 @@ export default function FinalVerificationModal({
                   <span className="text-blue-500 text-xs">✓</span>
                 </h4>
                 <p className="text-xs text-slate-600">
-                  {record.type} • {record.market?.name || 'Kenya'} {record.market?.flag || '🇰🇪'}
+                  {record.type} • {record.market?.name || '—'} {record.market?.flag || ''}
                 </p>
               </div>
             </div>

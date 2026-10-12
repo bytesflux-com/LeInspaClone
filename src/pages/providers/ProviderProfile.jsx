@@ -36,7 +36,7 @@ import { ContentModerationModal } from '../../components/providers/profile/Conte
 import { FullInfoModal } from '../../components/providers/profile/FullInfoModal'
 
 export default function ProviderProfile() {
-  const { providerId = 'PR-82941', section } = useParams()
+  const { providerId, section } = useParams()
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -54,7 +54,6 @@ export default function ProviderProfile() {
     canVerify,
     addInternalNote,
     moderateContent,
-    updateVerification,
     refetch,
   } = useProviderProfile(providerId, initialTab)
 
@@ -178,14 +177,14 @@ export default function ProviderProfile() {
 
                 <AvailabilityCard
                   profile={profile}
-                  onViewSchedule={() => showToast('Opening Real-Time Schedule Calendar')}
+                  onViewSchedule={() => navigate(`/providers/${providerId}/bookings`)}
                   onShowToast={showToast}
                 />
 
                 <ProviderPhotoGalleryCard
                   profile={profile}
                   onOpenContentReview={() => setIsContentReviewOpen(true)}
-                  onViewAllPhotos={() => showToast('Opening High-Resolution Gallery')}
+                  onViewAllPhotos={() => navigate('/content-approval/gallery')}
                 />
               </div>
 

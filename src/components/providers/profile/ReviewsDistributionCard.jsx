@@ -7,21 +7,10 @@ export function ReviewsDistributionCard({
   if (!profile) return null
 
   const reviews = profile.reviews || {}
-  const rating = reviews.rating ?? profile.rating ?? 4.9
-  const reviewCount = reviews.reviewCount ?? profile.reviewCount ?? 126
-  const distribution = reviews.distribution || [
-    { stars: 5, percentage: 92 },
-    { stars: 4, percentage: 6 },
-    { stars: 3, percentage: 2 },
-    { stars: 2, percentage: 0 },
-    { stars: 1, percentage: 0 },
-  ]
-  const recentReview = reviews.recentReview || {
-    clientName: 'James K.',
-    rating: 5,
-    date: '2 days ago',
-    comment: 'Amazing experience! Very professional and skilled. Highly recommend.',
-  }
+  const rating = reviews.rating ?? profile.rating ?? null
+  const reviewCount = reviews.reviewCount ?? profile.reviewCount ?? 0
+  const distribution = reviews.distribution || []
+  const recentReview = reviews.recentReview || null
 
   return (
     <div className="rounded-xl border border-slate-200/90 bg-white p-4 shadow-xs flex flex-col justify-between">
@@ -49,7 +38,7 @@ export function ReviewsDistributionCard({
           {/* Big Rating Block */}
           <div className="col-span-4 text-center border-r border-slate-100 pr-2">
             <p className="text-2xl font-black text-slate-900 leading-tight">
-              {rating}
+              {rating ?? '—'}
             </p>
             <div className="flex items-center justify-center gap-0.5 my-1">
               {[1, 2, 3, 4, 5].map((i) => (
@@ -91,11 +80,11 @@ export function ReviewsDistributionCard({
             <div className="flex items-center justify-between text-xs">
               <div className="flex items-center gap-1.5 font-semibold text-slate-800">
                 <span className="size-5 rounded-full bg-purple-100 text-purple-800 text-[10px] font-bold flex items-center justify-center">
-                  {recentReview.clientName?.charAt(0) || 'J'}
+                  {recentReview.clientName?.charAt(0) || '?'}
                 </span>
                 <span>{recentReview.clientName}</span>
                 <div className="flex items-center">
-                  {[...Array(recentReview.rating || 5)].map((_, i) => (
+                  {[...Array(Math.round(recentReview.rating || 0))].map((_, i) => (
                     <Star
                       key={i}
                       className="size-2.5 fill-amber-400 text-amber-400"

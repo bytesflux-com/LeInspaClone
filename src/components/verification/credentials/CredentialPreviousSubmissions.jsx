@@ -16,30 +16,7 @@ export default function CredentialPreviousSubmissions({
   const [noteText, setNoteText] = useState('')
   const [submittingNote, setSubmittingNote] = useState(false)
 
-  const defaultSubmissions = [
-    {
-      version: 2,
-      isCurrent: true,
-      submittedAt: '12 Sep 2026 • 10:42 AM',
-      fileName: 'Professional_Practice_Certificate.pdf',
-      status: 'Under Review',
-      statusType: 'under_review',
-      reviewer: 'Jane Ochieng',
-      notes: 'Resubmitted with clear issuing authority seal.',
-    },
-    {
-      version: 1,
-      isCurrent: false,
-      submittedAt: '10 Sep 2026 • 9:15 AM',
-      fileName: 'Certificate_v1.pdf',
-      status: 'Changes Requested',
-      statusType: 'changes_requested',
-      reviewer: 'Jane Ochieng',
-      notes: 'Issuer information and registrar seal unreadable.',
-    },
-  ]
-
-  const items = submissions.length > 0 ? submissions : defaultSubmissions
+  const items = submissions
 
   const handleCreateNote = async (e) => {
     e.preventDefault()

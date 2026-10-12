@@ -6,6 +6,7 @@ import { requireAdmin } from './auth.js'
 import { ALL_MARKETS, adminAccess, canAccessMarket } from './accessModel.js'
 import { getDateBounds, safeTimeZone } from './dashboard.js'
 import { recordAudit } from './events.js'
+import { bookingCountry, loadUsers } from './platformData.js'
 import {
   BOOKING_STATUSES,
   DAY,
@@ -147,6 +148,21 @@ async function loadBookings(periodStart, { live = true, recent = true, cancellat
     }
   }
 
+  // Drafts are unfinished client checkouts, not bookings.
+  for (const [id, data] of raw) if (String(data.bookingStatus ?? data.status ?? '').toLowerCase() === 'draft') raw.delete(id)
+
+  // Bookings carry no country: derive it (and the provider's name) from the
+  // provider's and client's users records, then the booking currency.
+  const users = await loadUsers(db(), [...raw.values()].flatMap((d) => [d.providerId, d.customerId ?? d.clientId]))
+  for (const [id, data] of raw) {
+    const provider = users.get(data.providerId)
+    raw.set(id, {
+      ...data,
+      derivedCountryCode: bookingCountry(data, provider, users.get(data.customerId ?? data.clientId)),
+      derivedProviderName: provider?.displayName || provider?.fullName || null,
+    })
+  }
+
   const bookings = [...raw].map(([id, data]) => normalizeBooking(id, data))
   return { bookings, truncated: liveSet.truncated || recentSet.truncated || cancelSet.length >= CANCEL_LIMIT }
 }
@@ -155,12 +171,13 @@ async function loadBookings(periodStart, { live = true, recent = true, cancellat
 // so no composite index is required). Skipped when a provider-type filter or a
 // multi-market restricted scope makes equality counting impossible.
 async function statusCounts(scope) {
-  if (scope.providerCategory || (scope.markets && scope.markets.length !== 1)) return null
+  // Bookings store no country field, so market-scoped counts come from the
+  // loaded (country-resolved) set instead of count() aggregates.
+  if (scope.providerCategory || scope.markets) return null
   try {
     const counts = await Promise.all(
       BOOKING_STATUSES.map(async (status) => {
         let q = db().collection('bookings').where('bookingStatus', '==', status)
-        if (scope.markets) q = q.where('countryCode', '==', scope.markets[0])
         return [status, (await q.count().get()).data().count]
       }),
     )
@@ -183,7 +200,7 @@ function context(scope, request, extra = {}) {
     generatedAt: new Date().toISOString(),
     canSeeFinancial: scope.finance,
     canExport: scope.access.permissions.includes('users.export'),
-    canRevealContact: scope.access.permissions.includes('users.reveal_pii'),
+    canRevealContact: scope.access.permissions.includes('identity.reveal_sensitive'),
     ...extra,
   }
 }
@@ -351,17 +368,17 @@ export const adminGetBookingQuickView = onCall(async (request) => {
       refundId: finance ? r.refunds[0]?.id || booking.refundId || null : null,
       reviewId: r.reviews[0]?.id || booking.reviewId || null,
     },
-    canRevealContact: access.permissions.includes('users.reveal_pii'),
+    canRevealContact: access.permissions.includes('identity.reveal_sensitive'),
   })
 })
 
 /**
- * ADM-050 — reveal a guest's full phone / email. Requires users.reveal_pii,
+ * ADM-050 — reveal a guest's full phone / email. Requires identity.reveal_sensitive,
  * re-checks market access and writes an audit log for every reveal.
  * data: { bookingId, reason? }
  */
 export const adminRevealGuestContact = onCall(async (request) => {
-  const { uid, bookingId, raw } = await loadAccessibleBooking(request, 'users.reveal_pii')
+  const { uid, bookingId, raw } = await loadAccessibleBooking(request, 'identity.reveal_sensitive')
   const booking = normalizeBooking(bookingId, raw)
   if (!booking.guest) throw new HttpsError('failed-precondition', 'This is not a guest booking.')
   await recordAudit(request, {

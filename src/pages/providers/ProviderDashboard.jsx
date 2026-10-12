@@ -23,7 +23,6 @@ import MarketDistributionCard from '../../components/providers/MarketDistributio
 import ProviderSubscriptionsCard from '../../components/providers/ProviderSubscriptionsCard'
 import AccountHealthCard from '../../components/providers/AccountHealthCard'
 import QuickActionsCard from '../../components/providers/QuickActionsCard'
-import ContentReviewModal from '../../components/providers/ContentReviewModal'
 import ExportReportModal from '../../components/providers/ExportReportModal'
 
 /**
@@ -39,7 +38,6 @@ export default function ProviderDashboard() {
 
   const { data, loading, error, refetch } = useProviderDashboard()
 
-  const [contentModalOpen, setContentModalOpen] = useState(false)
   const [exportModalOpen, setExportModalOpen] = useState(false)
   const [growthRange, setGrowthRange] = useState('30d')
   const [toast, setToast] = useState(null)
@@ -52,15 +50,6 @@ export default function ProviderDashboard() {
   }, [])
 
   useEffect(() => () => clearTimeout(toastTimer.current), [])
-
-  const handleContentAction = (actionDetails) => {
-    showToast(
-      actionDetails.action === 'approved'
-        ? 'Content approved and published to provider profile'
-        : 'Changes requested. Provider notified with reason note.'
-    )
-    refetch()
-  }
 
   return (
     <div className="flex min-h-full flex-col space-y-3 pb-8">
@@ -143,7 +132,7 @@ export default function ProviderDashboard() {
               <VerificationPipelineCard pipeline={data?.verificationPipeline} />
               <ContentApprovalCard
                 contentApproval={data?.contentApproval}
-                onReviewContent={() => setContentModalOpen(true)}
+                onReviewContent={() => navigate('/content-approval')}
               />
             </div>
           </section>
@@ -174,17 +163,11 @@ export default function ProviderDashboard() {
           >
             <ProviderSubscriptionsCard subscriptions={data?.subscriptions} />
             <AccountHealthCard accountHealth={data?.accountHealth} />
-            <QuickActionsCard onOpenContentReview={() => setContentModalOpen(true)} />
+            <QuickActionsCard onOpenContentReview={() => navigate('/content-approval')} />
           </section>
         </div>
       )}
 
-      {/* Content Review Modal */}
-      <ContentReviewModal
-        isOpen={contentModalOpen}
-        onClose={() => setContentModalOpen(false)}
-        onActionComplete={handleContentAction}
-      />
 
       {/* Export Report Modal */}
       <ExportReportModal

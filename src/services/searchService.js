@@ -2,14 +2,6 @@ import { callAdmin } from '../lib/adminCall'
 
 const RECENT_SEARCHES_KEY = 'leinspa_admin_recent_searches'
 
-const DEFAULT_RECENT = [
-  { id: '1', query: 'Grace Njeri', timeAgo: '2 minutes ago' },
-  { id: '2', query: 'LI-48291', timeAgo: '10 minutes ago' },
-  { id: '3', query: 'Serenity Wellness Spa', timeAgo: '1 hour ago' },
-  { id: '4', query: 'WD-82914', timeAgo: '3 hours ago' },
-  { id: '5', query: 'Daniel Kimani', timeAgo: '5 hours ago' },
-]
-
 const SAMPLE_ENTITIES = {
   clients: [
     {
@@ -339,26 +331,12 @@ function buildSandboxSearch(query, category = 'all', market = 'ALL', sortBy = 'r
 }
 
 export const searchService = {
+  // ADM-007 — always the live callable; demo data only when VITE_USE_MOCK_DATA=true.
   async search({ query = '', category = 'all', marketId = 'ALL', sortBy = 'relevance' } = {}) {
-    try {
-      const res = await callAdmin('adminGlobalSearch', {
-        query,
-        category,
-        market: marketId,
-        sortBy,
-      })
-      if (res && res.counts) {
-        return res
-      }
-      return buildSandboxSearch(query, category, marketId, sortBy)
-    } catch (err) {
-      console.warn(
-        '[searchService] Live Cloud Function unreachable or not yet deployed, using sandbox data:',
-        err?.message || err,
-      )
-      return buildSandboxSearch(query, category, marketId, sortBy)
-    }
+    if (import.meta.env.VITE_USE_MOCK_DATA === 'true') return buildSandboxSearch(query, category, marketId, sortBy)
+    return callAdmin('adminGlobalSearch', { query, category, market: marketId, sortBy })
   },
+
 
   getRecentSearches() {
     try {
@@ -367,7 +345,7 @@ export const searchService = {
     } catch {
       // ignore
     }
-    return DEFAULT_RECENT
+    return []
   },
 
   addRecentSearch(query) {

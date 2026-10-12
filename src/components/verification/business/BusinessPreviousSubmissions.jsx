@@ -29,30 +29,7 @@ export default function BusinessPreviousSubmissions({
   const [noteText, setNoteText] = useState('')
   const [submittingNote, setSubmittingNote] = useState(false)
 
-  const defaultSubmissions = [
-    {
-      version: 2,
-      isCurrent: true,
-      submittedAt: '11 Sep 2026 • 3:18 PM',
-      fileName: 'Nairobi_County_Operating_Licence_2025.pdf',
-      status: 'Under Review',
-      statusType: 'under_review',
-      reviewer: 'Jane Ochieng',
-      notes: 'Resubmitted with current 2025/2026 calendar year Single Business Permit and paid county receipt.',
-    },
-    {
-      version: 1,
-      isCurrent: false,
-      submittedAt: '05 Sep 2026 • 11:20 AM',
-      fileName: 'County_Permit_2024_Expired.pdf',
-      status: 'Changes Requested',
-      statusType: 'changes_requested',
-      reviewer: 'Jane Ochieng',
-      notes: 'Submitted permit expired on 31 Dec 2024. Current calendar year single business permit required.',
-    },
-  ]
-
-  const items = submissions.length > 0 ? submissions : defaultSubmissions
+  const items = submissions
 
   const handleCreateNote = async (e) => {
     e.preventDefault()

@@ -35,7 +35,7 @@ export default function AttentionSection({ attention }) {
         <div className="mt-3.5 grid grid-cols-2 gap-2 sm:gap-2.5 sm:grid-cols-4 min-w-0">
           <AttentionCard
             title="Provider Verification"
-            count={verification?.pending ?? 18}
+            count={verification?.pending ?? '—'}
             subtitle="Pending Reviews"
             link="/verifications"
             badgeIcon={CheckCircle2}

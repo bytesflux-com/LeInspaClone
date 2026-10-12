@@ -35,10 +35,10 @@ export default function CredentialDocumentViewer({
 
   if (!credential) return null
 
-  const pageCount = credential.pageCount || 2
+  const pageCount = credential.pageCount || 1
   const docNumber = isRevealed
-    ? credential.unmaskedNumber || 'KMF-2024-7281'
-    : credential.credentialNumber || '••••7281'
+    ? credential.unmaskedNumber || '—'
+    : credential.credentialNumber || '—'
 
   const handleZoomIn = () => setZoomLevel((prev) => Math.min(prev + 25, 175))
   const handleZoomOut = () => setZoomLevel((prev) => Math.max(prev - 25, 75))
@@ -268,7 +268,7 @@ export default function CredentialDocumentViewer({
                       This is to certify that
                     </p>
                     <p className="text-base font-black font-serif text-slate-950 underline decoration-amber-600/40 underline-offset-4 tracking-wide">
-                      {credential.nameOnDoc || 'Grace W. Njeri'}
+                      {credential.nameOnDoc || '—'}
                     </p>
                     <p className="text-[9px] text-slate-600 max-w-sm mx-auto leading-relaxed pt-1">
                       has successfully satisfied all rigorous theoretical examinations, clinical practicums, and code of ethics to be officially conferred the title of
@@ -285,7 +285,7 @@ export default function CredentialDocumentViewer({
                       <p className="font-serif italic text-xs text-slate-800 font-bold">Dr. Joseph Kimani</p>
                       <div className="w-24 h-px bg-slate-400" />
                       <p className="text-[8px] uppercase tracking-wider text-slate-500 font-medium">Registrar General</p>
-                      <p className="text-[8px] font-mono text-slate-400">Issued: {credential.issueDate || '15 Jan 2024'}</p>
+                      <p className="text-[8px] font-mono text-slate-400">Issued: {credential.issueDate || '—'}</p>
                     </div>
 
                     {/* Center: Gold Foil Stamp Emblem */}
@@ -303,7 +303,7 @@ export default function CredentialDocumentViewer({
                       <p className="font-serif italic text-xs text-slate-800 font-bold">Wanjohi Ndegwa</p>
                       <div className="w-24 h-px bg-slate-400 ml-auto" />
                       <p className="text-[8px] uppercase tracking-wider text-slate-500 font-medium">Board Chairman</p>
-                      <p className="text-[8px] font-mono text-slate-400">Valid Thru: {credential.expiryDate || '15 Jan 2028'}</p>
+                      <p className="text-[8px] font-mono text-slate-400">Valid Thru: {credential.expiryDate || '—'}</p>
                     </div>
                   </div>
                 </div>
@@ -315,7 +315,7 @@ export default function CredentialDocumentViewer({
                   <div className="flex items-center justify-between border-b border-slate-200 pb-2">
                     <div>
                       <p className="text-[11px] font-bold text-slate-900 uppercase">Clinical Modules & Hours Record</p>
-                      <p className="text-[8px] text-slate-500 font-mono">ID: {docNumber} • Candidate: {credential.nameOnDoc || 'Grace W. Njeri'}</p>
+                      <p className="text-[8px] text-slate-500 font-mono">ID: {docNumber} • Candidate: {credential.nameOnDoc || '—'}</p>
                     </div>
                     <span className="text-[9px] font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-xs font-bold">
                       CREDITS CLEARED
@@ -410,7 +410,7 @@ export default function CredentialDocumentViewer({
             {/* Name on Credential */}
             <div className="space-y-0.5">
               <span className="text-[10px] font-semibold text-slate-400 uppercase">Name on Credential</span>
-              <p className="text-xs font-bold text-slate-900 leading-snug">{credential.nameOnDoc || 'Grace W. Njeri'}</p>
+              <p className="text-xs font-bold text-slate-900 leading-snug">{credential.nameOnDoc || '—'}</p>
             </div>
 
             {/* Issuing Institution */}
@@ -427,18 +427,18 @@ export default function CredentialDocumentViewer({
             <div className="grid grid-cols-2 gap-2 text-xs">
               <div>
                 <span className="text-[10px] font-semibold text-slate-400 uppercase">Issue Date</span>
-                <p className="font-medium text-slate-800">{credential.issueDate || '15 Jan 2024'}</p>
+                <p className="font-medium text-slate-800">{credential.issueDate || '—'}</p>
               </div>
               <div>
                 <span className="text-[10px] font-semibold text-slate-400 uppercase">Expiry Date</span>
-                <p className="font-medium text-slate-800">{credential.expiryDate || '15 Jan 2028'}</p>
+                <p className="font-medium text-slate-800">{credential.expiryDate || '—'}</p>
               </div>
             </div>
 
             {/* Uploaded */}
             <div className="space-y-0.5">
               <span className="text-[10px] font-semibold text-slate-400 uppercase">Uploaded</span>
-              <p className="text-xs font-medium text-slate-600">{credential.uploadedAt || '12 Sep 2026 • 10:42 AM'}</p>
+              <p className="text-xs font-medium text-slate-600">{credential.uploadedAt || '—'}</p>
             </div>
           </div>
 

@@ -8,45 +8,7 @@ import { Clock, CheckCircle2, RotateCcw, AlertTriangle, ArrowRight, UserCheck } 
 export default function IdentityReviewHistory({ history = [] }) {
   const [showAll, setShowAll] = useState(false)
 
-  const defaultHistory = [
-    {
-      id: 'irh-1',
-      time: '12 Sep 2026 • 11:20 AM',
-      title: 'Review started by Jane Ochieng',
-      actor: 'Jane Ochieng',
-      type: 'review_started',
-    },
-    {
-      id: 'irh-2',
-      time: '12 Sep 2026 • 11:05 AM',
-      title: 'Assigned to Jane Ochieng by System',
-      actor: 'System',
-      type: 'assignment',
-    },
-    {
-      id: 'irh-3',
-      time: '12 Sep 2026 • 10:42 AM',
-      title: 'Document submitted by Grace Njeri',
-      actor: 'Grace Njeri',
-      type: 'submission',
-    },
-    {
-      id: 'irh-4',
-      time: '10 Sep 2026 • 3:02 PM',
-      title: 'Changes requested — Back side unreadable',
-      actor: 'Jane Ochieng',
-      type: 'changes_requested',
-    },
-    {
-      id: 'irh-5',
-      time: '10 Sep 2026 • 2:15 PM',
-      title: 'Identity document submitted',
-      actor: 'Grace Njeri',
-      type: 'submission',
-    },
-  ]
-
-  const items = history.length > 0 ? history : defaultHistory
+  const items = history
   const displayItems = showAll ? items : items.slice(0, 5)
 
   const getBulletClass = (type) => {

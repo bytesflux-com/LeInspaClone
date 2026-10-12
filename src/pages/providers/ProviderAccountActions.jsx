@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useParams } from 'react-router'
+import { Link, useParams, Navigate } from 'react-router'
 import { ShieldCheck } from 'lucide-react'
 import { providerTrustService } from '../../services/providerTrustService'
 import { useProviderTrustData } from '../../hooks/useProviderTrust'
@@ -28,7 +28,13 @@ import { AccountActionDrawer } from '../../components/providers/account/AccountA
 // cancelled and funds never confiscated from here.
 export default function ProviderAccountActions() {
   const { providerId: routeId } = useParams()
-  const providerId = routeId || 'PR-82941'
+  // Without a provider in the URL, demo mode shows its sample provider; live mode opens the directory.
+  const providerId = routeId || (providerTrustService.isMock ? 'PR-82941' : null)
+  if (!providerId) return <Navigate to="/providers/all" replace />
+  return <ProviderAccountActionsScreen key={providerId} providerId={providerId} />
+}
+
+function ProviderAccountActionsScreen({ providerId }) {
   const toast = useToast()
   const { ctx, data, error, refetch, fetching } = useProviderTrustData((c) => providerTrustService.getAccount(providerId, c), providerId)
   const [intent, setIntent] = useState(null)

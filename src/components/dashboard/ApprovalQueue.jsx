@@ -8,7 +8,7 @@ export default function ApprovalQueue({ approvals }) {
   const items = [
     {
       label: 'Profile Photos',
-      count: approvals.profilePhotos ?? 12,
+      count: approvals.profilePhotos ?? 0,
       icon: Image,
       badgeColor: 'bg-purple-100 text-[#5c2dd5]',
     },
@@ -26,7 +26,7 @@ export default function ApprovalQueue({ approvals }) {
     },
     {
       label: 'Credentials',
-      count: approvals.credentials ?? 14,
+      count: approvals.credentials ?? 0,
       icon: Award,
       badgeColor: 'bg-rose-100 text-rose-700',
     },

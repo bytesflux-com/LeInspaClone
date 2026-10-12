@@ -11,18 +11,18 @@ export default function CredentialRequirementCard({
   if (!requirementsMapping) return null
 
   const {
-    requiredFor = 'Massage Therapist Verification',
-    marketName = 'Kenya',
-    marketFlag = '🇰🇪',
-    ruleTitle = 'Professional Massage Therapy Qualification',
-    ruleStatus = 'Required',
-    eligibleServices = ['Swedish Massage', 'Deep Tissue Massage', 'Sports Massage'],
+    requiredFor = null,
+    marketName = null,
+    marketFlag = null,
+    ruleTitle = null,
+    ruleStatus = null,
+    eligibleServices = [],
     validity = {
-      issueDate: '15 Jan 2024',
-      expiryDate: '15 Jan 2028',
-      remainingTime: '1 year 4 months',
-      isCurrent: true,
-      isExpiringSoon: false,
+      issueDate: null,
+      expiryDate: null,
+      remainingTime: null,
+      isCurrent: null,
+      isExpiringSoon: null,
     },
   } = requirementsMapping
 
@@ -99,15 +99,15 @@ export default function CredentialRequirementCard({
         <div className="grid grid-cols-2 gap-2 text-xs rounded-xl border border-slate-100 bg-slate-50/50 p-2.5">
           <div>
             <span className="text-[10px] font-medium text-slate-400 uppercase">Issued</span>
-            <p className="font-semibold text-slate-800">{validity.issueDate || '15 Jan 2024'}</p>
+            <p className="font-semibold text-slate-800">{validity.issueDate || '—'}</p>
           </div>
           <div>
             <span className="text-[10px] font-medium text-slate-400 uppercase">Expires</span>
-            <p className="font-semibold text-slate-800">{validity.expiryDate || '15 Jan 2028'}</p>
+            <p className="font-semibold text-slate-800">{validity.expiryDate || '—'}</p>
           </div>
           <div className="col-span-2 pt-1 border-t border-slate-200/60 flex items-center justify-between">
             <span className="text-[11px] text-slate-500">Remaining Period:</span>
-            <span className="font-bold text-emerald-800 font-mono text-xs">{validity.remainingTime || '1 year 4 months'}</span>
+            <span className="font-bold text-emerald-800 font-mono text-xs">{validity.remainingTime || '—'}</span>
           </div>
         </div>
 

@@ -24,6 +24,7 @@ import {
 } from './contentModerationLogic.js'
 import { buildFullReview } from './changeReviewLogic.js'
 import { buildEntry, contentDecisionType, effectsFor, ledgerDecision, writeEntry } from './decisionLedger.js'
+import { applyWriteBack, prepareWriteBack, syncContentQueue } from './contentSources.js'
 
 // ADM-035 Content Approval Center · ADM-036 Profile Photo · ADM-037 Gallery & Media.
 //
@@ -79,6 +80,8 @@ export const adminGetContentQueue = onCall(async (request) => {
   const { uid, access } = await adminContext(request)
   const d = request.data || {}
   const scope = marketScope(access, d.market)
+  // Bring new app submissions (gallery, profile edits, services) into the queue.
+  await syncContentQueue(db())
   const now = Date.now()
   const timeZone = safeTimeZone(d.timeZone)
 
@@ -204,7 +207,10 @@ export async function transact(request, id, expectedVersion, mutate, side = null
     const raw = snap.data()
     const ledger = (spec) => ledgerEntry(record, raw, spec, actor, access, now)
     const out = mutate({ record, raw, actor, now, access, ledger })
-    if (side) await side(tx, out, record)
+    // Reads for the write-back to the app's source records happen before any write.
+    const writeBack = await prepareWriteBack(tx, db(), raw, out.patch || {})
+    if (side) await side(tx, out, record, raw)
+    applyWriteBack(tx, db(), writeBack)
     // ADM-043: record each decision in the ledger and remember it per subject
     // so the next decision for the same subject can supersede it.
     const patch = { ...(out.patch || {}) }

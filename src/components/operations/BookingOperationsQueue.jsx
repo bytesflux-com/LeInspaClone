@@ -6,12 +6,12 @@ export default function BookingOperationsQueue({ data }) {
   if (!data) return null
 
   const items = [
-    { label: 'New Booking Conflicts', count: data.newConflicts ?? 3, badge: 'bg-purple-100 text-[#5c2dd5]', dot: 'bg-purple-500' },
-    { label: 'Unassigned Bookings', count: data.unassigned ?? 4, badge: 'bg-rose-100 text-rose-700', dot: 'bg-rose-500' },
-    { label: 'Failed Reschedules', count: data.failedReschedules ?? 2, badge: 'bg-amber-100 text-amber-700', dot: 'bg-amber-500' },
-    { label: 'Provider Cancellations', count: data.providerCancellations ?? 5, badge: 'bg-blue-100 text-blue-700', dot: 'bg-blue-500' },
-    { label: 'Guest Booking Issues', count: data.guestIssues ?? 3, badge: 'bg-teal-100 text-teal-700', dot: 'bg-teal-500' },
-    { label: 'Bookings Awaiting Intervention', count: data.awaitingIntervention ?? 6, badge: 'bg-indigo-100 text-indigo-700', dot: 'bg-indigo-500' },
+    { label: 'New Booking Conflicts', count: data.newConflicts ?? null, badge: 'bg-purple-100 text-[#5c2dd5]', dot: 'bg-purple-500' },
+    { label: 'Unassigned Bookings', count: data.unassigned ?? null, badge: 'bg-rose-100 text-rose-700', dot: 'bg-rose-500' },
+    { label: 'Failed Reschedules', count: data.failedReschedules ?? null, badge: 'bg-amber-100 text-amber-700', dot: 'bg-amber-500' },
+    { label: 'Provider Cancellations', count: data.providerCancellations ?? null, badge: 'bg-blue-100 text-blue-700', dot: 'bg-blue-500' },
+    { label: 'Guest Booking Issues', count: data.guestIssues ?? null, badge: 'bg-teal-100 text-teal-700', dot: 'bg-teal-500' },
+    { label: 'Bookings Awaiting Intervention', count: data.awaitingIntervention ?? null, badge: 'bg-indigo-100 text-indigo-700', dot: 'bg-indigo-500' },
   ]
 
   return (

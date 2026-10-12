@@ -9,15 +9,7 @@ export default function ReviewComponentTabs({
   activeTabId,
   onSelectTab,
 }) {
-  const defaultTabs = [
-    { id: 'IDENTITY', label: 'Identity Verification', status: 'APPROVED', badgeCount: 0 },
-    { id: 'CREDENTIALS', label: 'Professional Credentials', status: 'REVIEWING_NOW', badgeCount: 1 },
-    { id: 'PROFILE', label: 'Profile Information', status: 'PENDING', badgeCount: 0 },
-    { id: 'DOCUMENTS', label: 'Required Documents', status: 'PENDING', badgeCount: 0 },
-    { id: 'FINAL', label: 'Final Verification', status: 'PENDING', badgeCount: 0 },
-  ]
-
-  const displayTabs = tabs.length > 0 ? tabs : defaultTabs
+  const displayTabs = tabs
 
   return (
     <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">

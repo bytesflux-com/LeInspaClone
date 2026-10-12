@@ -40,7 +40,7 @@ export default function QuickActionsCard({ onOpenContentReview }) {
       id: 'withdrawals',
       label: 'Review Withdrawals',
       icon: Banknote,
-      action: () => navigate('/withdrawals'),
+      action: () => navigate('/attention?tab=finance'),
       color: 'text-purple-600',
       bg: 'bg-purple-500/10',
     },

@@ -22,7 +22,7 @@ export function useProviderDirectory() {
   const [verification, setVerification] = useState('all')
   const [location, setLocation] = useState('all')
   const [availability, setAvailability] = useState('all')
-  const [subscription, setSubscription] = useState('all')
+  const [subscription, setSubscription] = useState(searchParams.get('subscription') || 'all')
   const [minRating, setMinRating] = useState(0)
   const [sortBy, setSortBy] = useState('newest')
   const [page, setPage] = useState(1)

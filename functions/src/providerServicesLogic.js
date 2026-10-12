@@ -9,7 +9,7 @@ export const APPROVAL_STATUSES = ['approved', 'pending_review', 'changes_request
 /**
  * Calculates service summary KPIs from a collection of provider services.
  */
-export function calculateServicesSummary(services = []) {
+export function calculateServicesSummary(services = [], currency = 'KES') {
   if (!Array.isArray(services) || services.length === 0) {
     return {
       activeCount: 0,
@@ -18,11 +18,11 @@ export function calculateServicesSummary(services = []) {
       changesRequestedCount: 0,
       totalCount: 0,
       averagePrice: 0,
-      averagePriceFormatted: 'KES 0',
+      averagePriceFormatted: `${currency} 0`,
       lowestPrice: 0,
-      lowestPriceFormatted: 'KES 0',
+      lowestPriceFormatted: `${currency} 0`,
       highestPrice: 0,
-      highestPriceFormatted: 'KES 0',
+      highestPriceFormatted: `${currency} 0`,
     }
   }
 
@@ -60,11 +60,11 @@ export function calculateServicesSummary(services = []) {
     changesRequestedCount,
     totalCount: services.length,
     averagePrice,
-    averagePriceFormatted: `KES ${averagePrice.toLocaleString()}`,
+    averagePriceFormatted: `${currency} ${averagePrice.toLocaleString()}`,
     lowestPrice,
-    lowestPriceFormatted: `KES ${lowestPrice.toLocaleString()}`,
+    lowestPriceFormatted: `${currency} ${lowestPrice.toLocaleString()}`,
     highestPrice,
-    highestPriceFormatted: `KES ${highestPrice.toLocaleString()}`,
+    highestPriceFormatted: `${currency} ${highestPrice.toLocaleString()}`,
   }
 }
 

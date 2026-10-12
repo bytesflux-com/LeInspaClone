@@ -1,392 +1,168 @@
-import { onCall, HttpsError } from 'firebase-functions/v2/https'
-import { logger } from 'firebase-functions/v2'
-import { getFirestore, FieldValue } from 'firebase-admin/firestore'
+import { HttpsError, onCall } from 'firebase-functions/v2/https'
+import { Timestamp, getFirestore } from 'firebase-admin/firestore'
 import { requireAdmin } from './auth.js'
-import { canAccessMarket, PERMISSIONS } from './accessModel.js'
+import { ALL_MARKETS, adminAccess, canAccessMarket } from './accessModel.js'
+import { recordAudit } from './events.js'
+import { MARKETS } from './dashboardLogic.js'
+import { getDateBounds, safeTimeZone } from './dashboard.js'
+import { loadAllProviders, loadProviderBundle } from './providerSources.js'
+import { buildProfileView, buildProviderDashboardView, directoryRow, normalizeProviderBookings, queryDirectory } from './providerViews.js'
+import { applyWriteBack, prepareWriteBack } from './contentSources.js'
+import { historyEntry } from './contentModerationLogic.js'
+import { readAll } from './platformLoaders.js'
+import { countryCodeOf } from './platformData.js'
 
-/**
- * ADM-022: Retrieve 360° Provider Admin Profile.
- * Authenticates admin session, validates market authorization, resolves provider ID,
- * aggregates source-of-truth data from Firestore (or canonical records),
- * enforces permission masking for sensitive/financial data, and returns dynamic profile.
- */
+// ADM-020 Provider Dashboard · ADM-021 Provider Directory · ADM-022 Provider
+// Admin Profile — over the mobile app's provider records (users +
+// provider_profiles + type collections). Market access is enforced per
+// provider; financial and contact details depend on the admin's permissions.
+
+const db = () => getFirestore()
+
+async function scope(request, permission = 'providers.view') {
+  const uid = await requireAdmin(request, { permission })
+  const access = await adminAccess(uid)
+  return {
+    uid,
+    access,
+    actor: { id: uid, name: access.fullName || 'Admin' },
+    perms: { finance: access.permissions.includes('payments.view'), revealPii: access.permissions.includes('users.reveal_pii'), moderate: access.permissions.includes('content.moderate') },
+    unrestricted: access.markets.includes(ALL_MARKETS),
+  }
+}
+
+function assertProviderMarket(s, countryCode) {
+  const ok = countryCode ? canAccessMarket(s.access, countryCode) : s.unrestricted
+  if (!ok) throw new HttpsError('permission-denied', 'You do not have access to providers in this market.', { reason: 'market-denied' })
+}
+
+const requireUid = (v) => {
+  const id = String(v || '').trim()
+  if (!id || id.includes('/')) throw new HttpsError('invalid-argument', 'A provider ID is required.')
+  return id
+}
+
+async function directoryRows(s) {
+  const [providers, bookings, content] = await Promise.all([
+    loadAllProviders(db()),
+    readAll('bookings', { limit: 10000 }),
+    readAll('content_moderation', { where: [['status', 'in', ['awaiting_review', 'under_review', 'resubmitted', 'escalated']]], limit: 3000 }),
+  ])
+  const byProvider = new Map()
+  for (const { b } of normalizeProviderBookings(bookings.rows)) {
+    if (!byProvider.has(b.provider.id)) byProvider.set(b.provider.id, [])
+    byProvider.get(b.provider.id).push(b)
+  }
+  const contentBy = new Map()
+  for (const c of content.rows) contentBy.set(c.providerId, (contentBy.get(c.providerId) || 0) + 1)
+  return providers
+    .filter((p) => (p.countryCode ? canAccessMarket(s.access, p.countryCode) : s.unrestricted))
+    .map((p) => directoryRow(p, { bookings: byProvider.get(p.uid) || [], contentPending: contentBy.get(p.uid) || 0 }))
+}
+
+/** ADM-021 — data: { market, providerType, subcategory, status, searchQuery, verification, location, availability, subscription, minRating, sortBy, page, pageSize } */
+export const adminListProviders = onCall(async (request) => {
+  const s = await scope(request)
+  const market = String(request.data?.market || 'ALL').toUpperCase()
+  if (market !== 'ALL' && !canAccessMarket(s.access, market)) throw new HttpsError('permission-denied', 'You do not have access to this market.', { reason: 'market-denied' })
+  const rows = await directoryRows(s)
+  const out = queryDirectory(rows, { ...(request.data || {}), market })
+  if (!s.perms.revealPii) out.items = out.items.map((r) => ({ ...r, email: r.email ? r.email.replace(/^(.{2}).*(@.*)$/, '$1••••$2') : null, phone: r.phone ? `${String(r.phone).slice(0, 4)}••••${String(r.phone).slice(-3)}` : null }))
+  return out
+})
+
+/** ADM-021 quick preview. data: { providerId } */
+export const adminGetProviderDetail = onCall(async (request) => {
+  const s = await scope(request)
+  const uid = requireUid(request.data?.providerId)
+  const rows = await directoryRows(s)
+  const row = rows.find((r) => r.id === uid)
+  if (!row) throw new HttpsError('not-found', 'Provider not found.')
+  return { provider: row }
+})
+
+/** ADM-022 — data: { providerId } */
 export const adminGetProviderProfile = onCall(async (request) => {
-  // 1. Authenticate Admin session
-  const admin = await requireAdmin(request)
-
-  const providerId = request.data?.providerId
-  if (!providerId) {
-    throw new HttpsError('invalid-argument', 'Missing providerId argument.')
-  }
-
-  // 2. Resolve Admin permissions
-  const permissions = Array.isArray(admin.permissions) ? admin.permissions : []
-  const isSuperAdmin = admin.role === 'super_admin'
-  const canViewProviders =
-    isSuperAdmin || permissions.includes(PERMISSIONS.PROVIDERS_VIEW) || permissions.includes('providers.view')
-
-  if (!canViewProviders) {
-    throw new HttpsError(
-      'permission-denied',
-      'Missing required permission: PROVIDERS_VIEW.',
-    )
-  }
-
-  const canViewFinancials =
-    isSuperAdmin || permissions.includes('payments.view') || permissions.includes('finance.view')
-  const canRevealPii =
-    isSuperAdmin || permissions.includes('users.reveal_pii') || permissions.includes('users.view')
-
-  const db = getFirestore()
-
-  try {
-    // 3. Resolve Provider document from Firestore (check 'providers', then 'users', then 'provider_profiles')
-    let providerDoc = null
-    let providerData = null
-
-    // Check providers collection by doc ID or providerId field
-    const pDoc = await db.collection('providers').doc(providerId).get()
-    if (pDoc.exists) {
-      providerDoc = pDoc
-      providerData = pDoc.data()
-    } else {
-      const qSnap = await db
-        .collection('providers')
-        .where('providerId', '==', providerId)
-        .limit(1)
-        .get()
-      if (!qSnap.empty) {
-        providerDoc = qSnap.docs[0]
-        providerData = providerDoc.data()
-      } else {
-        // Fallback: check users collection
-        const uDoc = await db.collection('users').doc(providerId).get()
-        if (uDoc.exists) {
-          providerDoc = uDoc
-          providerData = uDoc.data()
-        }
-      }
-    }
-
-    // 4. Validate Market Authorization if provider found in Firestore
-    if (providerData?.marketCode && !canAccessMarket(admin, providerData.marketCode)) {
-      throw new HttpsError(
-        'permission-denied',
-        `Admin is not authorized to access provider in market '${providerData.marketCode}'.`,
-      )
-    }
-
-    // 5. Gather aggregates & sub-collections if provider doc exists
-    let internalNotes = []
-    let recentActivity = []
-    let services = []
-    let bookingsAggregates = null
-    let earningsData = null
-
-    if (providerDoc) {
-      // Notes subcollection
-      try {
-        const notesSnap = await providerDoc.ref
-          .collection('admin_notes')
-          .orderBy('createdAt', 'desc')
-          .limit(20)
-          .get()
-        notesSnap.forEach((doc) => internalNotes.push({ id: doc.id, ...doc.data() }))
-      } catch (e) {
-        logger.warn('Could not read admin_notes subcollection:', e?.message)
-      }
-
-      // Services subcollection or collection
-      try {
-        const srvSnap = await db
-          .collection('provider_services')
-          .where('providerId', '==', providerId)
-          .limit(20)
-          .get()
-        srvSnap.forEach((doc) => services.push({ id: doc.id, ...doc.data() }))
-      } catch (e) {
-        logger.warn('Could not read provider_services:', e?.message)
-      }
-
-      // Booking aggregates
-      try {
-        const bookingsSnap = await db
-          .collection('bookings')
-          .where('providerId', '==', providerId)
-          .get()
-        
-        let total = bookingsSnap.size
-        let completed = 0
-        let upcoming = 0
-        let cancelled = 0
-
-        bookingsSnap.forEach((doc) => {
-          const st = doc.data().status
-          if (st === 'completed') completed++
-          else if (st === 'upcoming' || st === 'confirmed') upcoming++
-          else if (st === 'cancelled') cancelled++
-        })
-
-        const completionRate = total > 0 ? `${Math.round((completed / total) * 100)}%` : '96%'
-        const cancellationRate = total > 0 ? `${((cancelled / total) * 100).toFixed(1)}%` : '2.1%'
-
-        bookingsAggregates = {
-          totalBookings: total,
-          completedBookings: completed,
-          upcomingBookings: upcoming,
-          cancelledBookings: cancelled,
-          completionRate,
-          cancellationRate,
-        }
-      } catch (e) {
-        logger.warn('Could not compute bookings aggregates:', e?.message)
-      }
-    }
-
-    // 6. Return dynamic profile payload
-    return {
-      success: true,
-      foundInDb: !!providerDoc,
-      provider: providerData ? { id: providerDoc.id, ...providerData } : null,
-      internalNotes,
-      services,
-      bookingsAggregates,
-      permissions: {
-        canViewFinancials,
-        canRevealPii,
-      },
-    }
-  } catch (err) {
-    logger.error('[adminGetProviderProfile] Error fetching provider profile:', err)
-    if (err instanceof HttpsError) throw err
-    throw new HttpsError('internal', err?.message || 'Failed to retrieve provider profile.')
-  }
+  const s = await scope(request)
+  const uid = requireUid(request.data?.providerId)
+  const bundle = await loadProviderBundle(db(), uid, { finance: s.perms.finance })
+  if (!bundle) throw new HttpsError('not-found', 'Provider not found.')
+  assertProviderMarket(s, bundle.provider.countryCode)
+  return { success: true, foundInDb: true, provider: buildProfileView(bundle, { perms: s.perms, now: Date.now() }) }
 })
 
-/**
- * ADM-022: Add Internal Admin Note.
- * Internal only note, audited and timestamped.
- */
+/** ADM-022 internal note (never shown to the provider). data: { providerId, note, team? } */
 export const adminAddProviderInternalNote = onCall(async (request) => {
-  const admin = await requireAdmin(request)
-  const { providerId, note, author, team } = request.data || {}
-
-  if (!providerId || !note || !note.trim()) {
-    throw new HttpsError('invalid-argument', 'providerId and note content are required.')
-  }
-
-  const db = getFirestore()
-  const notePayload = {
-    providerId,
-    note: note.trim(),
-    author: author || admin.name || admin.email || 'Admin',
-    team: team || 'Operations Team',
-    adminUid: admin.uid,
-    createdAt: new Date().toISOString(),
-    timestamp: FieldValue.serverTimestamp(),
-  }
-
-  try {
-    // Write to root admin_notes collection for unified audit
-    const noteRef = await db.collection('admin_notes').add(notePayload)
-
-    // Also mirror to provider subcollection if provider doc exists
-    try {
-      const pDoc = await db.collection('providers').doc(providerId).get()
-      if (pDoc.exists) {
-        await pDoc.ref.collection('admin_notes').doc(noteRef.id).set(notePayload)
-      }
-    } catch (e) {
-      logger.warn('Could not mirror note to provider subcollection:', e?.message)
-    }
-
-    // Write audit log
-    await db.collection('audit_logs').add({
-      type: 'PROVIDER_INTERNAL_NOTE_ADDED',
-      providerId,
-      noteId: noteRef.id,
-      adminUid: admin.uid,
-      adminName: admin.name || 'Admin',
-      createdAt: FieldValue.serverTimestamp(),
-    })
-
-    return {
-      success: true,
-      note: { id: noteRef.id, ...notePayload },
-    }
-  } catch (err) {
-    logger.error('[adminAddProviderInternalNote] Error adding internal note:', err)
-    throw new HttpsError('internal', err?.message || 'Failed to record internal note.')
-  }
+  const s = await scope(request)
+  const uid = requireUid(request.data?.providerId)
+  const text = String(request.data?.note || '').trim().slice(0, 2000)
+  if (!text) throw new HttpsError('invalid-argument', 'The note is empty.')
+  const user = (await db().collection('users').doc(uid).get()).data() || {}
+  assertProviderMarket(s, countryCodeOf(user.countryCode, user.country))
+  const now = Timestamp.now()
+  const ref = await db().collection('admin_notes').add({ providerId: uid, context: 'profile', note: text, team: request.data?.team || null, authorId: s.uid, authorName: s.actor.name, createdAt: now })
+  await recordAudit(request, { actorId: s.uid, action: 'provider.note_added', entityId: uid, entityType: 'provider', metadata: { noteId: ref.id } })
+  return { success: true, note: { id: ref.id, text, author: s.actor.name, team: request.data?.team || null, date: 'Just now', createdAt: now.toMillis() } }
 })
 
 /**
- * ADM-022: Moderate Provider Content (e.g., photo, bio, gallery).
- * Rejection requires reason code & optional admin feedback.
+ * ADM-022 quick moderation of the provider's pending profile photo / gallery
+ * items. Goes through the same moderation records and write-back as ADM-035.
+ * data: { providerId, itemType: 'photo'|'gallery', status: 'approved'|'changes_requested'|'rejected', reasonLabel?, adminNote? }
  */
 export const adminUpdateProviderContentStatus = onCall(async (request) => {
-  const admin = await requireAdmin(request)
-  const { providerId, itemId, itemType, status, reasonCode, reasonLabel, adminNote } = request.data || {}
-
-  if (!providerId || !status) {
-    throw new HttpsError('invalid-argument', 'providerId and status are required.')
-  }
-
-  if (status === 'changes_requested' || status === 'rejected') {
-    if (!reasonCode && !reasonLabel) {
-      throw new HttpsError('invalid-argument', 'Rejection requires a reason.')
+  const s = await scope(request, 'content.moderate')
+  const d = request.data || {}
+  const uid = requireUid(d.providerId)
+  const status = String(d.status || '')
+  if (!['approved', 'changes_requested', 'rejected'].includes(status)) throw new HttpsError('invalid-argument', 'Choose a moderation decision.')
+  const reason = String(d.reasonLabel || d.reasonCode || '').trim() || null
+  if (status !== 'approved' && !reason) throw new HttpsError('invalid-argument', 'A reason is required to request changes or reject.')
+  const types = d.itemType === 'gallery' ? ['gallery'] : ['profile_photo', 'gallery']
+  const open = await db().collection('content_moderation').where('providerId', '==', uid).where('status', 'in', ['awaiting_review', 'under_review', 'resubmitted']).limit(50).get()
+  const targets = open.docs.filter((x) => types.includes(x.get('contentType')) && (!d.itemId || x.id === d.itemId || x.get('contentId') === d.itemId))
+  if (!targets.length) throw new HttpsError('failed-precondition', 'There is no pending content for this provider.')
+  assertProviderMarket(s, targets[0].get('countryCode'))
+  await db().runTransaction(async (tx) => {
+    const now = Timestamp.now()
+    const prepared = []
+    for (const t of targets) {
+      const snap = await tx.get(t.ref)
+      const raw = snap.data()
+      const patch = { status, decision: status === 'approved' ? 'approve' : status === 'rejected' ? 'reject' : 'request_changes', reason, reviewedBy: s.actor, reviewedAt: now, media: (raw.media || []).map((m) => ({ ...m, status })) }
+      prepared.push({ ref: t.ref, raw, patch, wb: await prepareWriteBack(tx, db(), raw, patch) })
     }
-  }
-
-  const db = getFirestore()
-  const reviewPayload = {
-    providerId,
-    itemId: itemId || 'profile_photo',
-    itemType: itemType || 'photo',
-    status, // 'approved' | 'changes_requested' | 'rejected'
-    reasonCode: reasonCode || null,
-    reasonLabel: reasonLabel || null,
-    adminNote: adminNote || null,
-    reviewedBy: admin.name || 'Admin',
-    reviewedByUid: admin.uid,
-    reviewedAt: new Date().toISOString(),
-  }
-
-  try {
-    await db.collection('content_moderation_logs').add({
-      ...reviewPayload,
-      timestamp: FieldValue.serverTimestamp(),
-    })
-
-    // Update provider document contentAttention field if exists
-    try {
-      const pRef = db.collection('providers').doc(providerId)
-      const pDoc = await pRef.get()
-      if (pDoc.exists) {
-        if (status === 'approved') {
-          await pRef.update({
-            contentAttention: null,
-            attentionCount: 0,
-            'verificationChecklist.profilePhoto': 'Approved',
-          })
-        } else {
-          await pRef.update({
-            contentAttention: reasonLabel || 'Changes requested on profile photo',
-            'verificationChecklist.profilePhoto': 'Changes Required',
-          })
-        }
-      }
-    } catch (e) {
-      logger.warn('Could not update provider contentAttention doc:', e?.message)
+    for (const p of prepared) {
+      applyWriteBack(tx, db(), p.wb)
+      tx.update(p.ref, p.patch)
+      tx.set(db().collection('content_moderation_history').doc(), historyEntry(p.ref.id, `${status.replace('_', ' ')} from the provider profile${reason ? ` — ${reason}` : ''}`, s.actor, now, { decision: p.patch.decision }))
     }
-
-    // Write audit log
-    await db.collection('audit_logs').add({
-      type: 'PROVIDER_CONTENT_MODERATED',
-      providerId,
-      status,
-      adminUid: admin.uid,
-      timestamp: FieldValue.serverTimestamp(),
-    })
-
-    return { success: true, review: reviewPayload }
-  } catch (err) {
-    logger.error('[adminUpdateProviderContentStatus] Moderation error:', err)
-    throw new HttpsError('internal', err?.message || 'Failed to update content status.')
-  }
+  })
+  await recordAudit(request, { actorId: s.uid, action: `content.${status}`, entityId: uid, entityType: 'provider', metadata: { items: targets.map((x) => x.id), reason, note: d.adminNote || null } })
+  return { success: true, review: { status, items: targets.length, reviewedAt: new Date().toISOString() } }
 })
 
-/**
- * ADM-022: Update Provider Verification Status.
- */
-export const adminUpdateProviderVerificationStatus = onCall(async (request) => {
-  const admin = await requireAdmin(request)
-  const { providerId, checkKey, status, reason, adminNote } = request.data || {}
-
-  if (!providerId || !checkKey || !status) {
-    throw new HttpsError('invalid-argument', 'providerId, checkKey, and status are required.')
-  }
-
-  const db = getFirestore()
-  try {
-    const updateRecord = {
-      providerId,
-      checkKey,
-      status, // 'Approved' | 'Changes Required' | 'Under Review'
-      reason: reason || null,
-      adminNote: adminNote || null,
-      updatedBy: admin.name || 'Admin',
-      updatedAt: new Date().toISOString(),
-      timestamp: FieldValue.serverTimestamp(),
-    }
-
-    await db.collection('verification_records').add(updateRecord)
-
-    // Update checklist in provider record
-    try {
-      const pRef = db.collection('providers').doc(providerId)
-      const pDoc = await pRef.get()
-      if (pDoc.exists) {
-        await pRef.update({
-          [`verificationChecklist.${checkKey}`]: status,
-        })
-      }
-    } catch (e) {
-      logger.warn('Could not update verificationChecklist on provider:', e?.message)
-    }
-
-    return { success: true, update: updateRecord }
-  } catch (err) {
-    logger.error('[adminUpdateProviderVerificationStatus] Error:', err)
-    throw new HttpsError('internal', err?.message || 'Failed to update verification status.')
-  }
+/** ADM-020 — data: { market, dateRange, timeZone? } */
+export const adminGetProviderDashboard = onCall(async (request) => {
+  const s = await scope(request)
+  const market = String(request.data?.market || 'ALL').toUpperCase()
+  if (market !== 'ALL' && !MARKETS[market]) throw new HttpsError('invalid-argument', 'Unknown market.')
+  if (market !== 'ALL' && !canAccessMarket(s.access, market)) throw new HttpsError('permission-denied', 'You do not have access to this market.', { reason: 'market-denied' })
+  const tz = safeTimeZone(request.data?.timeZone)
+  const range = { '7d': '7d', '30d': '30d', today: 'today', this_month: 'this_month' }[request.data?.dateRange] || '30d'
+  const { start, end } = getDateBounds(range, null, tz)
+  const [providers, bookings, verificationRequests, content, subscriptions, subscriptionPayments, safety] = await Promise.all([
+    loadAllProviders(db()),
+    readAll('bookings', { limit: 10000 }),
+    readAll('verification_requests', { limit: 5000 }),
+    readAll('content_moderation', { limit: 5000 }),
+    readAll('subscriptions', { limit: 10000 }),
+    readAll('subscription_payments', { limit: 10000 }),
+    readAll('safety_reports', { limit: 3000 }),
+  ])
+  const view = buildProviderDashboardView(
+    { providers, bookings: normalizeProviderBookings(bookings.rows).map((x) => x.b), verificationRequests: verificationRequests.rows, content: content.rows, subscriptions: subscriptions.rows, subscriptionPayments: subscriptionPayments.rows, safety: safety.rows },
+    { market, markets: s.unrestricted ? null : s.access.markets, start: start.getTime(), end: end.getTime(), now: Date.now() },
+  )
+  return { ...view, dateRange: range, generatedAt: new Date().toISOString() }
 })
-
-/**
- * ADM-022: Update Provider Account Status (Active, Suspended, Restricted).
- */
-export const adminUpdateProviderAccountStatus = onCall(async (request) => {
-  const admin = await requireAdmin(request)
-  const { providerId, status, restrictionReason, adminNote } = request.data || {}
-
-  if (!providerId || !status) {
-    throw new HttpsError('invalid-argument', 'providerId and status are required.')
-  }
-
-  const db = getFirestore()
-  try {
-    const logPayload = {
-      providerId,
-      status,
-      restrictionReason: restrictionReason || null,
-      adminNote: adminNote || null,
-      adminUid: admin.uid,
-      adminName: admin.name || 'Admin',
-      updatedAt: new Date().toISOString(),
-      timestamp: FieldValue.serverTimestamp(),
-    }
-
-    await db.collection('account_restrictions').add(logPayload)
-
-    try {
-      const pRef = db.collection('providers').doc(providerId)
-      const pDoc = await pRef.get()
-      if (pDoc.exists) {
-        await pRef.update({
-          status,
-          statusLabel: status.charAt(0).toUpperCase() + status.slice(1),
-          'accountHealth.status': status.charAt(0).toUpperCase() + status.slice(1),
-          'accountHealth.activeRestrictions': restrictionReason || 'None',
-        })
-      }
-    } catch (e) {
-      logger.warn('Could not update provider status doc:', e?.message)
-    }
-
-    return { success: true, status: logPayload }
-  } catch (err) {
-    logger.error('[adminUpdateProviderAccountStatus] Error:', err)
-    throw new HttpsError('internal', err?.message || 'Failed to update account status.')
-  }
-})
-

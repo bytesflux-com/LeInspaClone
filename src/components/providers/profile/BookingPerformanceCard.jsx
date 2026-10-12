@@ -14,15 +14,15 @@ export function BookingPerformanceCard({
   if (!profile) return null
 
   const perf = profile.bookingPerformance || {}
-  const total = perf.total ?? 284
-  const upcoming = perf.upcoming ?? 12
-  const completed = perf.completed ?? 268
+  const total = perf.total ?? 0
+  const upcoming = perf.upcoming ?? 0
+  const completed = perf.completed ?? 0
   const cancelled = perf.cancelled ?? 4
-  const completionRate = perf.completionRate || '96%'
-  const cancellationRate = perf.cancellationRate || '2.1%'
+  const completionRate = perf.completionRate || '—'
+  const cancellationRate = perf.cancellationRate || '—'
 
-  const completionPct = parseFloat(completionRate) || 96
-  const cancellationPct = parseFloat(cancellationRate) || 2.1
+  const completionPct = parseFloat(completionRate) || 0
+  const cancellationPct = parseFloat(cancellationRate) || 0.1
 
   return (
     <div className="rounded-xl border border-slate-200/90 bg-white p-4 shadow-xs flex flex-col justify-between">

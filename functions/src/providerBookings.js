@@ -1,231 +1,122 @@
-import { onCall, HttpsError } from 'firebase-functions/v2/https'
-import { logger } from 'firebase-functions/v2'
+import { HttpsError, onCall } from 'firebase-functions/v2/https'
 import { getFirestore } from 'firebase-admin/firestore'
 import { requireAdmin } from './auth.js'
-import { canAccessMarket, PERMISSIONS } from './accessModel.js'
-import {
-  calculateBookingsSummary,
-  filterProviderBookings,
-  calculateTopServices,
-  getEarningsChartPoints,
-} from './providerBookingsLogic.js'
+import { ALL_MARKETS, adminAccess, canAccessMarket } from './accessModel.js'
+import { MARKETS } from './dashboardLogic.js'
+import { loadProviderBundle } from './providerSources.js'
+import { bookingRow, bookingsSummary, businessContext, normalizeProviderBookings, reviewStats, topServices, walletTransactions } from './providerViews.js'
 
-/**
- * ADM-024: Retrieve Provider Bookings, Ledger & Financial Overview.
- * REUSE / ADMIN VIEW over shared bookings, escrow and payments collections.
- */
+// ADM-024 — Provider Bookings & Earnings (REUSE / ADMIN VIEW) over the shared
+// `bookings`, `escrow_transactions`, `wallets`, `wallet_transactions` and
+// `withdrawal_requests` records. Money is shown only to admins with
+// payments.view; nothing is estimated when a record is missing.
+
+const db = () => getFirestore()
+const DAY = 86400000
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+async function context(request) {
+  const uid = await requireAdmin(request, { permission: 'providers.view' })
+  const access = await adminAccess(uid)
+  const providerId = String(request.data?.providerId || '').trim()
+  if (!providerId || providerId.includes('/')) throw new HttpsError('invalid-argument', 'A provider ID is required.')
+  const finance = access.permissions.includes('payments.view')
+  const bundle = await loadProviderBundle(db(), providerId, { finance })
+  if (!bundle) throw new HttpsError('not-found', 'Provider not found.')
+  const code = bundle.provider.countryCode
+  const ok = code ? canAccessMarket(access, code) : access.markets.includes(ALL_MARKETS)
+  if (!ok) throw new HttpsError('permission-denied', 'You do not have access to providers in this market.', { reason: 'market-denied' })
+  const currency = MARKETS[code]?.currency || 'KES'
+  const items = normalizeProviderBookings(bundle.bookings.map((d) => ({ ...d, derivedCountryCode: code })))
+  return { finance, bundle, currency, items }
+}
+
+const TAB = {
+  upcoming: ['pending', 'negotiation', 'accepted', 'confirmed', 'on_the_way', 'arrived'],
+  ongoing: ['service_in_progress', 'awaiting_client_confirmation'],
+  completed: ['completed'],
+  cancelled: ['cancelled', 'rejected', 'expired'],
+}
+const RANGE_DAYS = { '7d': 7, '30d': 30, '90d': 90, '12m': 365 }
+
+function filterRows(rows, f) {
+  const q = String(f.search || '').trim().toLowerCase()
+  const days = RANGE_DAYS[f.dateRange]
+  return rows.filter((r) => {
+    if (f.tab && f.tab !== 'all') {
+      if (f.tab === 'disputed') { if (r.escrowStatus !== 'disputed') return false } else if (!(TAB[f.tab] || []).includes(r.status)) return false
+    }
+    if (f.service && f.service !== 'all' && !String(r.serviceName).toLowerCase().includes(String(f.service).toLowerCase())) return false
+    if (f.bookingSource && f.bookingSource !== 'all' && !String(r.bookingSource).toLowerCase().includes(String(f.bookingSource).toLowerCase())) return false
+    if (f.paymentStatus && f.paymentStatus !== 'all' && !String(r.paymentStatus).toLowerCase().includes(String(f.paymentStatus).toLowerCase())) return false
+    if (f.escrowStatus && f.escrowStatus !== 'all' && !String(r.escrowStatus).toLowerCase().includes(String(f.escrowStatus).toLowerCase())) return false
+    if (days && (!r.scheduledStart || r.scheduledStart < Date.now() - days * DAY)) return false
+    if (q && ![r.id, r.clientName, r.serviceName].some((v) => String(v || '').toLowerCase().includes(q))) return false
+    return true
+  })
+}
+
+const maskMoney = (row) => ({ ...row, amount: null, amountFormatted: '••••', paymentBreakdown: null })
+
+/** data: { providerId, tab, search, service, bookingSource, paymentStatus, escrowStatus, dateRange } */
 export const adminGetProviderBookings = onCall(async (request) => {
-  const admin = await requireAdmin(request)
-  const {
-    providerId,
-    tab = 'all',
-    search = '',
-    service = 'all',
-    bookingSource = 'all',
-    paymentStatus = 'all',
-    escrowStatus = 'all',
-    dateRange = 'all',
-  } = request.data || {}
-
-  if (!providerId) {
-    throw new HttpsError('invalid-argument', 'Missing providerId argument.')
-  }
-
-  // Permission check
-  const permissions = Array.isArray(admin.permissions) ? admin.permissions : []
-  const isSuperAdmin = admin.role === 'super_admin'
-  const canView =
-    isSuperAdmin ||
-    permissions.includes(PERMISSIONS.PROVIDERS_VIEW) ||
-    permissions.includes(PERMISSIONS.BOOKINGS_VIEW) ||
-    permissions.includes('providers.view')
-
-  if (!canView) {
-    throw new HttpsError('permission-denied', 'Missing required permission: PROVIDERS_VIEW or BOOKINGS_VIEW.')
-  }
-
-  const db = getFirestore()
-
-  try {
-    // 1. Resolve Provider Document to verify market authorization
-    let providerData = null
-    const pDoc = await db.collection('providers').doc(providerId).get()
-    if (pDoc.exists) {
-      providerData = pDoc.data()
-    } else {
-      const qSnap = await db.collection('providers').where('providerId', '==', providerId).limit(1).get()
-      if (!qSnap.empty) {
-        providerData = qSnap.docs[0].data()
-      }
-    }
-
-    if (providerData?.marketCode && !canAccessMarket(admin, providerData.marketCode)) {
-      throw new HttpsError(
-        'permission-denied',
-        `Admin not authorized to access provider in market '${providerData.marketCode}'.`
-      )
-    }
-
-    // 2. Fetch Bookings from shared collection
-    let bookings = []
-    const bSnap = await db.collection('bookings').where('providerId', '==', providerId).get()
-    bSnap.forEach((doc) => {
-      bookings.push({ id: doc.id, ...doc.data() })
-    })
-
-    // 3. Query ledger positions / wallet balances
-    let ledger = {}
-    try {
-      const walletDoc = await db.collection('provider_wallets').doc(providerId).get()
-      if (walletDoc.exists) {
-        ledger = walletDoc.data()
-      }
-    } catch (e) {
-      logger.warn('[adminGetProviderBookings] Could not load provider_wallets:', e?.message)
-    }
-
-    // 4. Compute summaries
-    const summary = calculateBookingsSummary(bookings, ledger)
-    const topServices = calculateTopServices(bookings)
-
-    // 5. Apply filters
-    const filtered = filterProviderBookings(bookings, {
-      tab,
-      search,
-      service,
-      bookingSource,
-      paymentStatus,
-      escrowStatus,
-      dateRange,
-    })
-
-    return {
-      success: true,
-      bookings: filtered,
-      totalMatching: filtered.length,
-      summary,
-      topServices,
-      provider: providerData ? { id: providerId, ...providerData } : null,
-    }
-  } catch (err) {
-    logger.error('[adminGetProviderBookings] Error:', err)
-    if (err instanceof HttpsError) throw err
-    throw new HttpsError('internal', err?.message || 'Failed to retrieve provider bookings.')
-  }
-})
-
-/**
- * ADM-024: Retrieve Single Booking Detailed View (Payment breakdown, Escrow, Timeline).
- */
-export const adminGetProviderBookingDetail = onCall(async (request) => {
-  const admin = await requireAdmin(request)
-  const { providerId, bookingId } = request.data || {}
-
-  if (!providerId || !bookingId) {
-    throw new HttpsError('invalid-argument', 'Missing providerId or bookingId argument.')
-  }
-
-  const db = getFirestore()
-  try {
-    const bDoc = await db.collection('bookings').doc(bookingId).get()
-    if (!bDoc.exists) {
-      throw new HttpsError('not-found', `Booking '${bookingId}' not found.`)
-    }
-
-    const bookingData = { id: bDoc.id, ...bDoc.data() }
-
-    // Security check: sovereign market isolation
-    if (bookingData.marketCode && !canAccessMarket(admin, bookingData.marketCode)) {
-      throw new HttpsError('permission-denied', `Admin not authorized to access booking in market '${bookingData.marketCode}'.`)
-    }
-
-    // Resolve client record if needed
-    let clientData = null
-    if (bookingData.clientId) {
-      const cDoc = await db.collection('clients').doc(bookingData.clientId).get()
-      if (cDoc.exists) clientData = { id: cDoc.id, ...cDoc.data() }
-    }
-
-    // Resolve payment & escrow records
-    let paymentData = null
-    if (bookingData.paymentId) {
-      const payDoc = await db.collection('payments').doc(bookingData.paymentId).get()
-      if (payDoc.exists) paymentData = payDoc.data()
-    }
-
-    return {
-      success: true,
-      booking: bookingData,
-      client: clientData,
-      payment: paymentData,
-    }
-  } catch (err) {
-    logger.error('[adminGetProviderBookingDetail] Error:', err)
-    if (err instanceof HttpsError) throw err
-    throw new HttpsError('internal', err?.message || 'Failed to retrieve booking detail.')
-  }
-})
-
-/**
- * ADM-024: Retrieve Ledger-Backed Earnings Overview & Escrow Position.
- */
-export const adminGetProviderEarningsOverview = onCall(async (request) => {
-  const admin = await requireAdmin(request)
-  const { providerId } = request.data || {}
-
-  if (!providerId) {
-    throw new HttpsError('invalid-argument', 'Missing providerId argument.')
-  }
-
-  const permissions = Array.isArray(admin.permissions) ? admin.permissions : []
-  const isSuperAdmin = admin.role === 'super_admin'
-  const canSeeFinance =
-    isSuperAdmin || permissions.includes(PERMISSIONS.FINANCE_VIEW) || permissions.includes('finance.view')
-
-  if (!canSeeFinance) {
-    throw new HttpsError('permission-denied', 'Missing required permission: FINANCE_VIEW.')
-  }
-
-  const db = getFirestore()
-  try {
-    const walletDoc = await db.collection('provider_wallets').doc(providerId).get()
-    const ledger = walletDoc.exists ? walletDoc.data() : {}
-
-    // Recent transactions
-    let recentTransactions = []
-    const txSnap = await db
-      .collection('wallet_transactions')
-      .where('walletId', '==', providerId)
-      .orderBy('createdAt', 'desc')
-      .limit(5)
-      .get()
-
-    txSnap.forEach((doc) => recentTransactions.push({ id: doc.id, ...doc.data() }))
-
-    return {
-      success: true,
-      ledger,
-      recentTransactions,
-    }
-  } catch (err) {
-    logger.error('[adminGetProviderEarningsOverview] Error:', err)
-    if (err instanceof HttpsError) throw err
-    throw new HttpsError('internal', err?.message || 'Failed to retrieve earnings overview.')
-  }
-})
-
-/**
- * ADM-024: Retrieve Earnings Performance Time Series Points.
- */
-export const adminGetProviderEarningsChart = onCall(async (request) => {
-  await requireAdmin(request)
-  const { period = '30d' } = request.data || {}
-
-  const points = getEarningsChartPoints(period)
+  const { finance, bundle, currency, items } = await context(request)
+  const rows = items.map(({ b, raw }) => bookingRow(b, raw)).sort((a, b) => (b.scheduledStart || 0) - (a.scheduledStart || 0))
+  const filtered = filterRows(rows, request.data || {})
+  const bookings = items.map((x) => x.b)
+  const p = bundle.provider
   return {
     success: true,
-    period,
-    points,
+    bookings: finance ? filtered : filtered.map(maskMoney),
+    totalMatching: filtered.length,
+    summary: bookingsSummary(bookings, { wallet: bundle.wallet, escrows: bundle.escrows, withdrawals: bundle.withdrawals, finance, currency, avgRating: reviewStats(bundle.reviews).avg }),
+    topServices: topServices(bookings, currency).map((s) => (finance ? s : { ...s, revenue: null, revenueFormatted: '••••' })),
+    recentTransactions: finance ? walletTransactions(bundle.walletTx, currency) : [],
+    provider: {
+      id: p.uid, name: p.name, providerType: p.category, typeLabel: p.typeLabel, city: p.city, country: p.country, flag: null,
+      rating: reviewStats(bundle.reviews).avg ?? p.rating, reviewCount: bundle.reviews.length, avatar: p.avatar, isVerified: p.verified,
+      status: p.accountStatus, availableNow: p.isAvailable === true, joinedDate: p.createdAt ? new Date(p.createdAt).toISOString() : null,
+      dynamicSpaContext: businessContext(p.category, items, currency, finance)?.spa,
+      dynamicHotelContext: businessContext(p.category, items, currency, finance)?.hotel,
+    },
+    currency,
   }
 })
 
+/** data: { providerId, bookingId } */
+export const adminGetProviderBookingDetail = onCall(async (request) => {
+  const { finance, items } = await context(request)
+  const hit = items.find((x) => x.b.id === request.data?.bookingId)
+  if (!hit) throw new HttpsError('not-found', 'Booking not found for this provider.')
+  const row = bookingRow(hit.b, hit.raw)
+  return { success: true, booking: finance ? row : maskMoney(row), client: { id: hit.b.client.id, name: hit.b.client.name }, payment: finance ? { status: row.paymentStatus, escrowStatus: row.escrowStatus, breakdown: row.paymentBreakdown } : null }
+})
+
+/** data: { providerId } — finance permission required */
+export const adminGetProviderEarningsOverview = onCall(async (request) => {
+  const { finance, bundle, currency, items } = await context(request)
+  if (!finance) throw new HttpsError('permission-denied', 'Earnings need the payments.view permission.')
+  const summary = bookingsSummary(items.map((x) => x.b), { wallet: bundle.wallet, escrows: bundle.escrows, withdrawals: bundle.withdrawals, finance: true, currency })
+  return { success: true, ledger: { ...summary.financials, ...summary.escrowPositions, ...summary.withdrawalPositions }, recentTransactions: walletTransactions(bundle.walletTx, currency) }
+})
+
+/** data: { providerId, period: '7d'|'30d'|'90d'|'12m' } — provider earnings per bucket vs the previous period */
+export const adminGetProviderEarningsChart = onCall(async (request) => {
+  const { finance, items } = await context(request)
+  if (!finance) return { success: true, period: request.data?.period || '30d', points: [], restricted: true }
+  const period = RANGE_DAYS[request.data?.period] ? request.data.period : '30d'
+  const days = RANGE_DAYS[period]
+  const buckets = period === '7d' ? 7 : period === '12m' ? 12 : 6
+  const size = (days * DAY) / buckets
+  const now = Date.now()
+  const done = items.map((x) => x.b).filter((b) => b.status === 'completed')
+  const at = (b) => b.completedAt || b.scheduledStart || 0
+  const points = Array.from({ length: buckets }, (_, i) => {
+    const s = now - days * DAY + i * size
+    const e = s + size
+    const sum = (from, to) => done.filter((b) => at(b) >= from && at(b) < to).reduce((t, b) => t + (b.providerAmount || 0), 0)
+    const d = new Date(e - 1 + 3 * 3600000)
+    return { date: period === '12m' ? MONTHS[d.getUTCMonth()] : `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]}`, current: Math.round(sum(s, e)), previous: Math.round(sum(s - days * DAY, e - days * DAY)) }
+  })
+  return { success: true, period, points }
+})

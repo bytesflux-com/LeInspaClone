@@ -19,7 +19,7 @@ export default function ProviderSubscriptionsCard({ subscriptions }) {
           <h2 className="text-[15px] font-bold text-[#1b1140]">Provider Subscriptions</h2>
         </div>
         <Link
-          to="/providers/subscriptions"
+          to="/providers/all?subscription=active"
           className="flex items-center gap-1 text-[12px] font-semibold text-[#5c2dd5] transition hover:text-[#4520a8]"
         >
           View Subscriptions <ArrowRight className="size-3.5" />

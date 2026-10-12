@@ -11,17 +11,7 @@ export default function VerificationChecklistCard({
   onOpenNotes,
   notesCount = 0,
 }) {
-  const defaultItems = [
-    { id: 'chk-1', key: 'documentReadable', label: 'Document readable', status: 'Pass', resultType: 'pass' },
-    { id: 'chk-2', key: 'nameMatches', label: 'Name reasonably matches account', status: 'Needs review', resultType: 'review' },
-    { id: 'chk-3', key: 'issuerProvided', label: 'Issuer provided', status: 'Pass', resultType: 'pass' },
-    { id: 'chk-4', key: 'documentCurrent', label: 'Document current (not expired)', status: 'Pass', resultType: 'pass' },
-    { id: 'chk-5', key: 'pagesIncluded', label: 'Required pages included', status: 'Pass', resultType: 'pass' },
-    { id: 'chk-6', key: 'credentialAccepted', label: 'Credential type accepted', status: 'Pass', resultType: 'pass' },
-    { id: 'chk-7', key: 'noTampering', label: 'No obvious tampering concern', status: 'Pass', resultType: 'pass' },
-  ]
-
-  const items = checklist.length > 0 ? checklist : defaultItems
+  const items = checklist
 
   // Cycle status on click: Pass -> Needs review -> Fail -> Pass
   const cycleStatus = (key, currentStatus) => {

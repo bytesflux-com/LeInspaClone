@@ -103,7 +103,7 @@ export function MarketTrustSafetySupport({ moderationSafetySupport, marketName =
               </div>
               <div>
                 <div className="text-[11px] text-gray-500">Avg Response</div>
-                <div className="text-lg font-bold text-emerald-700">{supportService?.avgResponseMinutes} min</div>
+                <div className="text-lg font-bold text-emerald-700">{supportService?.avgResponseMinutes == null ? 'Not tracked' : `${supportService.avgResponseMinutes} min`}</div>
               </div>
               <div>
                 <div className="text-[11px] text-gray-500">Resolved Today</div>

@@ -151,7 +151,8 @@ function RejectHeader({ origin, backPath, onSelectPreset }) {
         </div>
       </div>
 
-      {/* Context switcher bar so reviewers can test shared rejection across modules */}
+      {/* Demo-only context switcher (sample records exist only in mock mode) */}
+      {approvalWorkflowService.isMock && (
       <div className="flex flex-wrap items-center gap-1.5 rounded-xl border border-[#ece7fa] bg-[#faf8fe] px-3 py-1.5 text-[11.5px]">
         <span className="font-semibold text-[#4a4466]">Shared Workflow Context:</span>
         {DEMO_PRESETS.map((p) => {
@@ -171,6 +172,7 @@ function RejectHeader({ origin, backPath, onSelectPreset }) {
           )
         })}
       </div>
+      )}
     </header>
   )
 }

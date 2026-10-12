@@ -25,7 +25,7 @@ export default function IdentityDocumentsReviewPage() {
   const navigate = useNavigate()
 
   // Default to Grace Njeri (ver-001 / PR-82941) if no ID is passed
-  const targetId = id || 'PR-82941'
+  const targetId = id
 
   // Data states
   const [loading, setLoading] = useState(true)
@@ -296,7 +296,7 @@ export default function IdentityDocumentsReviewPage() {
       {/* 1. Breadcrumbs & Header Actions */}
       <IdentityHeader
         verificationId={identityData?.id || targetId}
-        providerId={identityData?.providerId || 'PR-82941'}
+        providerId={identityData?.providerId || null}
       />
 
       {/* 2. Top Identification & Summary Card */}

@@ -110,11 +110,10 @@ export async function fetchVerificationQueue(filters = {}) {
       if (result && Array.isArray(result.queue) && result.queue.length > 0) {
         return result
       }
+      return result
     } catch (err) {
-      console.warn(
-        '[verificationService] Cloud Function adminGetVerificationQueue unavailable or offline. Falling back to local mock data.',
-        err?.message
-      )
+      console.error('[verificationService] live call failed:', err?.message)
+      throw err
     }
   }
 
@@ -186,11 +185,10 @@ export async function assignReviewer(verificationId, reviewerData = {}) {
         }
         return result
       }
+      return result
     } catch (err) {
-      console.warn(
-        '[verificationService] Cloud Function adminAssignVerificationReviewer failed. Falling back to local state update.',
-        err?.message
-      )
+      console.error('[verificationService] live call failed:', err?.message)
+      throw err
     }
   }
 
@@ -269,11 +267,10 @@ export async function submitVerificationDecision(payload) {
         }
         return result
       }
+      return result
     } catch (err) {
-      console.warn(
-        '[verificationService] Cloud Function adminSubmitVerificationDecision failed. Falling back to local mock state.',
-        err?.message
-      )
+      console.error('[verificationService] live call failed:', err?.message)
+      throw err
     }
   }
 
@@ -368,11 +365,10 @@ export async function fetchDetailedQueue(filters = {}) {
       if (result && Array.isArray(result.queue)) {
         return result
       }
+      return result
     } catch (err) {
-      console.warn(
-        '[verificationService] Cloud Function adminGetVerificationQueueDetailed failed or offline. Falling back to local mock state.',
-        err?.message
-      )
+      console.error('[verificationService] live call failed:', err?.message)
+      throw err
     }
   }
 
@@ -526,11 +522,10 @@ export async function claimCase(verificationId) {
         recalculateLocalMetrics()
         return result
       }
+      return result
     } catch (err) {
-      console.warn(
-        '[verificationService] Cloud Function adminClaimVerificationCase failed. Falling back to local store.',
-        err?.message
-      )
+      console.error('[verificationService] live call failed:', err?.message)
+      throw err
     }
   }
 
@@ -593,11 +588,10 @@ export async function escalateCase(verificationId, reasonData = {}) {
         recalculateLocalMetrics()
         return result
       }
+      return result
     } catch (err) {
-      console.warn(
-        '[verificationService] Cloud Function adminEscalateVerificationCase failed. Falling back to local store.',
-        err?.message
-      )
+      console.error('[verificationService] live call failed:', err?.message)
+      throw err
     }
   }
 
@@ -1062,11 +1056,10 @@ export async function fetchVerificationDetail(verificationId) {
       if (result?.verification) {
         return result
       }
+      return result
     } catch (err) {
-      console.warn(
-        '[verificationService] Cloud Function adminGetVerificationDetail failed. Falling back to local store.',
-        err?.message
-      )
+      console.error('[verificationService] live call failed:', err?.message)
+      throw err
     }
   }
 
@@ -1122,11 +1115,10 @@ export async function submitComponentDecision(payload) {
       if (result?.success) {
         return result
       }
+      return result
     } catch (err) {
-      console.warn(
-        '[verificationService] Cloud Function adminSubmitComponentDecision failed. Falling back to local store.',
-        err?.message
-      )
+      console.error('[verificationService] live call failed:', err?.message)
+      throw err
     }
   }
 
@@ -1254,11 +1246,10 @@ export async function addInternalNote(verificationId, noteText) {
       if (result?.success) {
         return result
       }
+      return result
     } catch (err) {
-      console.warn(
-        '[verificationService] Cloud Function adminAddVerificationInternalNote failed. Falling back to local store.',
-        err?.message
-      )
+      console.error('[verificationService] live call failed:', err?.message)
+      throw err
     }
   }
 
@@ -1506,11 +1497,10 @@ export async function fetchIdentityVerificationDetail(verificationId) {
       if (result?.verificationId || result?.name) {
         return result
       }
+      return result
     } catch (err) {
-      console.warn(
-        '[verificationService] Cloud Function adminGetIdentityVerificationDetail failed. Falling back to local store.',
-        err?.message
-      )
+      console.error('[verificationService] live call failed:', err?.message)
+      throw err
     }
   }
 
@@ -1534,11 +1524,10 @@ export async function revealSensitiveIdentityField(verificationId, fieldName) {
       if (result?.plainValue) {
         return result
       }
+      return result
     } catch (err) {
-      console.warn(
-        '[verificationService] Cloud Function adminRevealSensitiveIdentityField failed. Falling back to local unmask.',
-        err?.message
-      )
+      console.error('[verificationService] live call failed:', err?.message)
+      throw err
     }
   }
 
@@ -1587,11 +1576,10 @@ export async function submitIdentityDecision(payload) {
       if (result?.success) {
         return result
       }
+      return result
     } catch (err) {
-      console.warn(
-        '[verificationService] Cloud Function adminSubmitIdentityDecision failed. Falling back to local store.',
-        err?.message
-      )
+      console.error('[verificationService] live call failed:', err?.message)
+      throw err
     }
   }
 
@@ -2003,11 +1991,10 @@ export async function fetchCredentialVerificationDetail(verificationId, credenti
       if (result?.verificationId || result?.name) {
         return result
       }
+      return result
     } catch (err) {
-      console.warn(
-        '[verificationService] Cloud Function adminGetCredentialVerificationDetail failed. Falling back to local store.',
-        err?.message
-      )
+      console.error('[verificationService] live call failed:', err?.message)
+      throw err
     }
   }
 
@@ -2041,11 +2028,10 @@ export async function submitCredentialDecision(payload) {
       if (result?.success) {
         return result
       }
+      return result
     } catch (err) {
-      console.warn(
-        '[verificationService] Cloud Function adminSubmitCredentialDecision failed. Falling back to local store.',
-        err?.message
-      )
+      console.error('[verificationService] live call failed:', err?.message)
+      throw err
     }
   }
 
@@ -2205,11 +2191,10 @@ export async function addCredentialInternalNote(verificationId, credentialId = '
       if (result?.success) {
         return result
       }
+      return result
     } catch (err) {
-      console.warn(
-        '[verificationService] Cloud Function adminAddCredentialInternalNote failed. Falling back to local store.',
-        err?.message
-      )
+      console.error('[verificationService] live call failed:', err?.message)
+      throw err
     }
   }
 
@@ -2527,11 +2512,10 @@ export async function fetchBusinessVerificationDetail(verificationId, documentId
       if (result?.verificationId || result?.tradingName || result?.legalEntityName) {
         return result
       }
+      return result
     } catch (err) {
-      console.warn(
-        '[verificationService] Cloud Function adminGetBusinessVerificationDetail failed. Falling back to local store.',
-        err?.message
-      )
+      console.error('[verificationService] live call failed:', err?.message)
+      throw err
     }
   }
 
@@ -2554,11 +2538,10 @@ export async function revealBusinessDocumentNumber(verificationId, documentId = 
       if (result?.plainNumber) {
         return result
       }
+      return result
     } catch (err) {
-      console.warn(
-        '[verificationService] Cloud Function adminRevealBusinessDocumentNumber failed. Falling back to local store.',
-        err?.message
-      )
+      console.error('[verificationService] live call failed:', err?.message)
+      throw err
     }
   }
 
@@ -2598,11 +2581,10 @@ export async function submitBusinessDocumentDecision(payload) {
       if (result?.success) {
         return result
       }
+      return result
     } catch (err) {
-      console.warn(
-        '[verificationService] Cloud Function adminSubmitBusinessDocumentDecision failed. Falling back to local store.',
-        err?.message
-      )
+      console.error('[verificationService] live call failed:', err?.message)
+      throw err
     }
   }
 
@@ -2762,11 +2744,10 @@ export async function addBusinessInternalNote(verificationId, documentId = 'doc-
       if (result?.success) {
         return result
       }
+      return result
     } catch (err) {
-      console.warn(
-        '[verificationService] Cloud Function adminAddBusinessInternalNote failed. Falling back to local store.',
-        err?.message
-      )
+      console.error('[verificationService] live call failed:', err?.message)
+      throw err
     }
   }
 

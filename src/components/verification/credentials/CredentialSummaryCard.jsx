@@ -1,4 +1,5 @@
 import { Clock, ShieldCheck, Award, CheckCircle2, AlertCircle, FileCheck, Layers } from 'lucide-react'
+import { AVATAR_PLACEHOLDER } from '../../../lib/placeholders'
 
 /**
  * ADM-033: CredentialSummaryCard
@@ -8,16 +9,16 @@ export default function CredentialSummaryCard({ data }) {
   if (!data) return null
 
   const summary = data.summary || {
-    credentialsRequired: 2,
-    submitted: 2,
-    approved: 1,
-    underReview: 1,
+    credentialsRequired: 0,
+    submitted: 0,
+    approved: 0,
+    underReview: 0,
     changesRequested: 0,
   }
 
   const defaultAvatar =
     data.avatarUrl ||
-    'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'
+    AVATAR_PLACEHOLDER
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 rounded-2xl border border-slate-200/90 bg-white p-5 shadow-sm">
@@ -43,7 +44,7 @@ export default function CredentialSummaryCard({ data }) {
           <div className="space-y-1.5">
             <div className="flex flex-wrap items-center gap-2">
               <h2 className="text-lg font-bold text-slate-900 tracking-tight">
-                {data.name || 'Grace Njeri'}
+                {data.name || '—'}
               </h2>
               <span className="inline-flex items-center gap-1 rounded-full border border-purple-200 bg-purple-50 px-2.5 py-0.5 text-xs font-semibold text-purple-700">
                 <span className="size-1.5 rounded-full bg-purple-600" />
@@ -52,16 +53,16 @@ export default function CredentialSummaryCard({ data }) {
             </div>
 
             <p className="text-xs font-medium text-slate-500 flex items-center gap-1.5">
-              <span className="font-mono text-purple-700 font-semibold">{data.providerId || 'PR-82941'}</span>
+              <span className="font-mono text-purple-700 font-semibold">{data.providerId || '—'}</span>
               <span>•</span>
               <span>{data.type || 'Massage Therapist'}</span>
               <span>•</span>
-              <span>{data.market?.flag || '🇰🇪'} {data.market?.name || 'Kenya'}</span>
+              <span>{data.market?.flag || ''} {data.market?.name || '—'}</span>
             </p>
 
             <div className="flex items-center gap-2 text-[11px] text-slate-400 pt-0.5">
               <Clock className="size-3.5 text-slate-400" />
-              <span>Submitted: {data.submittedAt || '12 Sep 2026 • 10:42 AM'}</span>
+              <span>Submitted: {data.submittedAt || '—'}</span>
             </div>
           </div>
         </div>
@@ -72,7 +73,7 @@ export default function CredentialSummaryCard({ data }) {
             <img
               src={
                 data.assignedReviewer?.avatarUrl ||
-                'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=80'
+                AVATAR_PLACEHOLDER
               }
               alt={data.assignedTo || 'Jane Ochieng'}
               className="size-6 rounded-full border border-purple-200 object-cover"

@@ -5,7 +5,7 @@ export const PERMISSIONS = {
   USERS_SUSPEND: 'users.suspend',
   USERS_DEACTIVATE: 'users.deactivate', // ADM-028 — deactivate / indefinite restriction
   USERS_EXPORT: 'users.export',
-  USERS_REVEAL_PII: 'users.reveal_pii', // ADM-012 — unmask client email / phone (audited)
+  USERS_REVEAL_PII: 'identity.reveal_sensitive', // ADM-012 — unmask client email / phone (audited)
   MEMBERSHIPS_MANAGE: 'memberships.manage', // ADM-016 — change / extend / reactivate a client's membership (audited)
   PROVIDERS_VIEW: 'providers.view',
   PROVIDERS_VERIFY: 'providers.verify',

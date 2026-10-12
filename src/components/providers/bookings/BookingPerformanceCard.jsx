@@ -30,7 +30,7 @@ export function BookingPerformanceCard({
               Completion Rate
             </span>
             <span className="font-mono font-bold text-emerald-700 text-base sm:text-lg mt-0.5 block">
-              {p.completionRate ?? 96}%
+              {p.completionRate ?? 0}%
             </span>
           </div>
 
@@ -48,7 +48,7 @@ export function BookingPerformanceCard({
               Average Booking Value
             </span>
             <span className="font-mono font-bold text-slate-900 text-base sm:text-lg mt-0.5 block">
-              {canSeeFinancial ? `KES ${(p.averageBookingValue ?? 3950).toLocaleString()}` : 'KES —'}
+              {canSeeFinancial ? `KES ${(p.averageBookingValue ?? 0).toLocaleString()}` : 'KES —'}
             </span>
           </div>
 
@@ -57,7 +57,7 @@ export function BookingPerformanceCard({
               Repeat Clients
             </span>
             <span className="font-mono font-bold text-purple-700 text-base sm:text-lg mt-0.5 block">
-              {p.repeatClientsRate ?? 38}%
+              {p.repeatClientsRate ?? 0}%
             </span>
           </div>
 
@@ -76,7 +76,7 @@ export function BookingPerformanceCard({
               Booking Growth
             </span>
             <span className="font-mono font-bold text-emerald-600 text-base sm:text-lg mt-0.5 flex items-center gap-1">
-              <span>{p.bookingGrowth ?? '+12%'}</span>
+              <span>{p.bookingGrowth ?? '—'}</span>
               <TrendingUp className="size-3.5" />
             </span>
           </div>

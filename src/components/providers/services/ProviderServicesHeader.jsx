@@ -7,24 +7,28 @@ import {
   Clock,
   Sparkles,
 } from 'lucide-react'
+import { AVATAR_PLACEHOLDER } from '../../../lib/placeholders'
+
+// Sample-provider switcher for the demo dataset only.
+const DEMO_SWITCHER = import.meta.env.VITE_USE_MOCK_PROVIDERS === 'true'
 
 export function ProviderServicesHeader({
   provider,
-  providerId = 'PR-82941',
+  providerId = null,
 }) {
   const navigate = useNavigate()
 
-  const name = provider?.name || 'Grace Njeri'
+  const name = provider?.name || '—'
   const id = provider?.id || providerId
-  const role = provider?.providerType || provider?.typeLabel || 'Massage Therapist'
-  const city = provider?.city || 'Nairobi'
+  const role = provider?.providerType || provider?.typeLabel || 'Provider'
+  const city = provider?.city || '—'
   const market = provider?.market || 'Kenya'
   const flag = provider?.flag || '🇰🇪'
-  const joinedDate = provider?.joinedDate || '12 Jan 2026'
+  const joinedDate = provider?.joinedDate || '—'
   const lastActive = provider?.lastActive || 'Today • 11:42 AM'
   const avatar =
     provider?.avatar ||
-    'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=160&auto=format&fit=crop&q=80'
+    AVATAR_PLACEHOLDER
 
   return (
     <div className="space-y-3">
@@ -47,6 +51,7 @@ export function ProviderServicesHeader({
         </nav>
 
         {/* Dynamic Mode Switcher */}
+        {DEMO_SWITCHER && (
         <div className="flex items-center gap-1.5 bg-purple-50/80 border border-purple-200/80 rounded-full px-2.5 py-1 text-[11px]">
           <span className="text-purple-800 font-semibold flex items-center gap-1">
             <Sparkles className="size-3 text-purple-600" /> Dynamic View:
@@ -85,6 +90,7 @@ export function ProviderServicesHeader({
             Hotel/Resort (Savanna)
           </button>
         </div>
+        )}
       </div>
 
       {/* 2. Provider Identity Section */}

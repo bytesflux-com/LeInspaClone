@@ -75,8 +75,8 @@ export function ReviewBeforeActionPanel({ review, providerId }) {
   return (
     <Panel title="Review Before Taking Action" icon={Info}>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <Tile icon={Siren} tone="red" label="Open Safety Cases" value={review.openSafetyCases} to="/safety" linkLabel="View Cases" />
-        <Tile icon={Scale} tone="amber" label="Open Disputes" value={review.openDisputes} to="/disputes" linkLabel="View Disputes" />
+        <Tile icon={Siren} tone="red" label="Open Safety Cases" value={review.openSafetyCases} to={`/providers/${providerId}/support`} linkLabel="View Cases" />
+        <Tile icon={Scale} tone="amber" label="Open Disputes" value={review.openDisputes} to={`/providers/${providerId}/support`} linkLabel="View Disputes" />
         <Tile icon={CalendarCheck} label="Upcoming Bookings" value={review.upcomingBookings} to={`/providers/${providerId}/bookings`} linkLabel="View Bookings" />
         <Tile icon={Wallet} tone="amber" label="Pending Escrow" value={money(review.pendingEscrow)} />
         <Tile icon={Landmark} label="Pending Withdrawal" value={money(review.pendingWithdrawal)} />

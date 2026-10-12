@@ -8,7 +8,7 @@ export default function AdminProfileMenu() {
   const { admin, role, lockSession } = useAdminSession()
   const { logout } = useAuth()
 
-  const adminName = admin?.fullName || 'Wallen Nyaberi'
+  const adminName = admin?.fullName || admin?.email || 'Admin'
   const adminRole = admin?.roleName || (role === 'super_admin' ? 'Super Admin' : role)
 
   return (

@@ -34,7 +34,7 @@ export function AvailabilityCard({
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
             <span className="size-2 rounded-full bg-emerald-500 animate-ping" />
             <span className="size-2 rounded-full bg-emerald-500 -ml-3.5" />
-            <span>{avail.statusLabel || 'Available Now'}</span>
+            <span>{avail.statusLabel || '—'}</span>
           </span>
         </div>
 
@@ -57,7 +57,7 @@ export function AvailabilityCard({
             <div>
               <p className="text-[11px] text-slate-500 font-medium">This Week</p>
               <p className="font-bold text-slate-900 text-xs">
-                {avail.thisWeekSlots || '18 available slots'}
+                {avail.thisWeekSlots || '—'}
               </p>
             </div>
           </div>
@@ -71,7 +71,7 @@ export function AvailabilityCard({
               <span>Service Area</span>
             </div>
             <p className="font-bold text-slate-800 text-xs truncate">
-              {avail.serviceArea || 'Nairobi • 15 km travel radius'}
+              {avail.serviceArea || '—'}
             </p>
             <p className="text-[10px] text-slate-400">
               Live GPS geofence enabled

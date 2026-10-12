@@ -177,7 +177,7 @@ export function ClientExperienceCard({ data, providerId }) {
         [Scale, 'Disputes', data.disputes, 'text-rose-500'],
         [CircleMinus, 'Refund-Related Cases', data.refundCases],
       ]} />
-      <Link to="/support" className="mt-1 inline-block text-[11.5px] font-semibold text-royal-600 hover:underline">View Support & Safety →</Link>
+      <Link to={`/providers/${providerId}/support`} className="mt-1 inline-block text-[11.5px] font-semibold text-royal-600 hover:underline">View Support & Safety →</Link>
     </Panel>
   )
 }
@@ -204,7 +204,7 @@ export function ComplianceCard({ compliance }) {
   )
 }
 
-export function FinancialSignalsCard({ financial }) {
+export function FinancialSignalsCard({ financial, providerId }) {
   return (
     <Panel title={<span className="flex items-center gap-1.5">Financial Signals {!financial && <Lock className="size-3.5 text-royal-400" />}</span>}>
       {!financial ? (
@@ -222,7 +222,7 @@ export function FinancialSignalsCard({ financial }) {
             <div className="mt-2 rounded-xl border border-amber-200 bg-amber-50 p-2.5 text-[12px]">
               <p className="font-semibold text-amber-800">Unusual Activity</p>
               <p className="text-slate-600">{financial.unusualAlert}</p>
-              <Link to="/withdrawals" className="text-[11.5px] font-semibold text-royal-600">Review Financial Activity →</Link>
+              <Link to={`/providers/${providerId}/earnings`} className="text-[11.5px] font-semibold text-royal-600">Review Financial Activity →</Link>
             </div>
           )}
         </>
@@ -231,9 +231,9 @@ export function FinancialSignalsCard({ financial }) {
   )
 }
 
-export function SafetyCard({ safety }) {
+export function SafetyCard({ safety, providerId }) {
   return (
-    <Panel title="Safety & Conduct" action={<LinkAction to="/safety">View History</LinkAction>}>
+    <Panel title="Safety & Conduct" action={<LinkAction to={`/providers/${providerId}/support`}>View History</LinkAction>}>
       <StatList rows={[
         [MessageSquareWarning, 'Open Safety Cases', safety.openCases, 'text-rose-500'],
         [CircleCheck, 'Closed Cases', safety.closedCases, 'text-emerald-600'],

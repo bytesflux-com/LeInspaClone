@@ -12,6 +12,10 @@ export const WITHDRAWAL_ACTION_STATUSES = ['submitted', 'processing', 'manual_re
 export const VERIFICATION_PENDING_STATUS = 'pending'
 export const DISPUTE_OPEN_STATUS = 'open'
 export const SUPPORT_OPEN_STATUS = 'open'
+// The mobile app writes mixed-case statuses ("Open", "Pending"); queries list every spelling.
+export const SUPPORT_OPEN_STATUSES = ['open', 'Open', 'OPEN', 'pending', 'Pending']
+export const SAFETY_OPEN_STATUSES = ['pending', 'Pending', 'open', 'Open', 'under_investigation', 'escalated']
+export const CONTENT_REQUEST_TYPES = ['gallery_photo', 'gallery_photo_edit', 'profile_photo', 'profile_text_change']
 
 export const QUEUE_CAP = 100
 export const SOURCE_LIMIT = 40
@@ -40,6 +44,8 @@ export function allowedCategories(permissionList) {
     verification: has('providers.view') || has('providers.verify'),
     finance: has('payments.view') || has('withdrawals.approve'),
     disputes: has('safety.manage'),
+    safety: has('safety.manage'),
+    content: has('content.moderate') || has('providers.view'),
     support: has('support.view'),
   }
 }
@@ -47,6 +53,8 @@ export function allowedCategories(permissionList) {
 export function resolvePriority({ category, status }) {
   if (category === 'finance' && status === 'manual_review') return 'high'
   if (category === 'disputes' && status === DISPUTE_OPEN_STATUS) return 'high'
+  if (category === 'safety' && /sos|emergency/i.test(String(status))) return 'critical'
+  if (category === 'safety') return 'high'
   return 'normal'
 }
 
@@ -99,8 +107,8 @@ const SUMMARY_KEY = {
 export const CATEGORY_AVAILABILITY = {
   verification: { state: 'connected' },
   content: {
-    state: 'unavailable',
-    reason: 'No gallery/media moderation collection or status schema exists in this repository.',
+    state: 'read_only',
+    reason: 'Content submissions (verification_requests gallery/profile items and professional_profile_update_requests) are decided in Content Approval.',
   },
   finance: {
     state: 'read_only',
@@ -111,8 +119,8 @@ export const CATEGORY_AVAILABILITY = {
     reason: 'No escrow-release or refund workflow is connected; disputes can be reviewed but not decided here.',
   },
   safety: {
-    state: 'unavailable',
-    reason: 'No safety-report collection or safety action model exists in this repository.',
+    state: 'read_only',
+    reason: 'Safety reports are investigated in the safety workflow; they can be reviewed but not decided here.',
   },
   support: {
     state: 'read_only',
@@ -170,11 +178,14 @@ export function isActionableStatus(sourceType, status) {
   if (sourceType === 'user_verification') return status === VERIFICATION_PENDING_STATUS
   if (sourceType === 'withdrawal_request') return WITHDRAWAL_ACTION_STATUSES.includes(status)
   if (sourceType === 'dispute') return status === DISPUTE_OPEN_STATUS
-  if (sourceType === 'support_ticket') return status === SUPPORT_OPEN_STATUS
+  if (sourceType === 'support_ticket') return status === SUPPORT_OPEN_STATUS || status === 'pending'
+  if (sourceType === 'safety_report' || sourceType === 'content_submission') return ['pending', 'open', 'under_investigation', 'escalated'].includes(status)
   return false
 }
 
 export const SOURCE_CATEGORY = {
+  safety_report: 'safety',
+  content_submission: 'content',
   user_verification: 'verification',
   withdrawal_request: 'finance',
   dispute: 'disputes',
@@ -205,6 +216,8 @@ export function actionPermissionFor(sourceType) {
   if (sourceType === 'withdrawal_request') return 'withdrawals.approve'
   if (sourceType === 'dispute') return 'safety.manage'
   if (sourceType === 'support_ticket') return 'support.respond'
+  if (sourceType === 'safety_report') return 'safety.manage'
+  if (sourceType === 'content_submission') return 'content.moderate'
   return null
 }
 
@@ -278,6 +291,8 @@ export function validateReviewPermission(permissionList, sourceType, action = 'v
   if (sourceType === 'dispute') {
     return permissions.has('safety.manage')
   }
+  if (sourceType === 'safety_report') return permissions.has('safety.manage')
+  if (sourceType === 'content_submission') return permissions.has('content.moderate') || (action === 'view' && permissions.has('providers.view'))
   if (sourceType === 'support_ticket') {
     if (action === 'view') {
       return permissions.has('support.view') || permissions.has('support.respond')

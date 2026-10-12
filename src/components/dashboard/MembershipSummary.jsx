@@ -3,22 +3,16 @@ import { Link } from 'react-router'
 import { formatNumber } from '../../lib/utils'
 import { formatDisplayCurrency } from '../../lib/currency'
 
-const DEFAULT_TIERS = [
-  { name: 'Standard', percent: 68, color: '#5c2dd5' },
-  { name: 'Premium', percent: 24, color: '#3b82f6' },
-  { name: 'Executive', percent: 8, color: '#f59e0b' },
-]
-
 export default function MembershipSummary({ membership }) {
   if (!membership) return null
 
-  const totalClients = membership.totalClients ?? 6842
-  const trend = membership.trend ?? '+11%'
-  const tiers = membership.tiers || DEFAULT_TIERS
-  const paidRevenue = membership.paidRevenue ?? 912400
-  const revenueTrend = membership.revenueTrend ?? '+19%'
-  const newUpgrades = membership.newUpgrades ?? 142
-  const upgradeTrend = membership.upgradeTrend ?? '+27%'
+  const totalClients = membership.totalClients ?? 0
+  const trend = membership.trend ?? null
+  const tiers = membership.tiers || []
+  const paidRevenue = membership.paidRevenue ?? 0
+  const revenueTrend = membership.revenueTrend ?? null
+  const newUpgrades = membership.newUpgrades ?? 0
+  const upgradeTrend = membership.upgradeTrend ?? null
   const currency = membership.currency || 'KES'
 
   // Circumference calculation for crisp SVG Donut
@@ -128,7 +122,7 @@ export default function MembershipSummary({ membership }) {
 
       <div className="mt-4 pt-2 text-center">
         <Link
-          to="/memberships"
+          to="/clients"
           className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#5c2dd5] hover:text-[#4922ab] transition-colors"
         >
           <span>View Memberships</span>

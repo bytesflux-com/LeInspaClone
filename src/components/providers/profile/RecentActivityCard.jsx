@@ -6,12 +6,7 @@ export function RecentActivityCard({
 }) {
   if (!profile) return null
 
-  const activities = profile.recentActivity || [
-    { time: 'Today • 11:42 AM', action: 'Provider logged in' },
-    { time: 'Today • 10:15 AM', action: 'Availability updated' },
-    { time: 'Yesterday • 4:30 PM', action: 'Booking #LI-48291 confirmed' },
-    { time: '10 Sep • 2:18 PM', action: 'Profile photo submitted for review' },
-  ]
+  const activities = profile.recentActivity || []
 
   const preview = activities.slice(0, 4)
 

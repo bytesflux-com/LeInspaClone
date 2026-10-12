@@ -273,22 +273,10 @@ function buildSandboxOperations(marketId) {
 }
 
 export const operationsService = {
+  // ADM-006 — always the live read model; errors surface to the page.
+  // Demo data only when VITE_USE_MOCK_DATA=true.
   async getOperationsSummary({ marketId = 'ALL' } = {}) {
-    try {
-      const result = await callAdmin('adminGetOperationsSummary', {
-        market: marketId,
-      })
-      if (result && !result.summary) {
-        return buildSandboxOperations(marketId)
-      }
-      return result
-    } catch (err) {
-      console.warn(
-        '[operationsService] Live Cloud Function unreachable or not yet deployed, using sandbox telemetry:',
-        err?.message || err,
-      )
-      return buildSandboxOperations(marketId)
-    }
+    if (import.meta.env.VITE_USE_MOCK_DATA === 'true') return buildSandboxOperations(marketId)
+    return callAdmin('adminGetOperationsSummary', { market: marketId })
   },
 }
-

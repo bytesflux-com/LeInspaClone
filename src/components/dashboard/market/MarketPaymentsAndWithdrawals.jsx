@@ -40,7 +40,7 @@ export function MarketPaymentsAndWithdrawals({ paymentsAndWithdrawals, marketNam
                   </div>
 
                   <div className="text-right">
-                    <div className="font-bold text-emerald-700 text-xs">{rail.successRate}% Success</div>
+                    <div className="font-bold text-emerald-700 text-xs">{rail.successRate == null ? 'No outcomes yet' : `${rail.successRate}% Success`}</div>
                     <div className="text-[11px] font-mono text-gray-500">
                       {formatCompactCurrency(rail.volume, currency)} ({rail.transactions} txns)
                     </div>
@@ -53,10 +53,10 @@ export function MarketPaymentsAndWithdrawals({ paymentsAndWithdrawals, marketNam
                       className={`h-full rounded-full ${
                         rail.successRate >= 96 ? 'bg-emerald-500' : 'bg-amber-500'
                       }`}
-                      style={{ width: `${rail.successRate}%` }}
+                      style={{ width: `${rail.successRate ?? 0}%` }}
                     />
                   </div>
-                  <Badge variant={rail.status === 'Operational' ? 'success' : 'warning'} size="sm">
+                  <Badge variant={rail.status === 'Operational' ? 'success' : rail.status === 'Not monitored' ? 'default' : 'warning'} size="sm">
                     {rail.status}
                   </Badge>
                 </div>

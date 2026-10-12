@@ -8,7 +8,7 @@ export default function OperationsSummaryCards({ summary, activeFilter, onSelect
     {
       id: 'critical',
       label: 'Critical',
-      count: summary.critical ?? 2,
+      count: summary.critical ?? null,
       subtitle: 'Require immediate action',
       icon: AlertCircle,
       iconColor: 'bg-rose-100 text-rose-600',
@@ -17,7 +17,7 @@ export default function OperationsSummaryCards({ summary, activeFilter, onSelect
     {
       id: 'high',
       label: 'High Priority',
-      count: summary.high ?? 8,
+      count: summary.high ?? null,
       subtitle: 'Need attention soon',
       icon: AlertTriangle,
       iconColor: 'bg-amber-100 text-amber-600',
@@ -26,7 +26,7 @@ export default function OperationsSummaryCards({ summary, activeFilter, onSelect
     {
       id: 'awaiting',
       label: 'Awaiting Action',
-      count: summary.awaitingAction ?? 27,
+      count: summary.awaitingAction ?? null,
       subtitle: 'Pending admin review',
       icon: Clock,
       iconColor: 'bg-purple-100 text-[#5c2dd5]',
@@ -35,7 +35,7 @@ export default function OperationsSummaryCards({ summary, activeFilter, onSelect
     {
       id: 'review',
       label: 'In Review',
-      count: summary.inReview ?? 14,
+      count: summary.inReview ?? null,
       subtitle: 'Currently being handled',
       icon: Eye,
       iconColor: 'bg-indigo-100 text-indigo-600',
@@ -44,7 +44,7 @@ export default function OperationsSummaryCards({ summary, activeFilter, onSelect
     {
       id: 'resolved',
       label: 'Resolved Today',
-      count: summary.resolvedToday ?? 43,
+      count: summary.resolvedToday ?? null,
       subtitle: 'Completed today',
       icon: CheckCircle2,
       iconColor: 'bg-emerald-100 text-emerald-600',

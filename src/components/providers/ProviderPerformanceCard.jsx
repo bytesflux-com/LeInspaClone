@@ -77,10 +77,10 @@ export default function ProviderPerformanceCard({ performance }) {
       <div className="flex items-center justify-between pb-3">
         <h2 className="text-[15px] font-bold text-[#1b1140]">Platform Provider Performance</h2>
         <Link
-          to="/analytics"
+          to="/markets"
           className="flex items-center gap-1 text-[12px] font-semibold text-[#5c2dd5] transition hover:text-[#4520a8]"
         >
-          View Analytics <ArrowRight className="size-3.5" />
+          View Market Dashboard <ArrowRight className="size-3.5" />
         </Link>
       </div>
 

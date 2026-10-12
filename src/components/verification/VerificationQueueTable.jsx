@@ -36,7 +36,7 @@ export default function VerificationQueueTable({
   onSearchChange,
   filters = {},
   onFilterChange,
-  totalCount = 428,
+  totalCount = 0,
 }) {
   const [selectedRowIds, setSelectedRowIds] = useState(new Set())
   const [currentPage, setCurrentPage] = useState(1)
@@ -45,7 +45,7 @@ export default function VerificationQueueTable({
 
   // Tab definitions
   const tabs = [
-    { id: 'ALL', label: 'All', count: totalCount || 428 },
+    { id: 'ALL', label: 'All', count: totalCount },
     { id: 'AWAITING_REVIEW', label: 'New', count: 196 },
     { id: 'UNDER_REVIEW', label: 'Under Review', count: 86 },
     { id: 'RESUBMITTED', label: 'Resubmitted', count: 46 },
@@ -160,8 +160,8 @@ export default function VerificationQueueTable({
 
   // Market label formatting
   const renderMarketBadge = (market) => {
-    const code = market?.code || 'KE'
-    const name = market?.name || 'Kenya'
+    const code = market?.code || null
+    const name = market?.name || '—'
     return (
       <div className="flex items-center gap-2">
         <CountryFlag code={code} className="size-4" />

@@ -214,3 +214,23 @@ test('ADM-050: masking keeps the market calling code', () => {
   assert.equal(maskPhone('+256772554310'), '+256 7•• ••• 310')
   assert.equal(maskEmail('a@x.com'), 'a••••@x.com')
 })
+
+// Live mobile-app booking shape: bookingDate + "hh:mm AM/PM" in market time, price under `local`.
+import { parseClockTime } from '../src/bookingsLogic.js'
+test('parses 12-hour booking times', () => {
+  assert.equal(parseClockTime('09:00 AM'), 540)
+  assert.equal(parseClockTime('02:00 PM'), 840)
+  assert.equal(parseClockTime('12:00 PM'), 720)
+  assert.equal(parseClockTime('12:15 AM'), 15)
+  assert.equal(parseClockTime('14:30'), 870)
+  assert.equal(parseClockTime('nonsense'), null)
+})
+test('normalizes the live mobile booking shape', () => {
+  const b = normalizeBooking('B1', { bookingStatus: 'confirmed', bookingDate: '2026-10-12', bookingTime: '02:00 PM', local: { totalPrice: 6000, currency: 'KES', providerEarnings: 5100 }, customerId: 'C1', providerId: 'P1', derivedCountryCode: 'KE', derivedProviderName: 'Paul JK', providerType: 'hotels_wellness_resorts' })
+  assert.equal(new Date(b.scheduledStart).toISOString(), '2026-10-12T11:00:00.000Z') // 14:00 EAT
+  assert.equal(b.amount, 6000)
+  assert.equal(b.currency, 'KES')
+  assert.equal(b.countryCode, 'KE')
+  assert.equal(b.provider.name, 'Paul JK')
+  assert.equal(b.category, 'hotel')
+})

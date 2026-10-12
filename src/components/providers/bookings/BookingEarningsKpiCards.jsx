@@ -15,17 +15,17 @@ export function BookingEarningsKpiCards({
   const counts = summary?.counts || {}
   const financials = summary?.financials || {}
 
-  const totalBookings = counts.total ?? 284
-  const upcomingBookings = counts.upcoming ?? 12
-  const completedBookings = counts.completed ?? 268
+  const totalBookings = counts.total ?? 0
+  const upcomingBookings = counts.upcoming ?? 0
+  const completedBookings = counts.completed ?? 0
   const cancelledBookings = counts.cancelled ?? 4
 
   const totalEarningsFormatted = canSeeFinancial
-    ? `KES ${(financials.providerEarnings ?? 1026500).toLocaleString()}`
+    ? `KES ${(financials.providerEarnings ?? 0).toLocaleString()}`
     : 'KES —'
 
   const availableWithdrawalFormatted = canSeeFinancial
-    ? `KES ${(financials.availableBalance ?? 342800).toLocaleString()}`
+    ? `KES ${(financials.availableBalance ?? 0).toLocaleString()}`
     : 'KES —'
 
   const cards = [

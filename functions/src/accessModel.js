@@ -8,13 +8,15 @@ import { newSessionData, sessionPolicy } from './session.js'
 //   admin_sessions/{uid_authTime}     each sign-in that passed 2FA (see session.js)
 // Bump CATALOG_VERSION when permissions or roles change; the next admin login
 // writes the new catalog.
-export const CATALOG_VERSION = 3
+export const CATALOG_VERSION = 4
 
 export const PERMISSIONS = {
   'dashboard.view': { name: 'View dashboard', category: 'Overview', sensitive: false },
   'users.view': { name: 'View users', category: 'Users', sensitive: false },
   'users.suspend': { name: 'Suspend or reactivate users', category: 'Users', sensitive: true },
   'users.deactivate': { name: 'Deactivate accounts or apply indefinite restrictions', category: 'Users', sensitive: true },
+  'users.export': { name: 'Export client lists (masked contacts)', category: 'Users', sensitive: true },
+  'memberships.manage': { name: 'Change, extend or reactivate client memberships', category: 'Users', sensitive: true },
   'providers.view': { name: 'View providers, spas and hotels', category: 'Providers', sensitive: false },
   'providers.verify': { name: 'Approve or reject provider verification', category: 'Providers', sensitive: true },
   'identity.reveal_sensitive': { name: 'Reveal sensitive identity information', category: 'Identity', sensitive: true },
@@ -49,6 +51,8 @@ export const ROLES = {
       'dashboard.view',
       'users.view',
       'users.suspend',
+      'users.export',
+      'memberships.manage',
       'providers.view',
       'providers.verify',
       'identity.reveal_sensitive',

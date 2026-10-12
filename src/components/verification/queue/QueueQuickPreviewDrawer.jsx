@@ -125,12 +125,7 @@ export default function QueueQuickPreviewDrawer({
   }
 
   // Progress Steps Helper
-  const progressSteps = record.progressSteps || [
-    { id: 'step-1', label: 'Identity', status: 'APPROVED' },
-    { id: 'step-2', label: 'Professional Credentials', status: 'REVIEWING_NOW' },
-    { id: 'step-3', label: 'Profile Information', status: 'PENDING' },
-    { id: 'step-4', label: 'Final Verification', status: 'PENDING' },
-  ]
+  const progressSteps = record.progressSteps || []
 
   const docs = record.documents || []
 
@@ -392,7 +387,7 @@ export default function QueueQuickPreviewDrawer({
                         </p>
                         <p className="text-[10px] text-slate-400">
                           {doc.fileFormat || 'PDF'} •{' '}
-                          {Math.round(((doc.fileSizeKb || 2400) / 1024) * 10) / 10} MB
+                          {doc.fileSizeKb ? `${Math.round((doc.fileSizeKb / 1024) * 10) / 10} MB` : '—'}
                         </p>
                       </div>
                     </div>
@@ -461,10 +456,7 @@ export default function QueueQuickPreviewDrawer({
             </p>
 
             <div className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-2xs">
-              {(record.comparisonData || [
-                { fieldName: 'Account Name', accountValue: record.name, docValue: record.name, isMatch: true },
-                { fieldName: 'Country', accountValue: record.market?.name, docValue: record.market?.name, isMatch: true },
-              ]).map((item, idx) => (
+              {(record.comparisonData || []).map((item, idx) => (
                 <div
                   key={idx}
                   className={`p-3 text-xs ${

@@ -19,13 +19,6 @@ export default function TeamWorkloadCard({ workloads = [] }) {
             <Users className="size-4.5 text-[#5c2dd5]" />
             <h3 className="text-sm font-bold text-gray-900">Team Workload</h3>
           </div>
-          <Link
-            to="/team"
-            className="inline-flex items-center gap-0.5 text-xs font-semibold text-[#5c2dd5] hover:text-[#4922ab] transition-colors"
-          >
-            <span>View Details</span>
-            <ArrowRight className="size-3.5" />
-          </Link>
         </div>
 
         <div className="divide-y divide-gray-50 text-xs">

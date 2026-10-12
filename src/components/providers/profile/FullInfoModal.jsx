@@ -87,11 +87,11 @@ export function FullInfoModal({
             <div className="grid grid-cols-2 gap-3">
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
                 <span className="text-slate-400 block text-[10.5px]">Tax Identification (PIN)</span>
-                <span className="font-mono font-bold text-slate-900 text-xs">{info?.taxPin || 'P051928190Z'}</span>
+                <span className="font-mono font-bold text-slate-900 text-xs">{info?.taxPin || '—'}</span>
               </div>
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
                 <span className="text-slate-400 block text-[10.5px]">Company Registration No</span>
-                <span className="font-mono font-bold text-slate-900 text-xs">{info?.businessRegNo || 'CPR/2023/892019'}</span>
+                <span className="font-mono font-bold text-slate-900 text-xs">{info?.businessRegNo || '—'}</span>
               </div>
             </div>
           )}

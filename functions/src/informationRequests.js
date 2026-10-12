@@ -4,6 +4,7 @@ import { Timestamp, getFirestore } from 'firebase-admin/firestore'
 import { requireAdmin } from './auth.js'
 import { ALL_MARKETS, adminAccess, canAccessMarket } from './accessModel.js'
 import { recordAudit } from './events.js'
+import { countryCodeOf } from './platformData.js'
 import { CONTENT_TYPES, normalizeModeration, toMillis } from './contentModerationLogic.js'
 import {
   CHANNELS,
@@ -76,7 +77,26 @@ async function resolveOrigin(originModule, originRecordId) {
       countryCode: r.countryCode,
     }
   }
-  // Verification / account / safety / finance cases are keyed by the provider's user record.
+  // Verification cases are the provider's verification_requests submission.
+  if (originModule === 'verification') {
+    const v = await db().collection('verification_requests').doc(id).get()
+    if (v.exists) {
+      const uid = v.get('userId') || v.get('providerId')
+      const u = uid ? (await db().collection('users').doc(uid).get()).data() || {} : {}
+      return {
+        originModule,
+        originRecordId: id,
+        reviewType: 'Professional Verification',
+        caseId: id,
+        caseStatus: v.get('status') || null,
+        relatedItem: v.get('docType') || v.get('requestType') || null,
+        provider: { id: uid, ref: uid, name: v.get('businessName') || u.fullName || u.displayName || 'Provider', typeLabel: u.accountType || null, photoUrl: u.profilePhoto || null, verified: u.isVerified === true, city: u.city || null },
+        countryCode: countryCodeOf(u.countryCode, u.country),
+        sourceCollection: 'verification_requests',
+      }
+    }
+  }
+  // Account / safety / finance cases are keyed by the provider's user record.
   const snap = await db().collection('users').doc(id).get()
   if (!snap.exists) throw new HttpsError('not-found', 'The originating case no longer exists.')
   const u = snap.data()
@@ -87,8 +107,8 @@ async function resolveOrigin(originModule, originRecordId) {
     caseId: `${originModule === 'verification' ? 'VER' : 'CASE'}-${id.slice(0, 8).toUpperCase()}`,
     caseStatus: u.professionalVerificationStatus || u.accountStatus || null,
     relatedItem: null,
-    provider: { id, ref: u.providerRef || id, name: u.fullName || u.displayName || u.name || 'Provider', typeLabel: u.accountType || null, photoUrl: u.photoURL || u.profileImage || null, verified: u.professionalVerificationStatus === 'approved', city: u.city || null },
-    countryCode: String(u.countryCode || '').toUpperCase() || null,
+    provider: { id, ref: u.providerRef || id, name: u.fullName || u.displayName || u.name || 'Provider', typeLabel: u.accountType || null, photoUrl: u.profilePhoto || u.photoURL || null, verified: u.professionalVerificationStatus === 'approved', city: u.city || null },
+    countryCode: countryCodeOf(u.countryCode, u.country),
   }
 }
 
@@ -207,6 +227,13 @@ export const adminSaveInfoRequest = onCall(async (request) => {
       ...(send ? { sentAt: ts, notificationIntent: { channels: payload.channels, at: ts } } : {}),
       history,
     })
+    if (send && origin.provider?.id) {
+      // Notify the provider in the app's own notification format.
+      tx.set(db().collection('notifications').doc(), { userId: origin.provider.id, title: 'More information needed', message: payload.providerMessage || `Lé Inspa needs ${payload.items.length} item${payload.items.length === 1 ? '' : 's'} from you: ${payload.items.map((x) => x.label).join(', ')}`, notificationType: 'information_request', relatedId: ref.id, isRead: false, read: false, createdAt: ts })
+    }
+    if (send && origin.sourceCollection === 'verification_requests') {
+      tx.update(db().collection('verification_requests').doc(origin.originRecordId), { status: 'reviewed', requiredActions: payload.items.map((x) => x.label), updatedAt: ts })
+    }
     // Link the request to its originating moderation case.
     if (send && ['content', 'profile_change', 'service'].includes(d.originModule)) {
       tx.update(db().collection('content_moderation').doc(origin.originRecordId), { openInfoRequestId: ref.id })

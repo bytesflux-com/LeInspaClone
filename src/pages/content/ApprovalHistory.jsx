@@ -189,7 +189,7 @@ function ApprovalDetailsDrawer({ detail, loading, onSelectDecision, onClose }) {
   const originalRoute =
     d.routes?.original ||
     (['verification', 'identity', 'credentials', 'business_documents'].includes(d.originModule)
-      ? verificationDecisionPath(d.providerId || 'PR-82941')
+      ? verificationDecisionPath(d.originRecordId || d.verificationId)
       : CONTENT_BASE)
 
   const providerRoute = d.routes?.provider || (d.providerId ? `/providers/${d.providerId}` : '/providers')
@@ -221,8 +221,8 @@ function ApprovalDetailsDrawer({ detail, loading, onSelectDecision, onClose }) {
               </p>
               <p className="text-[12px] font-medium text-[#2a1b57]">{d.subjectSubtitle || d.providerType}</p>
               <p className="flex items-center gap-1 text-[11.5px] text-[#4a4466]">
-                <CountryFlag code={d.marketId || 'KE'} className="h-3 w-4" />
-                {d.marketName || d.marketId || 'Nairobi, Kenya'}
+                <CountryFlag code={d.marketId} className="h-3 w-4" />
+                {d.marketName || d.marketId || '—'}
               </p>
               <p className="text-[11px] text-[#6b6785]">Provider ID: {d.providerRef || d.providerId}</p>
             </div>
@@ -507,7 +507,7 @@ function ApprovalDetailsDrawer({ detail, loading, onSelectDecision, onClose }) {
               <ArrowUpRight className="size-4 text-[#4125d0]" />
             </Link>
             <Link
-              to={verificationDecisionPath(d.providerId || 'PR-82941')}
+              to={verificationDecisionPath(d.originRecordId || d.verificationId)}
               className="flex items-center justify-between rounded-xl border border-[#ece7fa] bg-[#faf9fe] p-3 font-semibold text-[#1b1140] hover:border-[#b9a9f0]"
             >
               <span>Verification Decision Gate (ADM-042)</span>
@@ -568,7 +568,7 @@ function ApprovalDetailsDrawer({ detail, loading, onSelectDecision, onClose }) {
             View Provider Profile
           </Link>
           <Link
-            to={verificationDecisionPath(d.providerId || 'PR-82941')}
+            to={verificationDecisionPath(d.originRecordId || d.verificationId)}
             className="flex h-9 items-center justify-center rounded-lg border border-[#ddd7ee] bg-white px-2 text-[12px] font-semibold text-[#1b1140] hover:bg-[#f4f1fc]"
           >
             View Verification Case
@@ -581,7 +581,7 @@ function ApprovalDetailsDrawer({ detail, loading, onSelectDecision, onClose }) {
 
 export default function ApprovalHistory() {
   const [searchParams, setSearchParams] = useSearchParams()
-  const initialDecisionId = searchParams.get('decision') || 'APR-82941'
+  const initialDecisionId = searchParams.get('decision') || '—'
 
   const [tab, setTab] = useState('all')
   const [q, setQ] = useState('')

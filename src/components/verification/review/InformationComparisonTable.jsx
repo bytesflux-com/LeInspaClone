@@ -7,17 +7,9 @@ import { ExternalLink, CheckCircle2, AlertTriangle, HelpCircle } from 'lucide-re
  */
 export default function InformationComparisonTable({
   comparisonData = [],
-  providerId = 'PR-82941',
+  providerId = null,
 }) {
-  const defaultData = [
-    { field: 'Full Name', account: 'Grace Njeri', document: 'Grace W. Njeri', result: 'Review', resultType: 'review' },
-    { field: 'Country', account: 'Kenya', document: 'Kenya', result: 'Match', resultType: 'match' },
-    { field: 'Profession', account: 'Massage Therapist', document: 'Massage Therapy', result: 'Consistent', resultType: 'consistent' },
-    { field: 'Document Status', account: '—', document: 'Valid', result: 'Valid', resultType: 'valid' },
-    { field: 'Expiry Date', account: '—', document: '15 Jan 2028', result: 'Valid', resultType: 'valid' },
-  ]
-
-  const rows = comparisonData.length > 0 ? comparisonData : defaultData
+  const rows = comparisonData
 
   const renderResultBadge = (result, type) => {
     const norm = (type || result || '').toLowerCase()

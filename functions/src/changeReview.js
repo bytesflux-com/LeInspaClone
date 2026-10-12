@@ -13,14 +13,16 @@ import {
   validateServiceDecision,
 } from './changeReviewLogic.js'
 import { requireId, transact } from './contentModeration.js'
+import { isSharedProfileField, profileTargets } from './contentSources.js'
 
 // ADM-038 Profile Information Change Review · ADM-039 Service Information Approval.
 //
 // Both reuse `content_moderation` (contentType profile_change / service) and
-// write back to the provider's own records — `providers/{id}` for profile
-// fields and `provider_services/{id}` for services (same contract as ADM-023:
-// proposedChanges → live, approvalStatus). Live values stay public until a
-// change is approved; rejecting a proposal never touches the live record.
+// write back to the provider's own records — the provider's type-collection
+// document (+ provider_profiles shared fields) for profile fields and
+// `<type collection>/{uid}/services/{id}` for services. Live values stay
+// public until a change is approved; rejecting a proposal never touches the
+// live record.
 
 const db = () => getFirestore()
 
@@ -117,11 +119,14 @@ export const adminPublishProfileChanges = onCall(async (request) => {
       // Live profile update happens inside the same transaction.
       livePatch: Object.fromEntries(ready.map((f) => [f.path, f.proposed])),
     }
-  }, async (tx, o, record) => {
-    if (!record.provider.id) return
-    const ref = db().collection('providers').doc(record.provider.id)
-    const snap = await tx.get(ref)
-    if (snap.exists) tx.update(ref, { ...o.livePatch, profileUpdatedAt: FieldValue.serverTimestamp() })
+  }, async (tx, o, record, raw) => {
+    // Live profile = the provider's type-collection document (+ shared fields on provider_profiles).
+    const targets = profileTargets(db(), raw)
+    if (!targets) return
+    const [detail, profile] = await Promise.all([tx.get(targets.detail), tx.get(targets.profile)])
+    if (detail.exists) tx.update(targets.detail, { ...o.livePatch, updatedAt: FieldValue.serverTimestamp() })
+    const shared = Object.fromEntries(Object.entries(o.livePatch).filter(([k]) => isSharedProfileField(k)))
+    if (profile.exists && Object.keys(shared).length) tx.update(targets.profile, shared)
   })
   await recordAudit(request, { actorId: uid, action: 'content.profile_changes_published', entityId: id, entityType: 'profile_change', metadata: { providerId: record.provider.id, fields: published.map((f) => f.key) } })
   return { ok: true, published: published.map((f) => f.key) }
@@ -176,12 +181,10 @@ export const adminServiceDecision = onCall(async (request) => {
               : null,
       reverify: inp.decision === 'reverify' ? { ref: db().collection('reverification_requests').doc(), data: reverificationRecord(record, [{ key: 'category', label: 'Service Category', current: record.serviceChange.current?.category ?? null, proposed: proposed.category, reverifyRoute: { adm: 'ADM-033', label: 'Professional Credentials' } }], actor, now) } : null,
     }
-  }, async (tx, o) => {
+  }, (tx, o) => {
+    // The service's content already lives in its document; its moderation
+    // status is written by the shared write-back (contentSources.js).
     if (o.reverify) tx.set(o.reverify.ref, o.reverify.data)
-    if (!o.servicePatch || !o.serviceId) return
-    const ref = db().collection('provider_services').doc(o.serviceId)
-    const snap = await tx.get(ref)
-    if (snap.exists) tx.update(ref, o.servicePatch)
   })
   await recordAudit(request, { actorId: uid, action: `content.service_${inp.decision}`, entityId: id, entityType: 'service_moderation', metadata: { providerId: record.provider.id, serviceId: record.serviceChange?.serviceId || null, reason: inp.reason } })
   return { ok: true }

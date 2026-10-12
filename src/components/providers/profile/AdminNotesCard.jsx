@@ -52,9 +52,9 @@ export function AdminNotesCard({
                 </p>
                 <div className="flex items-center justify-between text-[10.5px] text-slate-500 pt-1 border-t border-purple-100/60 font-medium">
                   <span>
-                    {n.author || 'Admin'} • {n.team || 'Verification Team'}
+                    {n.author || 'Admin'} • {n.team || 'Admin team'}
                   </span>
-                  <span>{n.date || '10 Sep 2026'}</span>
+                  <span>{n.date || '—'}</span>
                 </div>
               </div>
             ))

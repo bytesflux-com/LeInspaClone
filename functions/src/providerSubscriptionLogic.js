@@ -486,3 +486,103 @@ export function planVisibilityChange({ provider, subscription, visibility: rawVi
     message: label,
   }
 }
+
+// ---------------------------------------------------------------- app adapters
+// The mobile app keeps one `subscriptions` document per billing period
+// (userId, planName, status, startDate, endDate, autoRenew, amount, currency),
+// payments in `subscription_payments`, and plan prices per provider type in
+// platform_settings/global_settings.subscriptions.provider (USD).
+const PRICE_KEY = { massage_therapist: 'individual_massage', fitness_trainer: 'fitness_trainer', yoga_specialist: 'yoga_specialist', meditation_specialist: 'meditation_specialist', physiotherapist: 'physio_recovery', spa: 'spa_wellness', hotel_resort: 'hotel_resort' }
+const CATEGORY_OF = { spa: 'spa', hotel_resort: 'hotel' }
+
+export function appPlans(settings = {}, providerType) {
+  const prices = settings?.subscriptions?.provider?.[PRICE_KEY[providerType]] || {}
+  return Object.entries(prices).map(([tier, price]) => normalizePlan(tier, {
+    planId: tier,
+    name: tier.charAt(0).toUpperCase() + tier.slice(1),
+    kind: 'base',
+    currency: 'USD',
+    price: typeof price === 'number' ? Math.round(price * 100) / 100 : null,
+    billingCycle: 'monthly',
+    providerCategories: [CATEGORY_OF[providerType] || 'individual'],
+    visibilityTier: tier === 'premium' ? 'premium' : 'standard',
+    benefits: tier === 'premium' ? ['Higher Search Priority', 'Featured Placement', 'Premium Badge', 'Priority Discovery'] : [],
+  }))
+}
+
+const isTest = (s) => s.testOnly || s.isTestEntitlement || s.isTestAccount
+export function appSubscriptionState(subs = [], payments = [], now = Date.now()) {
+  const periods = subs
+    .filter((s) => !['superseded'].includes(lower(s.status)))
+    .map((s) => ({ ...s, _start: toMillis(s.startDate || s.createdAt), _end: toMillis(s.endDate) }))
+    .sort((a, b) => (b._start || 0) - (a._start || 0))
+  const current = periods.find((s) => lower(s.status) === 'active' && (!s._end || s._end >= now)) || periods.find((s) => lower(s.status) === 'pending') || periods[0] || null
+  const payFor = (s) => payments.find((p) => p.subscriptionId === s.id || p.id === s.paymentId || p.transactionReference === s.paymentReference)
+  const paymentStatusOf = (s) => {
+    if (!s) return 'pending'
+    const p = payFor(s)
+    if (p) return ['successful', 'completed', 'paid'].includes(lower(p.paymentStatus)) ? 'paid' : lower(p.paymentStatus) || 'pending'
+    if (s.paymentRequired === false || s.amountPaid > 0 || /^pay_|WALLET/i.test(s.paymentReference || '')) return 'paid'
+    return lower(s.status) === 'pending' ? 'pending' : 'paid'
+  }
+  const subscription = current
+    ? normalizeSubscription(current.id, {
+        subscriptionId: current.id,
+        planId: lower(current.planName) || 'standard',
+        planName: `${current.planName || 'Standard'}${isTest(current) ? ' (test)' : ''}`,
+        status: lower(current.status) === 'pending' ? 'active' : lower(current.status),
+        billingCycle: current.billingCycle || 'monthly',
+        currentPeriodStart: current._start,
+        currentPeriodEnd: current._end,
+        autoRenew: current.autoRenew === true,
+        priceCharged: typeof (current.amountPaid ?? current.amount) === 'number' ? { amount: current.amountPaid ?? current.amount, currency: current.currency || 'USD' } : null,
+        paymentStatus: paymentStatusOf(current),
+        latestPaymentId: payFor(current)?.id || current.paymentId || null,
+        pendingPlanName: current.pendingPlanName || null,
+        version: current.adminVersion || 0,
+      })
+    : null
+  const history = periods.map((s) => ({
+    id: s.id,
+    planName: s.planName || 'Plan',
+    kind: 'base',
+    periodStart: s._start,
+    periodEnd: s._end,
+    amount: s.amountPaid ?? s.amount ?? null,
+    currency: s.currency || 'USD',
+    status: s === current && (!s._end || s._end >= now) ? lower(s.status) : s._end && s._end < now ? 'completed' : lower(s.status),
+    paymentStatus: paymentStatusOf(s),
+    paymentId: payFor(s)?.id || null,
+    source: s.source || s.provisionedBy || null,
+  }))
+  return { current, subscription, history }
+}
+
+export function appPayments(payments = []) {
+  return payments.map((p) => normalizePayment(p.id, {
+    paymentId: p.id,
+    amount: typeof p.amountLocal === 'number' ? p.amountLocal : p.amount,
+    currency: p.amountLocal != null ? p.localCurrency || p.currency : p.currency,
+    method: p.paymentMethod,
+    status: ['successful', 'completed', 'paid'].includes(lower(p.paymentStatus)) ? 'successful' : lower(p.paymentStatus),
+    createdAt: p.paidAt || p.createdAt,
+    planName: p.plan || p.description || null,
+    kind: 'base',
+    failureReason: p.failureReason || null,
+  }))
+}
+
+/** Visibility state from the provider's type document + current plan. */
+export function appVisibility(detail = {}, subscription = null) {
+  const premiumPlan = subscription && /premium/i.test(subscription.planName)
+  const premium = Boolean(detail.premiumVisibility) || premiumPlan
+  return {
+    level: premium ? 'premium' : 'standard',
+    premiumStartsAt: premium ? subscription?.currentPeriodStart || null : null,
+    premiumEndsAt: premium ? subscription?.currentPeriodEnd || null : null,
+    featured: Boolean(detail.isFeatured || detail.featured),
+    paused: Boolean(detail.visibilityPaused),
+    pausedReason: detail.visibilityPausedReason || null,
+    version: Number(detail.visibilityVersion) || 0,
+  }
+}

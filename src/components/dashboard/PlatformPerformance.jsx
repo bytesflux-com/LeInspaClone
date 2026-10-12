@@ -1,26 +1,16 @@
 import { useState } from 'react'
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
-import { ChevronDown, LineChart as ChartIcon, TrendingUp } from 'lucide-react'
+import { LineChart as ChartIcon, TrendingDown, TrendingUp } from 'lucide-react'
 import { formatCurrency } from '../../lib/currency'
 
-const SAMPLE_PERFORMANCE = [
-  { date: 'Aug 1', revenue: 480000, bookings: 45 },
-  { date: 'Aug 5', revenue: 590000, bookings: 52 },
-  { date: 'Aug 10', revenue: 780000, bookings: 68 },
-  { date: 'Aug 15', revenue: 950000, bookings: 84 },
-  { date: 'Aug 20', revenue: 1350000, bookings: 112 },
-  { date: 'Aug 25', revenue: 1180000, bookings: 98 },
-  { date: 'Aug 30', revenue: 1680000, bookings: 134 },
-]
-
-function ChartTooltip({ active, payload, mode }) {
+function ChartTooltip({ active, payload, mode, currency }) {
   if (!active || !payload?.length) return null
   const data = payload[0].payload
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-2.5 text-xs shadow-lg">
       <p className="text-gray-500 font-medium">{data.date}</p>
       <p className="mt-0.5 font-bold text-royal-950">
-        {mode === 'revenue' ? formatCurrency(data.revenue, 'KES') : `${data.bookings} Bookings`}
+        {mode === 'revenue' ? formatCurrency(data.revenue, currency) : `${data.bookings} Bookings`}
       </p>
     </div>
   )
@@ -29,7 +19,10 @@ function ChartTooltip({ active, payload, mode }) {
 export default function PlatformPerformance({ performance }) {
   const [mode, setMode] = useState('revenue') // 'revenue' | 'bookings'
 
-  const chartData = SAMPLE_PERFORMANCE
+  const chartData = (performance?.chartPoints || []).map((p) => ({ ...p, date: p.date.slice(5).replace('-', '/') }))
+  const currency = performance?.currency || 'USD'
+  const growth = performance?.growthPercentage
+  const down = typeof growth === 'string' && growth.startsWith('-')
 
   return (
     <div className="rounded-2xl border border-gray-200/90 bg-white p-5 shadow-xs flex flex-col justify-between">
@@ -70,14 +63,6 @@ export default function PlatformPerformance({ performance }) {
               </button>
             </div>
 
-            {/* Timeframe dropdown badge */}
-            <button
-              type="button"
-              className="inline-flex items-center gap-1 rounded-xl border border-gray-200 bg-white px-2.5 py-1 text-xs font-semibold text-gray-700 hover:bg-gray-50"
-            >
-              <span>Last 30 Days</span>
-              <ChevronDown className="size-3 text-gray-400" />
-            </button>
           </div>
         </div>
 
@@ -104,7 +89,7 @@ export default function PlatformPerformance({ performance }) {
                 tick={{ fontSize: 10, fill: '#6b7280' }}
                 tickFormatter={(v) => (v >= 1000000 ? `${v / 1000000}M` : v >= 1000 ? `${v / 1000}K` : v)}
               />
-              <Tooltip content={<ChartTooltip mode={mode} />} />
+              <Tooltip content={<ChartTooltip mode={mode} currency={currency} />} />
               <Area
                 type="monotone"
                 dataKey={mode}
@@ -122,17 +107,17 @@ export default function PlatformPerformance({ performance }) {
       <div className="mt-4 grid grid-cols-3 border-t border-gray-100 pt-3 text-xs">
         <div>
           <p className="text-[11px] text-gray-400 font-medium">Current Period</p>
-          <p className="mt-0.5 text-xs sm:text-sm font-bold text-gray-900">KES 12,482,300</p>
+          <p className="mt-0.5 text-xs sm:text-sm font-bold text-gray-900">{formatCurrency(performance?.currentPeriodGbv ?? 0, currency)}</p>
         </div>
         <div>
           <p className="text-[11px] text-gray-400 font-medium">Previous Period</p>
-          <p className="mt-0.5 text-xs sm:text-sm font-bold text-gray-900">KES 9,842,110</p>
+          <p className="mt-0.5 text-xs sm:text-sm font-bold text-gray-900">{formatCurrency(performance?.previousPeriodGbv ?? 0, currency)}</p>
         </div>
         <div>
           <p className="text-[11px] text-gray-400 font-medium">Growth</p>
-          <p className="mt-0.5 text-xs sm:text-sm font-bold text-emerald-600 flex items-center gap-0.5">
-            <TrendingUp className="size-3" />
-            <span>26.8%</span>
+          <p className={`mt-0.5 text-xs sm:text-sm font-bold flex items-center gap-0.5 ${growth ? (down ? 'text-rose-600' : 'text-emerald-600') : 'text-gray-400'}`}>
+            {growth && (down ? <TrendingDown className="size-3" /> : <TrendingUp className="size-3" />)}
+            <span>{growth || 'No prior data'}</span>
           </p>
         </div>
       </div>

@@ -1,10 +1,12 @@
+import { useNavigate, useParams } from 'react-router'
 import { Receipt, ChevronRight, ArrowUpRight, ArrowDownLeft } from 'lucide-react'
 
 export function RecentTransactionsCard({
   recentTransactions = [],
   canSeeFinancial = true,
-  onShowToast,
 }) {
+  const navigate = useNavigate()
+  const { providerId: routeProviderId } = useParams()
   const list = recentTransactions && recentTransactions.length > 0 ? recentTransactions : [
     { typeLabel: 'Booking Payment Released', reference: '#LI-47182', amountFormatted: '+ KES 3,150', date: '8 Sep', isCredit: true },
     { typeLabel: 'Withdrawal Request', reference: 'WD-82914', amountFormatted: '− KES 45,000', date: '12 Sep', isCredit: false },
@@ -27,7 +29,7 @@ export function RecentTransactionsCard({
 
           <button
             type="button"
-            onClick={() => onShowToast?.('Opening Provider Wallet & Transaction Ledger')}
+            onClick={() => navigate(`/providers/${routeProviderId}/earnings`)}
             className="text-xs font-semibold text-purple-700 hover:underline flex items-center gap-0.5"
           >
             <span>View All</span>

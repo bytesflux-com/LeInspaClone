@@ -7,31 +7,7 @@ import { Clock, UserCheck, CheckCircle2, Shield, ArrowRight, UserPlus, Flag } fr
 export default function ReviewHistoryTimeline({
   history = [],
 }) {
-  const defaultHistory = [
-    {
-      id: 'rh-1',
-      time: '12 Sep 2026 • 11:20 AM',
-      title: 'Review started',
-      actor: 'Jane Ochieng',
-      type: 'review_started',
-    },
-    {
-      id: 'rh-2',
-      time: '12 Sep 2026 • 11:05 AM',
-      title: 'Assigned to Jane Ochieng by System',
-      actor: 'System',
-      type: 'assignment',
-    },
-    {
-      id: 'rh-3',
-      time: '12 Sep 2026 • 10:42 AM',
-      title: 'Document submitted by Grace Njeri',
-      actor: 'Grace Njeri',
-      type: 'submission',
-    },
-  ]
-
-  const list = history.length > 0 ? history : defaultHistory
+  const list = history
 
   const getNodeIcon = (type) => {
     switch (type) {

@@ -8,45 +8,7 @@ import { Clock, ArrowRight } from 'lucide-react'
 export default function CredentialReviewHistory({ history = [] }) {
   const [showAll, setShowAll] = useState(false)
 
-  const defaultHistory = [
-    {
-      id: 'crh-1',
-      time: '12 Sep 2026 • 11:20 AM',
-      title: 'Review started (Jane Ochieng)',
-      actor: 'Jane Ochieng',
-      type: 'review_started',
-    },
-    {
-      id: 'crh-2',
-      time: '12 Sep 2026 • 11:05 AM',
-      title: 'Assigned to Jane Ochieng',
-      actor: 'System',
-      type: 'assignment',
-    },
-    {
-      id: 'crh-3',
-      time: '12 Sep 2026 • 10:42 AM',
-      title: 'Replacement credential submitted',
-      actor: 'Grace Njeri',
-      type: 'submission',
-    },
-    {
-      id: 'crh-4',
-      time: '10 Sep 2026 • 11:02 AM',
-      title: 'Changes requested (Issuer unreadable)',
-      actor: 'Jane Ochieng',
-      type: 'changes_requested',
-    },
-    {
-      id: 'crh-5',
-      time: '10 Sep 2026 • 9:15 AM',
-      title: 'Credential submitted',
-      actor: 'Grace Njeri',
-      type: 'submission',
-    },
-  ]
-
-  const items = history.length > 0 ? history : defaultHistory
+  const items = history
   const displayItems = showAll ? items : items.slice(0, 5)
 
   const getBulletClass = (type) => {

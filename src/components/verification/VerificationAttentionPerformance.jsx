@@ -20,25 +20,25 @@ export default function VerificationAttentionPerformance({
   onFilterTrigger,
 }) {
   const overdueReviews = needsAttention?.overdueReviews || {
-    count: 24,
+    count: null,
     label: 'Overdue Reviews',
     description: 'Past review target',
     severity: 'urgent',
   }
   const expiringCredentials = needsAttention?.expiringCredentials || {
-    count: 38,
+    count: null,
     label: 'Expiring Credentials',
     description: 'Require renewal',
     severity: 'warning',
   }
   const resubmissions = needsAttention?.resubmissions || {
-    count: 46,
+    count: null,
     label: 'Resubmissions',
     description: 'Submitted corrections',
     severity: 'warning',
   }
   const escalatedReviews = needsAttention?.escalatedReviews || {
-    count: 7,
+    count: null,
     label: 'Escalated Reviews',
     description: 'Require senior review',
     severity: 'escalated',
@@ -83,11 +83,11 @@ export default function VerificationAttentionPerformance({
     },
   ]
 
-  const medianReviewTime = performance?.medianReviewTime || '4h 18m'
-  const reviewedToday = performance?.reviewedToday || 84
-  const approvalRate = performance?.approvalRate || '88%'
-  const changesRequestedRate = performance?.changesRequestedRate || '9%'
-  const escalatedRate = performance?.escalatedRate || '3%'
+  const medianReviewTime = performance?.medianReviewTime || '—'
+  const reviewedToday = performance?.reviewedToday ?? '—'
+  const approvalRate = performance?.approvalRate || '—'
+  const changesRequestedRate = performance?.changesRequestedRate || '—'
+  const escalatedRate = performance?.escalatedRate || '—'
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">

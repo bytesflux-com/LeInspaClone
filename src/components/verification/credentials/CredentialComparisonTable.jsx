@@ -5,55 +5,7 @@ import { ArrowLeftRight, CheckCircle2, AlertCircle, HelpCircle } from 'lucide-re
  * Side-by-side reconciliation between Provider Profile record and submitted Credential.
  */
 export default function CredentialComparisonTable({ comparisonRows = [] }) {
-  const defaultRows = [
-    {
-      id: 'cmp-c1',
-      field: 'Full Name',
-      account: 'Grace Njeri',
-      credential: 'Grace W. Njeri',
-      result: 'Review',
-      resultType: 'review',
-      note: 'Middle initial difference corresponds to National ID',
-    },
-    {
-      id: 'cmp-c2',
-      field: 'Profession',
-      account: 'Massage Therapist',
-      credential: 'Massage Therapy',
-      result: 'Consistent',
-      resultType: 'consistent',
-      note: 'Matches practice category',
-    },
-    {
-      id: 'cmp-c3',
-      field: 'Country of Practice',
-      account: 'Kenya',
-      credential: 'Kenya',
-      result: 'Match',
-      resultType: 'match',
-      note: 'Sovereign jurisdiction verified',
-    },
-    {
-      id: 'cmp-c4',
-      field: 'Credential Type',
-      account: 'Massage Therapy Qualification',
-      credential: 'Professional Practice Certificate',
-      result: 'Match',
-      resultType: 'match',
-      note: 'Meets Tier-1 qualification requirement',
-    },
-    {
-      id: 'cmp-c5',
-      field: 'Document Expiry',
-      account: '—',
-      credential: '15 Jan 2028',
-      result: 'Current',
-      resultType: 'match',
-      note: 'Valid for 1 year 4 months',
-    },
-  ]
-
-  const rows = comparisonRows.length > 0 ? comparisonRows : defaultRows
+  const rows = comparisonRows
 
   return (
     <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-sm space-y-4">

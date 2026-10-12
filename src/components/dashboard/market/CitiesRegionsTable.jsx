@@ -166,7 +166,7 @@ export function CitiesRegionsTable({ cities = [], marketName = 'Kenya', currency
                     {formatCompactCurrency(city.revenue, currency)}
                   </td>
                   <td className="px-4 py-3.5 text-center font-bold text-emerald-600">
-                    {city.growth}
+                    {city.growth ?? '—'}
                   </td>
                   <td className="px-5 py-3.5 text-center">
                     <Badge

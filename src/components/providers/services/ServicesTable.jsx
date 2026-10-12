@@ -8,6 +8,7 @@ import {
   Sparkles,
   ArrowRight,
 } from 'lucide-react'
+import { IMAGE_PLACEHOLDER } from '../../../lib/placeholders'
 
 export function ServicesTable({
   services = [],
@@ -97,7 +98,7 @@ export function ServicesTable({
                         <img
                           src={
                             srv.image ||
-                            'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=120'
+                            IMAGE_PLACEHOLDER
                           }
                           alt={srv.name}
                           className="size-10 rounded-xl object-cover border border-slate-200 shrink-0 shadow-2xs"
@@ -120,7 +121,7 @@ export function ServicesTable({
 
                     {/* Duration */}
                     <td className="py-3 px-3 text-center text-slate-500 font-mono">
-                      {srv.duration || `${srv.durationMinutes || 60} min`}
+                      {srv.duration || `${srv.durationMinutes ?? 0} min`}
                     </td>
 
                     {/* Price */}

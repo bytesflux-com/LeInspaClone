@@ -237,6 +237,9 @@ export default function VerificationCenterPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 p-6 space-y-6 text-slate-900">
+      {error && (
+        <p role="alert" className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm text-rose-700">{error}</p>
+      )}
       {/* Toast Notification */}
       {toast && (
         <div
@@ -275,7 +278,7 @@ export default function VerificationCenterPage() {
           {/* Awaiting Review Pill */}
           <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
             <span className="size-2 rounded-full bg-amber-500" />
-            <span>{kpis?.awaitingReview?.count || 428} Awaiting Review</span>
+            <span>{kpis?.awaitingReview?.count ?? '—'} Awaiting Review</span>
           </span>
 
           {/* Refresh Action */}
@@ -333,7 +336,7 @@ export default function VerificationCenterPage() {
             onSearchChange={(val) => setSearchTerm(val)}
             filters={tableFilters}
             onFilterChange={(f) => setTableFilters(f)}
-            totalCount={kpis?.awaitingReview?.count || 428}
+            totalCount={kpis?.awaitingReview?.count ?? '—'}
           />
         </div>
 

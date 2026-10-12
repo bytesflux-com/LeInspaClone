@@ -4,24 +4,13 @@ import { usePermissions } from './usePermissions'
 import { PERMISSIONS } from '../constants/permissions'
 import { useAdminSession } from './useAdminSession'
 
-export function useProviderServices(providerId = 'PR-82941') {
+export function useProviderServices(providerId) {
   const { can } = usePermissions()
   const { admin } = useAdminSession()
 
   const [services, setServices] = useState([])
-  const [stats, setStats] = useState({
-    activeCount: 6,
-    inactiveCount: 1,
-    pendingReviewCount: 2,
-    changesRequestedCount: 0,
-    totalCount: 9,
-    averagePrice: 4250,
-    averagePriceFormatted: 'KES 4,250',
-    lowestPrice: 3000,
-    lowestPriceFormatted: 'KES 3,000',
-    highestPrice: 6500,
-    highestPriceFormatted: 'KES 6,500',
-  })
+  const [stats, setStats] = useState(null)
+  const [provider, setProvider] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
@@ -63,6 +52,7 @@ export function useProviderServices(providerId = 'PR-82941') {
       if (data) {
         setServices(data.services || [])
         if (data.stats) setStats(data.stats)
+        if (data.provider) setProvider(data.provider)
         // If drawer is open, keep selected service synchronized
         if (selectedService) {
           const updated = (data.services || []).find((s) => s.id === selectedService.id || s.serviceId === selectedService.serviceId)
@@ -236,6 +226,7 @@ export function useProviderServices(providerId = 'PR-82941') {
   }, [category, priceRange, availability, status, searchQuery])
 
   return {
+    provider,
     services,
     stats,
     loading,

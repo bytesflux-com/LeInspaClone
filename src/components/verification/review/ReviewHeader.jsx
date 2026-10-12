@@ -17,8 +17,8 @@ export default function ReviewHeader({
   saving = false,
 }) {
   const navigate = useNavigate()
-  const providerName = record?.name || 'Grace Njeri'
-  const providerId = record?.providerId || 'PR-82941'
+  const providerName = record?.name || '—'
+  const providerId = record?.providerId || '—'
 
   return (
     <div className="space-y-2">

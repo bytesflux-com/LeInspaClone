@@ -6,11 +6,11 @@ export default function SupportOperationsQueue({ data }) {
   if (!data) return null
 
   const items = [
-    { label: 'Open Tickets', count: data.openTickets ?? 12, badge: 'bg-rose-100 text-rose-700 font-black', dot: 'bg-rose-500' },
-    { label: 'High Priority', count: data.highPriority ?? 3, badge: 'bg-amber-100 text-amber-700 font-bold', dot: 'bg-amber-500' },
-    { label: 'Waiting on Lé Inspa', count: data.waitingOnLeInspa ?? 7, badge: 'bg-purple-100 text-[#5c2dd5]', dot: 'bg-purple-500' },
-    { label: 'Waiting on User', count: data.waitingOnUser ?? 5, badge: 'bg-blue-100 text-blue-700', dot: 'bg-blue-500' },
-    { label: 'SLA Breach / Overdue', count: data.slaBreachOverdue ?? 2, badge: 'bg-rose-200 text-rose-800 font-black', dot: 'bg-rose-600' },
+    { label: 'Open Tickets', count: data.openTickets ?? null, badge: 'bg-rose-100 text-rose-700 font-black', dot: 'bg-rose-500' },
+    { label: 'High Priority', count: data.highPriority ?? null, badge: 'bg-amber-100 text-amber-700 font-bold', dot: 'bg-amber-500' },
+    { label: 'Waiting on Lé Inspa', count: data.waitingOnLeInspa ?? null, badge: 'bg-purple-100 text-[#5c2dd5]', dot: 'bg-purple-500' },
+    { label: 'Waiting on User', count: data.waitingOnUser ?? null, badge: 'bg-blue-100 text-blue-700', dot: 'bg-blue-500' },
+    { label: 'SLA Breach / Overdue', count: data.slaBreachOverdue ?? null, badge: 'bg-rose-200 text-rose-800 font-black', dot: 'bg-rose-600' },
   ]
 
   return (
@@ -25,7 +25,7 @@ export default function SupportOperationsQueue({ data }) {
             <h3 className="text-sm font-bold text-gray-900 truncate">Support</h3>
           </div>
           <Link
-            to="/support"
+            to="/attention?tab=support"
             className="inline-flex items-center gap-1 text-[11px] font-bold text-[#5c2dd5] hover:text-[#4922ab] bg-purple-50/60 hover:bg-purple-100/80 px-2 py-0.5 rounded-md transition-colors whitespace-nowrap"
           >
             <span>View Queue</span>

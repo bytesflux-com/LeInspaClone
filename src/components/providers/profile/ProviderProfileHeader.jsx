@@ -5,7 +5,6 @@ import {
   Copy,
   Check,
   Star,
-  ExternalLink,
   ChevronDown,
   ChevronRight,
   Send,
@@ -16,6 +15,10 @@ import {
   Clock,
   Sparkles,
 } from 'lucide-react'
+import { IMAGE_PLACEHOLDER } from '../../../lib/placeholders'
+
+// Sample-provider switcher for the demo dataset only.
+const DEMO_SWITCHER = import.meta.env.VITE_USE_MOCK_PROVIDERS === 'true'
 
 export function ProviderProfileHeader({
   profile,
@@ -60,6 +63,7 @@ export function ProviderProfileHeader({
         </nav>
 
         {/* Dynamic Profile Mode Switcher for Admin Testing */}
+        {DEMO_SWITCHER && (
         <div className="flex items-center gap-1.5 bg-purple-50/80 border border-purple-200/80 rounded-full px-2.5 py-1 text-[11px]">
           <span className="text-purple-800 font-semibold flex items-center gap-1">
             <Sparkles className="size-3 text-purple-600" /> Dynamic View:
@@ -98,6 +102,7 @@ export function ProviderProfileHeader({
             Hotel/Resort (Savanna)
           </button>
         </div>
+        )}
       </div>
 
       {/* 2. Main Hero Banner Section */}
@@ -107,7 +112,7 @@ export function ProviderProfileHeader({
           <img
             src={
               profile.coverImage ||
-              'https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=1200&auto=format&fit=crop&q=80'
+              IMAGE_PLACEHOLDER
             }
             alt="Spa ambiance"
             className="w-full h-full object-cover object-right"
@@ -129,7 +134,7 @@ export function ProviderProfileHeader({
               {/* Online beacon dot */}
               <div
                 className="absolute bottom-1 right-1 flex items-center justify-center size-5 rounded-full bg-white shadow-xs"
-                title={profile.availabilityLabel || 'Available Now'}
+                title={profile.availabilityLabel || '—'}
               >
                 <span className="size-3.5 rounded-full bg-emerald-500 ring-2 ring-white animate-pulse" />
               </div>
@@ -173,7 +178,7 @@ export function ProviderProfileHeader({
                 {/* Available Now pill */}
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
                   <span className="size-1.5 rounded-full bg-emerald-500" />
-                  {profile.availabilityLabel || 'Available Now'}
+                  {profile.availabilityLabel || '—'}
                 </span>
               </div>
 
@@ -230,17 +235,6 @@ export function ProviderProfileHeader({
 
           {/* Right Action Buttons */}
           <div className="shrink-0 flex items-center gap-2 self-start md:self-auto">
-            <a
-              href={`#public-preview-${profile.id}`}
-              onClick={(e) => {
-                e.preventDefault()
-                onShowToast?.(`Opening client-facing public profile for ${profile.name}`)
-              }}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-300 bg-white/90 backdrop-blur-xs text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:border-slate-400 transition shadow-2xs"
-            >
-              <ExternalLink className="size-3.5 text-slate-500" />
-              View Public Profile
-            </a>
 
             {/* More Actions Dropdown */}
             <div className="relative">

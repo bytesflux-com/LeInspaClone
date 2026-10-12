@@ -3,7 +3,7 @@ import { FieldValue } from 'firebase-admin/firestore'
 import { auditEntry, db, docsForProvider, loadProvider, providerScope, requireProviderId, rethrow } from './providerAdminContext.js'
 import { normalizeBooking } from './providerAdminShared.js'
 import { normalizeAction } from './providerAccountLogic.js'
-import { normalizeReport, normalizeReview } from './providerReviewsLogic.js'
+import { normalizeReport, normalizeReview, reportFromFlag } from './providerReviewsLogic.js'
 import {
   DEFAULT_QUALITY_MODEL,
   DEFAULT_RISK_RULES,
@@ -33,14 +33,15 @@ async function loadModel() {
 async function loadRiskSources(provider, perms) {
   const [bookings, reviews, reports, cases, restrictions, credentials, content, withdrawals, actions, assessments, security, config] = await Promise.all([
     docsForProvider('bookings', provider, 'bookings', { limit: 5000 }),
-    docsForProvider('provider_reviews', provider, 'reviews', { limit: 5000 }),
+    docsForProvider('reviews', provider, 'reviews', { limit: 5000 }),
     docsForProvider('review_reports', provider, 'review reports', { limit: 2000 }),
     loadCases(provider),
     loadRestrictions(provider),
-    docsForProvider('provider_credentials', provider, 'credentials', { limit: 50 }),
+    // The app does not record credential expiry dates yet; expiry signals stay empty until it does.
+    { docs: [] },
     docsForProvider('content_moderation', provider, 'content moderation', { limit: 300 }),
     // Financial sources are only read for Finance-permitted admins.
-    perms.viewFinance ? docsForProvider('withdrawal_requests', provider, 'withdrawals', { limit: 300 }) : { docs: [] },
+    perms.viewFinance ? docsForProvider('withdrawal_requests', provider, 'withdrawals', { field: 'userId', limit: 300 }) : { docs: [] },
     docsForProvider('account_actions', provider, 'account actions', { limit: 200 }),
     docsForProvider('provider_risk_assessments', provider, 'assessments', { limit: 50 }),
     provider.userId ? docsForProvider('security_events', provider, 'security events', { field: 'userId', limit: 50 }) : { docs: [] },
@@ -49,7 +50,11 @@ async function loadRiskSources(provider, perms) {
   return {
     bookings: bookings.docs.map((d) => normalizeBooking(d.id, d)),
     reviews: reviews.docs.map((d) => normalizeReview(d.id, d)),
-    reports: reports.docs.map((d) => normalizeReport(d.id, d)),
+    reports: (() => {
+      const recorded = reports.docs.map((d) => normalizeReport(d.id, d))
+      const seen = new Set(recorded.map((r) => r.reviewId))
+      return [...recorded, ...reviews.docs.map((d) => normalizeReview(d.id, d)).filter((r) => !seen.has(r.id)).map(reportFromFlag).filter(Boolean)]
+    })(),
     cases,
     restrictions,
     credentials: credentials.docs.map((d) => normalizeCredential(d.id, d)),

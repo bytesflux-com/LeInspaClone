@@ -12,6 +12,7 @@ import {
   ShieldCheck,
   Sparkles,
 } from 'lucide-react'
+import { AVATAR_PLACEHOLDER } from '../../../lib/placeholders'
 
 /**
  * ADM-034: BusinessProfileProgressCard
@@ -19,38 +20,38 @@ import {
  * assigned reviewer, and a 6-counter verification progress summary.
  */
 export default function BusinessProfileProgressCard({
-  providerId = 'SPA-28192',
-  tradingName = 'Serenity Wellness Spa',
-  legalEntityName = 'Serenity Wellness Ltd.',
-  businessCategory = 'Spa & Wellness Center',
-  market = { code: 'KE', name: 'Kenya', flag: '🇰🇪' },
-  location = 'Westlands, Nairobi',
+  providerId = null,
+  tradingName = null,
+  legalEntityName = null,
+  businessCategory = null,
+  market = null,
+  location = null,
   assignedReviewer = {
-    name: 'Jane Ochieng',
-    avatarUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=80',
-    role: 'Verification Specialist',
+    name: null,
+    avatarUrl: AVATAR_PLACEHOLDER,
+    role: null,
   },
   progressSummary = {
-    requiredDocuments: 4,
-    submitted: 4,
-    approved: 2,
-    underReview: 1,
-    changesRequested: 1,
+    requiredDocuments: 0,
+    submitted: 0,
+    approved: 0,
+    underReview: 0,
+    changesRequested: 0,
     missing: 0,
   },
 }) {
   const {
-    requiredDocuments = 4,
-    submitted = 4,
-    approved = 2,
-    underReview = 1,
-    changesRequested = 1,
+    requiredDocuments = 0,
+    submitted = 0,
+    approved = 0,
+    underReview = 0,
+    changesRequested = 0,
     missing = 0,
   } = progressSummary
 
-  const approvedPercent = Math.round((approved / requiredDocuments) * 100) || 50
-  const reviewPercent = Math.round((underReview / requiredDocuments) * 100) || 25
-  const changesPercent = Math.round((changesRequested / requiredDocuments) * 100) || 25
+  const approvedPercent = Math.round((approved / requiredDocuments) * 100) || 0
+  const reviewPercent = Math.round((underReview / requiredDocuments) * 100) || 0
+  const changesPercent = Math.round((changesRequested / requiredDocuments) * 100) || 0
 
   return (
     <div className="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-sm space-y-6">
@@ -84,8 +85,8 @@ export default function BusinessProfileProgressCard({
               </span>
               <span className="text-slate-300">•</span>
               <span className="inline-flex items-center gap-1 font-medium">
-                <span>{market?.flag || '🇰🇪'}</span>
-                <span>{market?.name || 'Kenya'}</span>
+                <span>{market?.flag || ''}</span>
+                <span>{market?.name || '—'}</span>
               </span>
               <span className="text-slate-300">•</span>
               <span className="inline-flex items-center gap-1">
@@ -99,7 +100,7 @@ export default function BusinessProfileProgressCard({
         {/* Assigned Reviewer Card */}
         <div className="flex items-center gap-3 rounded-xl border border-slate-200/80 bg-slate-50/80 px-3.5 py-2.5 self-start lg:self-center">
           <img
-            src={assignedReviewer?.avatarUrl || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=80'}
+            src={assignedReviewer?.avatarUrl || '—'}
             alt={assignedReviewer?.name || 'Reviewer'}
             className="size-9 rounded-full object-cover ring-2 ring-white"
           />

@@ -30,7 +30,7 @@ export default function BusinessDocumentsReviewPage() {
   const navigate = useNavigate()
 
   // Target provider/verification ID (defaults to Serenity Wellness Spa if absent)
-  const targetId = id || 'SPA-28192'
+  const targetId = id
 
   // Data states
   const [loading, setLoading] = useState(true)
@@ -256,7 +256,8 @@ export default function BusinessDocumentsReviewPage() {
   }
 
   const handleViewBusinessProfile = () => {
-    showToast(`Navigating to profile for ${data?.tradingName || 'Business'}...`, 'info')
+    if (data?.providerId) navigate(`/providers/${data.providerId}`)
+    else showToast('This submission is not linked to a provider account yet.', 'info')
   }
 
   return (
@@ -285,7 +286,7 @@ export default function BusinessDocumentsReviewPage() {
       {/* 1. Header (No Duplicate Global Navbar) */}
       <BusinessHeader
         verificationId={data?.verificationId || targetId}
-        providerId={data?.providerId || 'SPA-28192'}
+        providerId={data?.providerId || null}
         tradingName={data?.tradingName || 'Serenity Wellness Spa'}
         businessCategory={data?.businessCategory || 'Spa & Wellness Center'}
         status={data?.status || 'UNDER_REVIEW'}

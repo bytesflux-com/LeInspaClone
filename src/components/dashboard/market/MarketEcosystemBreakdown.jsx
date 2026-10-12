@@ -104,7 +104,7 @@ export function MarketEcosystemBreakdown({ providerNetwork, clientNetwork, marke
                 Repeat Booking Rate
               </div>
               <div className="mt-1 text-xl font-bold text-emerald-700">
-                {clientNetwork.returningPercentage}%
+                {clientNetwork.returningPercentage == null ? '—' : `${clientNetwork.returningPercentage}%`}
               </div>
             </div>
           </div>

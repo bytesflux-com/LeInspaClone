@@ -165,7 +165,7 @@ export function FailedRenewalCard({ data }) {
       </div>
       <div className="mt-2.5 grid grid-cols-2 gap-2">
         <Link to={`/payments/${f.paymentId}`} className="inline-flex items-center justify-center rounded-xl bg-royal-700 px-3 py-2 text-[12px] font-semibold text-white hover:bg-royal-800">View Payment</Link>
-        <Link to="/payments" className="inline-flex items-center justify-center rounded-xl border border-royal-300 bg-white px-3 py-2 text-[12px] font-semibold text-royal-700 hover:bg-royal-50">View Billing History</Link>
+        <button type="button" onClick={() => document.getElementById('subscription-history')?.scrollIntoView({ behavior: 'smooth' })} className="inline-flex items-center justify-center rounded-xl border border-royal-300 bg-white px-3 py-2 text-[12px] font-semibold text-royal-700 hover:bg-royal-50">View Billing History</button>
       </div>
       <p className="mt-2 text-[10.5px] text-slate-500">Payment status comes from the payment system and cannot be marked successful by an Admin.</p>
     </Panel>
@@ -220,7 +220,7 @@ export function HistoryTabs({ data, providerId }) {
   }
   const tabs = [['subscription', 'Subscription History'], ['visibility', 'Visibility History'], ['payments', 'Subscription Payments']]
   return (
-    <section className="rounded-2xl border border-slate-200/80 bg-white shadow-card">
+    <section id="subscription-history" className="scroll-mt-4 rounded-2xl border border-slate-200/80 bg-white shadow-card">
       <div className="flex flex-wrap items-center justify-between gap-2 px-4 pt-3.5">
         <div className="flex flex-wrap gap-1.5">
           {tabs.map(([id, label]) => (
@@ -288,7 +288,7 @@ function PaymentsTable({ payments }) {
 
 export function RecentPaymentsCard({ data }) {
   return (
-    <Panel title="Recent Subscription Payments" icon={Receipt} action={<LinkAction to="/payments">View All</LinkAction>} bodyClass="px-0">
+    <Panel title="Recent Subscription Payments" icon={Receipt} action={<LinkAction onClick={() => document.getElementById('subscription-history')?.scrollIntoView({ behavior: 'smooth' })}>View All</LinkAction>} bodyClass="px-0">
       <div className="overflow-x-auto"><PaymentsTable payments={data.payments.slice(0, 4)} /></div>
     </Panel>
   )

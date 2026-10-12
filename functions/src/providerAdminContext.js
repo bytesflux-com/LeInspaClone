@@ -4,6 +4,7 @@ import { FieldValue, getFirestore } from 'firebase-admin/firestore'
 import { requireAdmin } from './auth.js'
 import { ALL_MARKETS, adminAccess, canAccessMarket } from './accessModel.js'
 import { normalizeProvider, trustPermissions } from './providerAdminShared.js'
+import { loadProvider as loadAppProvider } from './platformData.js'
 
 // Shared callable plumbing for ADM-025 → ADM-028. Every call:
 //   1. authenticates the admin (2FA + active session; `fresh` for high-risk writes),
@@ -25,22 +26,42 @@ export const requireProviderId = (value) => {
   return id
 }
 
-// Looks the provider up in the existing records: providers/{id}, then a
-// providers doc whose providerId matches, then users/{id}. Never a copy.
+// Resolves the provider from the mobile app's own records: users/{uid}
+// (identity, accountStatus, country) merged with provider_profiles and the
+// type-collection document, plus Spa branches / Hotel wellness locations.
+// `ref` is users/{uid} — the central account record account actions write to.
 export async function loadProvider(providerId, access) {
-  const providers = db().collection('providers')
-  let snap = await providers.doc(providerId).get()
-  if (!snap.exists) {
-    const q = await providers.where('providerId', '==', providerId).limit(1).get()
-    snap = q.empty ? await db().collection('users').doc(providerId).get() : q.docs[0]
+  const merged = await loadAppProvider(db(), providerId)
+  if (!merged) throw new HttpsError('not-found', 'Provider not found.')
+  const [userSnap, detailSnap] = await Promise.all([merged.refs.user.get(), merged.refs.detail ? merged.refs.detail.get() : null])
+  const user = userSnap.exists ? userSnap.data() : {}
+  const detail = detailSnap?.exists ? detailSnap.data() : {}
+  const [branches, locations] = await Promise.all([
+    merged.category === 'spa' ? safeDocs(db().collection('spa_branches').where('spaId', '==', providerId), 'spa branches', 100) : { docs: [] },
+    merged.category === 'hotel' ? safeDocs(db().collection('hotel_wellness_locations').where('hotelId', '==', providerId), 'wellness locations', 100) : { docs: [] },
+  ])
+  const raw = {
+    ...detail,
+    ...user,
+    providerId,
+    name: merged.name,
+    typeLabel: merged.typeLabel,
+    accountType: merged.type,
+    country: user.country || detail.country,
+    verificationStatus: merged.verificationStatus,
+    rating: merged.rating,
+    reviewCount: merged.reviewCount,
+    profilePhoto: merged.avatar,
+    userId: providerId,
+    branches: branches.docs.map((x) => ({ id: x.id, name: x.branchName || x.name || x.id, status: x.status, active: !['inactive', 'archived', 'deleted'].includes(String(x.status || '').toLowerCase()) })),
+    wellnessLocations: locations.docs.map((x) => ({ id: x.id, name: x.name || x.id, status: x.status, active: !['inactive', 'archived', 'deleted'].includes(String(x.status || '').toLowerCase()) })),
   }
-  if (!snap.exists) throw new HttpsError('not-found', 'Provider not found.')
-  const provider = normalizeProvider(snap.id, snap.data())
+  const provider = normalizeProvider(providerId, raw)
   const allowed = provider.marketCode ? canAccessMarket(access, provider.marketCode) : access.markets.includes(ALL_MARKETS)
   if (!allowed) {
     throw new HttpsError('permission-denied', 'You do not have access to providers in this market.', { reason: 'market-denied' })
   }
-  return { ref: snap.ref, raw: snap.data(), provider }
+  return { ref: merged.refs.user, detailRef: merged.refs.detail, raw, provider }
 }
 
 // A query that degrades to [] (with a log) instead of failing the whole screen
@@ -65,18 +86,18 @@ export async function docsForProvider(collection, provider, label, { field = 'pr
 // Queues a notice in the shared `notifications` collection; delivery (push /
 // email) is handled by the platform notification pipeline.
 export function queueNotification(tx, n) {
+  // Same shape as the mobile app's notifications so the recipient sees it in-app.
   const ref = db().collection('notifications').doc()
   tx.set(ref, {
-    recipientId: n.recipientId,
+    userId: n.recipientId,
     recipientType: n.recipientType,
-    category: n.category || 'account',
-    type: n.type,
     title: n.title,
-    body: n.body,
+    message: n.body,
+    notificationType: n.category || 'account',
+    relatedId: n.related ? Object.values(n.related).find(Boolean) || null : null,
     channels: n.channels || ['in_app', 'email'],
-    status: 'queued',
+    isRead: false,
     read: false,
-    related: n.related || null,
     createdAt: FieldValue.serverTimestamp(),
   })
   return ref.id

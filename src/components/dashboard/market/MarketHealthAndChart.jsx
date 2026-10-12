@@ -51,7 +51,7 @@ export function MarketHealthAndChart({ performance, marketHealth, marketName = '
               <h3 className="text-base font-bold text-royal-950">Market Growth Trajectory</h3>
               <Badge variant="success" size="sm">
                 <TrendingUp className="size-3" />
-                {performance.growthPercentage || '+16.8% MoM'}
+                {performance.growthPercentage || 'No prior data'}
               </Badge>
             </div>
             <p className="mt-0.5 text-xs text-gray-500">
@@ -151,7 +151,7 @@ export function MarketHealthAndChart({ performance, marketHealth, marketName = '
                   : 'bg-rose-500'
               }
             >
-              {marketHealth.status} ({marketHealth.overallScore}/100)
+              {marketHealth.status} ({marketHealth.overallScore ?? '—'}/100)
             </Badge>
           </div>
 
@@ -184,10 +184,10 @@ export function MarketHealthAndChart({ performance, marketHealth, marketName = '
                         className={`h-full rounded-full ${
                           isGood ? 'bg-emerald-500' : isWarning ? 'bg-amber-500' : 'bg-rose-500'
                         }`}
-                        style={{ width: `${m.score}%` }}
+                        style={{ width: `${m.score ?? 0}%` }}
                       />
                     </div>
-                    <span className="text-[10px] text-gray-400 font-mono">{m.score}/100</span>
+                    <span className="text-[10px] text-gray-400 font-mono">{m.score ?? '—'}/100</span>
                   </div>
                 </div>
               )

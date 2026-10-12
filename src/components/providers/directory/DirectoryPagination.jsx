@@ -2,8 +2,8 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 export function DirectoryPagination({
   currentPage = 1,
-  totalPages = 2486,
-  totalItems = 24860,
+  totalPages = 1,
+  totalItems = 0,
   pageSize = 10,
   onPageChange,
   onPageSizeChange,

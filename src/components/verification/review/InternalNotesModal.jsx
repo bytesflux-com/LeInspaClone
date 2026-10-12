@@ -82,7 +82,7 @@ export default function InternalNotesModal({
                   </div>
                   <div className="flex items-center gap-1 text-[11px] text-slate-400 font-mono">
                     <Clock className="size-3" />
-                    <span>{n.createdAt || '12 Sep 2026 • 11:22 AM'}</span>
+                    <span>{n.createdAt || '—'}</span>
                   </div>
                 </div>
                 <p className="text-xs text-slate-700 leading-relaxed bg-slate-50 p-2.5 rounded-xl border border-slate-100">

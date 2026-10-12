@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useParams } from 'react-router'
+import { Navigate, useParams, useSearchParams } from 'react-router'
 import { providerTrustService } from '../../services/providerTrustService'
 import { useProviderTrustData, useTrustContext } from '../../hooks/useProviderTrust'
 import ErrorState from '../../components/ui/ErrorState'
@@ -15,7 +15,8 @@ const DEFAULT_FILTERS = { tab: 'all', search: '', rating: 'all', dateRange: 'all
 // Read → Verify → Contextualize → Decide → Record.
 export default function ProviderReviews() {
   const { providerId: routeId } = useParams()
-  const providerId = routeId || 'PR-82941'
+  const providerId = routeId || (providerTrustService.isMock ? 'PR-82941' : null)
+  if (!providerId) return <Navigate to="/providers/all" replace />
   // Keyed by provider so filters and selection reset when switching providers.
   return <ReviewsScreen key={providerId} providerId={providerId} />
 }
@@ -41,7 +42,8 @@ function ReviewsScreen({ providerId }) {
   const list = useProviderTrustData((c) => providerTrustService.getReviews(providerId, query, c), `${providerId}|${JSON.stringify(query)}`)
 
   // undefined = follow the default (newest review on wide screens); null = closed by the admin.
-  const [chosenId, setSelectedId] = useState(undefined)
+  const [searchParams] = useSearchParams()
+  const [chosenId, setSelectedId] = useState(() => searchParams.get('review') || undefined)
   const [wide] = useState(() => window.matchMedia('(min-width: 1280px)').matches)
   const firstId = list.data?.items?.[0]?.id
   const selectedId = chosenId === undefined ? (wide ? firstId || null : null) : chosenId

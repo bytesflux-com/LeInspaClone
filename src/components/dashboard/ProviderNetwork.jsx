@@ -2,25 +2,15 @@ import { Users, ArrowUp, ArrowRight } from 'lucide-react'
 import { Link } from 'react-router'
 import { formatNumber } from '../../lib/utils'
 
-const DEFAULT_CATEGORIES = [
-  { name: 'Massage Therapists', percent: 38 },
-  { name: 'Personal Trainers', percent: 36 },
-  { name: 'Yoga Specialists', percent: 12 },
-  { name: 'Meditation Specialists', percent: 8 },
-  { name: 'Physiotherapists / Recovery', percent: 30 },
-  { name: 'Spa & Wellness Centers', percent: 12 },
-  { name: 'Hotels & Resorts', percent: 4 },
-]
-
 export default function ProviderNetwork({ providerNetwork }) {
   if (!providerNetwork) return null
 
-  const total = providerNetwork.total ?? 2317
-  const trend = providerNetwork.trend ?? '+9%'
+  const total = providerNetwork.total ?? 0
+  const trend = providerNetwork.trend ?? null
   const period = providerNetwork.period ?? 'vs. last month'
-  const categories = providerNetwork.categories || DEFAULT_CATEGORIES
-  const pendingVerification = providerNetwork.pendingVerification ?? 214
-  const suspended = providerNetwork.suspended ?? 36
+  const categories = providerNetwork.categories || []
+  const pendingVerification = providerNetwork.pendingVerification ?? 0
+  const suspended = providerNetwork.suspended ?? 0
 
   return (
     <div className="flex flex-col justify-between rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">

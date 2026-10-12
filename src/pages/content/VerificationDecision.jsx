@@ -273,7 +273,7 @@ export default function VerificationDecision() {
   const navigate = useNavigate()
   const { verificationId: routeVerId } = useParams()
   const [searchParams, setSearchParams] = useSearchParams()
-  const activeVerId = routeVerId || searchParams.get('case') || 'PR-82941'
+  const activeVerId = routeVerId || searchParams.get('case') || (approvalWorkflowService.isMock ? 'PR-82941' : null)
 
   const [data, setData] = useState(null)
   const [error, setError] = useState(null)

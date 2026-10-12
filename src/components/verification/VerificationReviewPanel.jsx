@@ -51,18 +51,9 @@ export default function VerificationReviewPanel({
 
   if (!record) return null
 
-  const activeDoc = record.documents?.[0] || {
-    title: 'Professional Certificate',
-    docType: 'PROF_CERT',
-    nameOnDoc: record.name,
-    docNumber: '••••7281',
-    issuer: 'Kenya Massage Federation',
-    issueDate: '15 Jan 2024',
-    expiryDate: '15 Jan 2028',
-    fileFormat: 'PDF',
-  }
+  const activeDoc = record.documents?.[0] || { title: 'No document uploaded', nameOnDoc: record.name, docNumber: null, issuer: null, issueDate: null, expiryDate: null }
 
-  const unmaskedDocNumber = 'KMF-2024-7281'
+  const unmaskedDocNumber = activeDoc.unmaskedDocNumber || activeDoc.docNumber || '—'
 
   const statusConfig = VERIFICATION_STATUS_CONFIG[record.status] || {
     label: record.status,
@@ -295,7 +286,7 @@ export default function VerificationReviewPanel({
                     <span>
                       Doc #:{' '}
                       <span className="font-mono font-semibold text-purple-700">
-                        {maskedDocNumber ? activeDoc.docNumber : unmaskedDocNumber}
+                        {maskedDocNumber ? activeDoc.docNumber || '—' : unmaskedDocNumber}
                       </span>
                     </span>
                     <button

@@ -1,12 +1,13 @@
-import { Link } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 import { X, ArrowRight } from 'lucide-react'
+import { AVATAR_PLACEHOLDER } from '../../../lib/placeholders'
 
 export function SelectedBookingDrawer({
   booking,
   onClose,
   canSeeFinancial = true,
-  onShowToast,
 }) {
+  const navigate = useNavigate()
   if (!booking) return null
 
   const id = booking.id?.startsWith('#') ? booking.id : `#${booking.id}`
@@ -18,19 +19,9 @@ export function SelectedBookingDrawer({
   const isEscrowHeld = escrow === 'held'
   const isEscrowReleased = escrow === 'released'
 
-  const breakdown = booking.paymentBreakdown || {
-    clientPaid: booking.amount || 4500,
-    platformFeePercent: 10,
-    platformFee: (booking.amount || 4500) * 0.1,
-    providerEarnings: (booking.amount || 4500) * 0.9,
-  }
+  const breakdown = booking.paymentBreakdown || { clientPaid: booking.amount ?? null, platformFeePercent: null, platformFee: null, providerEarnings: null }
 
-  const timeline = booking.timeline || [
-    { time: '12 Sep 2026 • 12:05 PM', title: 'Payment successful', status: 'done' },
-    { time: '12 Sep 2026 • 12:06 PM', title: 'Escrow funded and held', status: 'done' },
-    { time: '12 Sep 2026 • 1:50 PM', title: 'Client checked in', status: 'done' },
-    { time: '12 Sep 2026 • 2:00 PM', title: 'Service confirmed', status: 'current' },
-  ]
+  const timeline = booking.timeline || []
 
   return (
     <aside className="w-full xl:w-[380px] shrink-0 bg-white border border-slate-200 rounded-2xl shadow-lg flex flex-col max-h-[calc(100vh-140px)] sticky top-20 overflow-hidden animate-in slide-in-from-right-4">
@@ -71,14 +62,14 @@ export function SelectedBookingDrawer({
             <img
               src={
                 booking.clientAvatar ||
-                'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80'
+                AVATAR_PLACEHOLDER
               }
               alt={booking.clientName}
               className="size-10 rounded-full object-cover border border-white shadow-2xs shrink-0"
             />
             <div>
               <h4 className="font-bold text-slate-900 text-sm leading-snug">
-                {booking.clientName || 'Wallen Nyaberi'}
+                {booking.clientName || '—'}
               </h4>
               <p className="font-mono text-[10.5px] text-slate-400">
                 {booking.clientId || 'CL-19281'}
@@ -103,7 +94,7 @@ export function SelectedBookingDrawer({
 
           <div className="flex justify-between py-1 border-b border-slate-100">
             <span className="text-slate-400">Date</span>
-            <span className="font-medium text-slate-800">{booking.dateOnly || '12 Sep 2026'}</span>
+            <span className="font-medium text-slate-800">{booking.dateOnly || '—'}</span>
           </div>
 
           <div className="flex justify-between py-1 border-b border-slate-100">
@@ -114,7 +105,7 @@ export function SelectedBookingDrawer({
           <div className="flex justify-between py-1 border-b border-slate-100">
             <span className="text-slate-400">Location</span>
             <span className="font-medium text-slate-800 text-right">
-              {booking.location || 'Provider Location • Nairobi'}
+              {booking.location || '—'}
             </span>
           </div>
 
@@ -132,7 +123,7 @@ export function SelectedBookingDrawer({
           <div className="flex justify-between py-1 border-b border-slate-100">
             <span className="text-slate-400">Payment Status</span>
             <span className="font-semibold text-emerald-700 text-right">
-              🟢 Paid ({booking.paymentDate || '12 Sep 2026, 12:05 PM'})
+              🟢 Paid ({booking.paymentDate || '—'})
             </span>
           </div>
 
@@ -200,7 +191,7 @@ export function SelectedBookingDrawer({
             <h4 className="font-bold text-slate-900 text-xs">Timeline</h4>
             <button
               type="button"
-              onClick={() => onShowToast?.(`Opening complete audit timeline for ${id}`)}
+              onClick={() => navigate(`/bookings/${String(id).replace('#', '')}/timeline`)}
               className="text-[10.5px] font-bold text-purple-700 hover:underline"
             >
               View All →

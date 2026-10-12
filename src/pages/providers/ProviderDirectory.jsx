@@ -167,6 +167,11 @@ export default function ProviderDirectory() {
       <div className="flex flex-col xl:flex-row items-start gap-5">
         {/* Table & Pagination Column */}
         <div className="flex-1 w-full min-w-0 space-y-4">
+          {error && (
+            <p role="alert" className="mb-3 rounded-xl bg-rose-50 px-3 py-2 text-xs text-rose-700">
+              Providers could not be loaded: {error}
+            </p>
+          )}
           <ProviderDirectoryTable
             providers={data.items}
             selectedIds={selectedIds}

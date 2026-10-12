@@ -20,7 +20,7 @@ import {
   requiresFreshAuth,
 } from './providerAccountLogic.js'
 import { normalizeAssessment } from './providerRiskLogic.js'
-import { normalizeSubscription, resolveSubscriptionStatus } from './providerSubscriptionLogic.js'
+import { appSubscriptionState, resolveSubscriptionStatus } from './providerSubscriptionLogic.js'
 
 // ADM-028 — Provider Account Actions / Suspension.
 // Account status lives on the existing records (users.accountStatus and the
@@ -60,16 +60,16 @@ export const adminGetProviderAccountActions = onCall(async (request) => {
       docsForProvider('account_actions', provider, 'account actions', { limit: 200 }),
       docsForProvider('bookings', provider, 'bookings', { limit: 5000 }),
       loadCases(provider),
-      perms.viewFinance ? db().collection('provider_wallets').doc(provider.docId).get() : null,
-      perms.viewFinance ? docsForProvider('withdrawal_requests', provider, 'withdrawals', { limit: 200 }) : { docs: [] },
-      db().collection('provider_subscriptions').doc(provider.docId).get(),
+      perms.viewFinance ? db().collection('wallets').doc(provider.id).get() : null,
+      perms.viewFinance ? docsForProvider('withdrawal_requests', provider, 'withdrawals', { field: 'userId', limit: 200 }) : { docs: [] },
+      safeDocs(db().collection('subscriptions').where('userId', '==', provider.id), 'subscriptions', 200),
       docsForProvider('provider_risk_assessments', provider, 'assessments', { limit: 20 }),
       safeDocs(db().collection('admin_notes').where('providerId', '==', provider.id).where('context', '==', 'account'), 'account notes', 50),
       provider.userId
-        ? safeDocs(db().collection('notifications').where('recipientId', '==', provider.userId).where('category', '==', 'account'), 'notifications', 50)
+        ? safeDocs(db().collection('notifications').where('userId', '==', provider.userId).where('notificationType', '==', 'account'), 'notifications', 50)
         : { docs: [] },
     ])
-    const subscription = sub.exists ? normalizeSubscription(sub.id, sub.data()) : null
+    const subscription = appSubscriptionState(sub.docs, [], Date.now()).subscription
     const latest = assessments.docs.map((d) => normalizeAssessment(d.id, d)).sort((a, b) => (b.reviewedAt || 0) - (a.reviewedAt || 0))[0] || null
     return buildAccountView({
       provider,
@@ -78,7 +78,8 @@ export const adminGetProviderAccountActions = onCall(async (request) => {
       notifications: notifications.docs,
       bookings: bookings.docs.map((d) => normalizeBooking(d.id, d)),
       cases,
-      wallet: wallet?.exists ? wallet.data() : null,
+      // App wallet: pendingEscrow + local.availableBalance (local currency).
+      wallet: wallet?.exists ? { pendingEscrow: wallet.get('pendingEscrow'), availableBalance: wallet.get('local')?.availableBalance ?? wallet.get('availableBalance') } : null,
       withdrawals: withdrawals.docs,
       subscriptionStatus: resolveSubscriptionStatus(subscription, Date.now()).label,
       assessment: latest,
@@ -102,17 +103,18 @@ export const adminApplyProviderAccountAction = onCall(async (request) => {
   const { uid, access, perms, actor } = await providerScope(request, { permission: 'users.suspend', fresh: requiresFreshAuth(d) })
   const providerId = requireProviderId(d.providerId)
   try {
-    const { ref, provider: loaded } = await loadProvider(providerId, access)
+    const { ref, detailRef, raw, provider: loaded } = await loadProvider(providerId, access)
     const [cases, policy] = await Promise.all([loadCases(loaded), accountPolicy()])
     const restrictionCol = db().collection('account_restrictions')
 
     const result = await db().runTransaction(async (tx) => {
       // Latest provider state + restrictions, read inside the transaction.
       const fresh = await tx.get(ref)
-      const provider = normalizeProvider(fresh.id, fresh.data())
+      const detailSnap = detailRef ? await tx.get(detailRef) : null
+      // Latest account fields from users/{uid} over the loaded provider profile.
+      const provider = normalizeProvider(providerId, { ...raw, ...(fresh.exists ? fresh.data() : {}) })
       const rSnap = await tx.get(restrictionCol.where('providerId', '==', provider.id).limit(300))
       const restrictions = rSnap.docs.map((x) => normalizeRestriction(x.id, x.data())).filter(Boolean)
-      const userRef = provider.userId ? db().collection('users').doc(provider.userId) : null
 
       const plan = planAccountAction({ provider, restrictions, cases, input: d, actor, permissions: perms, policy, now: Date.now() })
       if (plan.error) throw new HttpsError(plan.code || 'invalid-argument', plan.error)
@@ -125,11 +127,20 @@ export const adminApplyProviderAccountAction = onCall(async (request) => {
       }
       for (const u of plan.restrictionUpdates) tx.update(restrictionCol.doc(u.id), u.patch)
       if (plan.providerPatch) {
-        tx.update(ref, { ...plan.providerPatch, status: plan.providerPatch.accountStatus })
-        if (userRef && userRef.path !== ref.path) tx.set(userRef, { accountStatus: plan.providerPatch.accountStatus }, { merge: true })
+        // users.accountStatus keeps the app's vocabulary (pending | approved | rejected | suspended);
+        // admin-only states are flags on the same record.
+        const next = plan.providerPatch.accountStatus
+        const app = {
+          active: { accountStatus: 'approved', adminReviewStatus: null, accountDeactivated: false },
+          under_review: { adminReviewStatus: 'under_review' },
+          suspended: { accountStatus: 'suspended', adminReviewStatus: null },
+          deactivated: { accountStatus: 'suspended', accountDeactivated: true, deactivatedAt: FieldValue.serverTimestamp() },
+        }[next] || {}
+        tx.set(ref, { ...app, accountStatusUpdatedAt: FieldValue.serverTimestamp(), accountStatusUpdatedBy: uid }, { merge: true })
+        if (detailSnap?.exists && 'accountStatus' in app) tx.update(detailRef, { accountStatus: next === 'active' ? 'active' : 'suspended' })
       }
-      if (plan.notification && provider.userId) {
-        queueNotification(tx, { ...plan.notification, recipientId: provider.userId, recipientType: 'provider', category: 'account', related: { actionId: actionRef.id, caseId: plan.actionRecord.caseId } })
+      if (plan.notification) {
+        queueNotification(tx, { ...plan.notification, recipientId: provider.id, recipientType: 'provider', category: 'account', related: { actionId: actionRef.id, caseId: plan.actionRecord.caseId } })
       }
       auditEntry(tx, request, { actorId: uid, action: plan.audit.action, entityId: provider.id, entityType: 'provider_account', metadata: { ...plan.audit, actionId: actionRef.id } })
       return plan

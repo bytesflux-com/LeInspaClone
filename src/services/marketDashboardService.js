@@ -286,29 +286,10 @@ function buildMarketData(marketId = 'KE', dateRange = '30d') {
 }
 
 export const marketDashboardService = {
+  // ADM-008 — always the live callable; demo data only when VITE_USE_MOCK_DATA=true.
   async getMarketDashboardData({ marketId = 'KE', dateRange = '30d' } = {}) {
+    if (import.meta.env.VITE_USE_MOCK_DATA === 'true') return buildMarketData(marketId, dateRange)
     const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
-    try {
-      const result = await callAdmin('adminGetMarketDashboardData', {
-        marketId,
-        dateRange,
-        timeZone,
-      })
-      if (result && result.metrics) {
-        return result
-      }
-      return buildMarketData(marketId, dateRange)
-    } catch (err) {
-      // Graceful fallback to rich local aggregate model if backend function not deployed yet
-      if (
-        err?.code === 'functions/not-found' ||
-        err?.code === 'functions/unavailable' ||
-        import.meta.env.VITE_USE_SANDBOX === 'true' ||
-        true
-      ) {
-        return buildMarketData(marketId, dateRange)
-      }
-      throw err
-    }
+    return callAdmin('adminGetMarketDashboardData', { marketId, dateRange, timeZone })
   },
 }

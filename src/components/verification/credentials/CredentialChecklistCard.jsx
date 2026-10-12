@@ -8,19 +8,7 @@ export default function CredentialChecklistCard({
   checklist = [],
   onChecklistChange,
 }) {
-  const defaultItems = [
-    { key: 'documentReadable', label: 'Document readable and clear', status: 'Pass', resultType: 'pass', description: 'Text, seals, and signatures are fully legible' },
-    { key: 'pagesIncluded', label: 'Required pages included', status: 'Pass', resultType: 'pass', description: 'All certificate pages (1 & 2) submitted' },
-    { key: 'nameCorresponds', label: 'Provider name corresponds', status: 'Needs review', resultType: 'review', description: 'Grace Njeri vs Grace W. Njeri (corresponds with National ID)' },
-    { key: 'categoryMatches', label: 'Credential matches provider category', status: 'Pass', resultType: 'pass', description: 'Massage therapy qualification matches therapist profile' },
-    { key: 'issuerProvided', label: 'Issuer information provided', status: 'Pass', resultType: 'pass', description: 'Kenya Massage Federation is a recognized professional body' },
-    { key: 'issueDateValid', label: 'Issue date valid', status: 'Pass', resultType: 'pass', description: 'Issued 15 Jan 2024 within valid credential window' },
-    { key: 'credentialCurrent', label: 'Credential current / not expired', status: 'Pass', resultType: 'pass', description: 'Expiry date 15 Jan 2028 is beyond statutory threshold' },
-    { key: 'satisfiesRequirement', label: 'Satisfies configured requirement', status: 'Pass', resultType: 'pass', description: 'Fulfills Tier-1 platform qualification standards' },
-    { key: 'noTampering', label: 'No issue requiring escalation', status: 'Pass', resultType: 'pass', description: 'Signatures, borders, and official seals intact' },
-  ]
-
-  const items = checklist.length > 0 ? checklist : defaultItems
+  const items = checklist
 
   const handleToggle = (key, currentStatus) => {
     let next = 'Pass'

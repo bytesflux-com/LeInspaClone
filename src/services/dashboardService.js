@@ -267,28 +267,11 @@ function buildSandboxSummary(marketId, dateRange) {
 }
 
 export const dashboardService = {
+  // ADM-005 — always the live callable. Errors surface to the page's error
+  // state; demo telemetry is only used when VITE_USE_MOCK_DATA=true.
   async getDashboardSummary({ marketId = 'ALL', dateRange = 'today', customRange = null } = {}) {
+    if (import.meta.env.VITE_USE_MOCK_DATA === 'true') return buildSandboxSummary(marketId, dateRange)
     const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
-    try {
-      const result = await callAdmin('adminGetDashboardSummary', {
-        market: marketId,
-        dateRange,
-        customRange,
-        timeZone,
-      })
-
-      // Normalize if backend returned flatter legacy structure
-      if (result && !result.metrics) {
-        return buildSandboxSummary(marketId, dateRange)
-      }
-      return result
-    } catch (err) {
-      console.warn(
-        '[dashboardService] Live Cloud Function unreachable or not yet deployed, using sandbox telemetry:',
-        err?.message || err,
-      )
-      return buildSandboxSummary(marketId, dateRange)
-    }
+    return callAdmin('adminGetDashboardSummary', { market: marketId, dateRange, customRange, timeZone })
   },
 }
-

@@ -29,10 +29,10 @@ export function BookingFilterBar({
   const counts = summary?.counts || {}
 
   const tabs = [
-    { id: 'all', label: 'All', count: counts.total ?? 284 },
-    { id: 'upcoming', label: 'Upcoming', count: counts.upcoming ?? 12 },
+    { id: 'all', label: 'All', count: counts.total ?? 0 },
+    { id: 'upcoming', label: 'Upcoming', count: counts.upcoming ?? 0 },
     { id: 'ongoing', label: 'Ongoing', count: counts.ongoing ?? 3 },
-    { id: 'completed', label: 'Completed', count: counts.completed ?? 268 },
+    { id: 'completed', label: 'Completed', count: counts.completed ?? 0 },
     { id: 'cancelled', label: 'Cancelled', count: counts.cancelled ?? 4 },
     { id: 'disputed', label: 'Disputed', count: counts.disputed ?? 2 },
   ]

@@ -77,7 +77,8 @@ function Notes({ payment, preview, onSave }) {
           ))}
         </ul>
       )}
-      <textarea
+      {!onSave && notes.length === 0 && <p className="text-[11px] text-[#4a4466]">No internal notes.</p>}
+      {onSave && <><textarea
         value={text}
         onChange={(e) => setText(e.target.value)}
         rows={3}
@@ -95,7 +96,7 @@ function Notes({ payment, preview, onSave }) {
       >
         {saving ? 'Saving…' : 'Save Note'}
       </button>
-      <p className="mt-1.5 text-[10px] leading-snug text-[#4a4466]">Visible only to authorised Lé Inspa staff. Notes never change the transaction.</p>
+      <p className="mt-1.5 text-[10px] leading-snug text-[#4a4466]">Visible only to authorised Lé Inspa staff. Notes never change the transaction.</p></>}
     </section>
   )
 }
@@ -123,9 +124,11 @@ export default function PaymentDrawer({ payment: p, preview, loading, error, cli
     <aside aria-label="Payment details" className="rounded-xl border border-[#e6e1f3] bg-white p-3.5 shadow-[0_1px_2px_rgba(36,21,71,0.04),0_8px_20px_-12px_rgba(36,21,71,0.14)]">
       <header className="mb-3 flex items-center justify-between">
         <h2 className="text-[19px] font-bold tracking-tight text-[#1b1140]">Payment Details</h2>
-        <button type="button" onClick={onClose} aria-label="Close payment details" className="rounded-lg p-1 text-[#1b1140] transition hover:bg-[#f1edff]">
-          <X className="size-5" />
-        </button>
+        {onClose && (
+          <button type="button" onClick={onClose} aria-label="Close payment details" className="rounded-lg p-1 text-[#1b1140] transition hover:bg-[#f1edff]">
+            <X className="size-5" />
+          </button>
+        )}
       </header>
 
       <div className="flex items-start gap-3">
@@ -160,7 +163,7 @@ export default function PaymentDrawer({ payment: p, preview, loading, error, cli
             <h3 className={H3}>Transaction Information</h3>
             <ul>
               <InfoRow icon={CalendarDays} label="Payment Type">{preview.typeLabel || PAYMENT_TYPE_LABELS[p.type]}</InfoRow>
-              <InfoRow icon={Smartphone} iconClass="text-[#2fa84f]" label="Payment Method">{p.method.label}</InfoRow>
+              <InfoRow icon={Smartphone} iconClass="text-[#2fa84f]" label="Payment Method">{p.method?.label || "—"}</InfoRow>
               <InfoRow icon={Hash} label="Transaction Reference">
                 <span className="truncate">{preview.reference}</span>
                 <button type="button" onClick={() => copy(preview.reference, 'ref')} aria-label="Copy transaction reference" className="shrink-0 rounded p-0.5 text-[#4527c8] hover:bg-[#f1edff]">
@@ -215,7 +218,7 @@ export default function PaymentDrawer({ payment: p, preview, loading, error, cli
                 <EscrowPill status={preview.escrowDetail.status} />
                 <p className="mt-1.5 text-[13.5px] font-bold text-[#1b1140]">{money(cur, preview.escrowDetail.amount)}</p>
                 <p className="text-[10.5px] leading-snug text-[#4a4466]">{ESCROW_HINT[preview.escrowDetail.status]}</p>
-                <Link to={links.escrow(preview.escrowDetail.id)} state={links.state} className="mt-1.5 text-[11px] font-semibold text-[#3b1fd6] hover:underline">View Escrow Details</Link>
+                {preview.escrowDetail.id && links.escrow && <Link to={links.escrow(preview.escrowDetail.id)} state={links.state} className="mt-1.5 text-[11px] font-semibold text-[#3b1fd6] hover:underline">View Escrow Details</Link>}
               </section>
             )}
 
@@ -228,10 +231,10 @@ export default function PaymentDrawer({ payment: p, preview, loading, error, cli
                 <dl className="space-y-1 text-left text-[11.5px]">
                   <div className="flex justify-between gap-2"><dt className="text-[#2a1b57]">Amount</dt><dd className="font-bold text-[#1b1140]">{money(cur, preview.refund.amount)}</dd></div>
                   <div className="flex items-center justify-between gap-2"><dt className="text-[#2a1b57]">Status</dt><dd><span className="inline-flex items-center gap-1 rounded-md bg-[#ffe9d2] px-1.5 py-1 text-[10.5px] font-medium text-[#c2570c]"><Clock className="size-3 fill-[#f08a24] text-white" aria-hidden="true" />{preview.refund.status}</span></dd></div>
-                  <div className="flex justify-between gap-2"><dt className="text-[#2a1b57]">Reason</dt><dd className="text-right font-medium text-[#1b1140]">{preview.refund.reason}</dd></div>
+                  <div className="flex justify-between gap-2"><dt className="text-[#2a1b57]">Reason</dt><dd className="text-right font-medium text-[#1b1140]">{preview.refund.reason || '—'}</dd></div>
                   <div className="flex justify-between gap-2"><dt className="text-[#2a1b57]">Requested</dt><dd className="text-right font-medium text-[#1b1140]">{formatFullStamp(preview.refund.requestedAt, tz)}</dd></div>
-                  <div className="flex justify-between gap-2"><dt className="text-[#2a1b57]">Processed by</dt><dd className="font-medium text-[#1b1140]">{preview.refund.processedBy}</dd></div>
-                  <Link to={links.refund(preview.refund.id)} state={links.state} className="inline-block pt-1 text-[11px] font-semibold text-[#3b1fd6] hover:underline">View Refund Details</Link>
+                  <div className="flex justify-between gap-2"><dt className="text-[#2a1b57]">Processed by</dt><dd className="font-medium text-[#1b1140]">{preview.refund.processedBy || '—'}</dd></div>
+                  {preview.refund.id && links.refund && <Link to={links.refund(preview.refund.id)} state={links.state} className="inline-block pt-1 text-[11px] font-semibold text-[#3b1fd6] hover:underline">View Refund Details</Link>}
                 </dl>
               ) : (
                 <>

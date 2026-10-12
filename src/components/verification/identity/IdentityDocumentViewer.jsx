@@ -20,6 +20,7 @@ import {
   Info,
   Plus,
 } from 'lucide-react'
+import { AVATAR_PLACEHOLDER } from '../../../lib/placeholders'
 
 /**
  * ADM-032: IdentityDocumentViewer
@@ -40,16 +41,16 @@ export default function IdentityDocumentViewer({
   const [isFullscreen, setIsFullscreen] = useState(false)
 
   const doc = data?.document || {}
-  const personName = doc.nameOnDoc || data?.name || 'Grace Wanjiku Njeri'
+  const personName = doc.nameOnDoc || data?.name || '—'
   const isSpa = data?.providerCategory === 'SPA_WELLNESS'
   const isHotel = data?.providerCategory === 'HOTEL_RESORT'
 
   // Sensitive Field: Masked vs Unmasked
   const displayNumber = isNumberRevealed
-    ? doc.docNumberPlain || '1234 5678 4821'
-    : doc.docNumberMasked || '•••• •••• 4821'
+    ? doc.docNumberPlain || '—'
+    : doc.docNumberMasked || '—'
 
-  const displayDob = doc.dobPlain || '14 Mar 1998'
+  const displayDob = doc.dobPlain || '—'
 
   // Zoom handlers
   const handleZoomIn = () => setZoomLevel((prev) => Math.min(prev + 25, 175))
@@ -327,7 +328,7 @@ export default function IdentityDocumentViewer({
                         <img
                           src={
                             data?.avatarUrl ||
-                            'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80'
+                            AVATAR_PLACEHOLDER
                           }
                           alt="ID Portrait"
                           className="size-full object-cover grayscale contrast-110"
@@ -469,7 +470,7 @@ export default function IdentityDocumentViewer({
 
                       <div className="pt-1 text-[10px]">
                         <span className="text-[8px] font-bold text-slate-400 uppercase">DATE OF ISSUE:</span>
-                        <p className="font-mono font-semibold">{doc.issueDate || '14 Mar 2018'}</p>
+                        <p className="font-mono font-semibold">{doc.issueDate || '—'}</p>
                       </div>
                     </div>
 
@@ -604,7 +605,7 @@ export default function IdentityDocumentViewer({
             <div className="grid grid-cols-2 gap-2 text-xs">
               <div>
                 <span className="text-[10px] font-semibold text-slate-400 uppercase">Issue Date</span>
-                <p className="font-medium text-slate-800">{doc.issueDate || '14 Mar 2018'}</p>
+                <p className="font-medium text-slate-800">{doc.issueDate || '—'}</p>
               </div>
               <div>
                 <span className="text-[10px] font-semibold text-slate-400 uppercase">Expiry Date</span>
@@ -615,7 +616,7 @@ export default function IdentityDocumentViewer({
             {/* Uploaded Timestamp */}
             <div className="space-y-0.5">
               <span className="text-[10px] font-semibold text-slate-400 uppercase">Uploaded</span>
-              <p className="text-xs font-medium text-slate-600">{doc.uploadedAt || '12 Sep 2026 • 10:42 AM'}</p>
+              <p className="text-xs font-medium text-slate-600">{doc.uploadedAt || '—'}</p>
             </div>
           </div>
 

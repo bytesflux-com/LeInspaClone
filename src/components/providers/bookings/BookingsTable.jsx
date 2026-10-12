@@ -8,6 +8,7 @@ import {
   ChevronRight,
   ShieldAlert,
 } from 'lucide-react'
+import { AVATAR_PLACEHOLDER } from '../../../lib/placeholders'
 
 export function BookingsTable({
   bookings = [],
@@ -21,7 +22,7 @@ export function BookingsTable({
   onPageChange,
   pageSize = 5,
   onPageSizeChange,
-  totalCount = 284,
+  totalCount = 0,
   canSeeFinancial = true,
   onShowToast,
 }) {
@@ -128,7 +129,7 @@ export function BookingsTable({
                         <img
                           src={
                             b.clientAvatar ||
-                            'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80'
+                            AVATAR_PLACEHOLDER
                           }
                           alt={b.clientName}
                           className="size-7.5 rounded-full object-cover border border-slate-200 shrink-0"
@@ -149,7 +150,7 @@ export function BookingsTable({
 
                     {/* Date & Time */}
                     <td className="py-3 px-3 text-slate-600 font-medium whitespace-nowrap">
-                      {b.dateTime || '12 Sep 2026 • 2:00 PM'}
+                      {b.dateTime || '—'}
                     </td>
 
                     {/* Amount (KES) */}

@@ -1,4 +1,5 @@
 import { Sparkles, ChevronRight, Clock } from 'lucide-react'
+import { IMAGE_PLACEHOLDER } from '../../../lib/placeholders'
 
 export function ActiveServicesCard({
   profile,
@@ -53,7 +54,7 @@ export function ActiveServicesCard({
                 <img
                   src={
                     srv.image ||
-                    'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=120'
+                    IMAGE_PLACEHOLDER
                   }
                   alt={srv.name}
                   className="size-8 rounded-lg object-cover shrink-0 border border-slate-200"

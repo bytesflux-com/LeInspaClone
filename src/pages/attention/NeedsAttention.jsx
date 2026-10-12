@@ -409,6 +409,10 @@ export default function NeedsAttention() {
       path = `/disputes/${item.sourceId}`
     } else if (item.sourceType === 'support_ticket') {
       path = `/support/${item.sourceId}`
+    } else if (item.sourceType === 'safety_report') {
+      path = `/safety/${item.sourceId}`
+    } else if (item.sourceType === 'content_submission') {
+      path = '/content-approval'
     }
     navigate(
       `${path}?returnTo=attention&market=${encodeURIComponent(currentMarket)}&tab=${encodeURIComponent(activeTab)}`,
@@ -473,6 +477,9 @@ export default function NeedsAttention() {
   }
 
   const { admin } = useAdminSession()
+  // "My Tasks" (Operations Center) = items assigned to the signed-in admin.
+  const mineOnly = searchParams.get('assigned') === 'me'
+  const myItems = items.filter((item) => item.assignedTo?.uid && item.assignedTo.uid === admin?.uid)
 
   const handleAssignToMe = async (item) => {
     try {
@@ -535,8 +542,14 @@ export default function NeedsAttention() {
         </div>
       </section>
 
+      {mineOnly && (
+        <p className="flex flex-wrap items-center gap-2 rounded-xl border border-royal-100 bg-royal-50 px-3 py-2 text-xs text-royal-900">
+          Showing items assigned to you ({myItems.length}).
+          <button type="button" onClick={() => setSearchParams((p) => { p.delete('assigned'); return p })} className="font-semibold underline">Show all</button>
+        </p>
+      )}
       <ActionQueue
-        items={items}
+        items={mineOnly ? myItems : items}
         loading={loading}
         error={error}
         onRetry={refetch}

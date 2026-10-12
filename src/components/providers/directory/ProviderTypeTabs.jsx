@@ -11,25 +11,25 @@ export function ProviderTypeTabs({
     {
       id: 'all',
       label: 'All Providers',
-      count: typeCounts.all || 24860,
+      count: typeCounts.all ?? 0,
       icon: Users,
     },
     {
       id: 'professionals',
       label: 'Professionals',
-      count: typeCounts.professionals || 20260,
+      count: typeCounts.professionals ?? 0,
       icon: User,
     },
     {
       id: 'spa',
       label: 'Spas & Wellness Centers',
-      count: typeCounts.spa || 3820,
+      count: typeCounts.spa ?? 0,
       icon: Flower2,
     },
     {
       id: 'hotel_resort',
       label: 'Hotels & Resorts',
-      count: typeCounts.hotel_resort || 780,
+      count: typeCounts.hotel_resort ?? 0,
       icon: Building2,
     },
   ]

@@ -16,16 +16,16 @@ import {
  */
 export default function BusinessRepresentativeCard({
   representative = {
-    name: 'Mary Wanjiku',
-    role: 'Managing Director & Founder',
-    title: 'Business Owner / Authorized Signatory',
-    ownership: '100% Beneficial Shareholder',
-    email: 'm.wanjiku@serenityspa.co.ke',
-    phone: '+254 722 998 877',
-    idNumberMasked: '•••• •••• 9102',
-    authorizedDocument: 'CR12 Official Company Registry Certificate',
-    isIdentityVerified: true,
-    identityReviewId: 'ver-002',
+    name: null,
+    role: null,
+    title: null,
+    ownership: null,
+    email: null,
+    phone: null,
+    idNumberMasked: null,
+    authorizedDocument: null,
+    isIdentityVerified: null,
+    identityReviewId: null,
   },
   onViewIdentity,
 }) {

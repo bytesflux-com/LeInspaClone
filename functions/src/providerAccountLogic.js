@@ -269,7 +269,7 @@ export function buildAccountView({
     restrictions: restrictions.sort((a, b) => (b.startedAt || 0) - (a.startedAt || 0)),
     history,
     notifications: notifications
-      .map((n) => ({ id: n.id, title: n.title, type: n.type, channels: n.channels || ['in_app'], status: lower(n.status || 'queued'), at: toMillis(n.createdAt), body: n.body || null }))
+      .map((n) => ({ id: n.id, title: n.title, type: n.type || n.notificationType, channels: n.channels || ['in_app'], status: lower(n.status || (n.isRead ? 'read' : 'delivered')), at: toMillis(n.createdAt), body: n.body || n.message || null }))
       .sort((a, b) => (b.at || 0) - (a.at || 0)),
     notes: notes.map((n) => ({ id: n.id, text: n.note || n.text, author: n.authorName || n.author || 'Admin', at: toMillis(n.createdAt) })).sort((a, b) => (b.at || 0) - (a.at || 0)),
     assessment,

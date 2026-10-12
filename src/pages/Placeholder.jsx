@@ -1,10 +1,9 @@
-import { Construction, ArrowLeft } from 'lucide-react'
+import { Construction, ArrowLeft, ArrowRight } from 'lucide-react'
 import { Link } from 'react-router'
-import { useMarketContext } from '../hooks/useMarketContext'
 
-export default function Placeholder({ title }) {
-  const { selectedMarket } = useMarketContext()
-
+// Screens that are specified but not built yet. Says so plainly and points to
+// the closest working screen instead of leaving the admin at a dead end.
+export default function Placeholder({ title, spec, alternatives = [] }) {
   return (
     <div className="mx-auto max-w-5xl space-y-6">
       <div className="flex items-center gap-2 text-xs font-medium text-gray-500">
@@ -20,8 +19,19 @@ export default function Placeholder({ title }) {
 
         <h1 className="mt-5 text-2xl font-bold tracking-tight text-royal-950">{title}</h1>
         <p className="mt-2 text-sm text-gray-500 max-w-md mx-auto">
-          This module is part of the Lé Inspa roadmap. Currently scoped to {selectedMarket.name} ({selectedMarket.flag}).
+          {spec ? `This screen (${spec}) is in the specification but has not been built yet.` : 'This screen has not been built yet.'}
         </p>
+
+        {alternatives.length > 0 && (
+          <div className="mx-auto mt-5 flex max-w-md flex-col gap-2">
+            {alternatives.map((a) => (
+              <Link key={a.to} to={a.to} className="flex items-center justify-between rounded-xl border border-royal-100 px-4 py-2.5 text-left text-xs font-semibold text-royal-800 hover:bg-royal-50">
+                {a.label}
+                <ArrowRight className="size-4" />
+              </Link>
+            ))}
+          </div>
+        )}
 
         <div className="mt-6 flex justify-center">
           <Link

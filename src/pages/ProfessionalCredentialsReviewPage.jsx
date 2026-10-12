@@ -27,7 +27,7 @@ export default function ProfessionalCredentialsReviewPage() {
   const navigate = useNavigate()
 
   // Target provider/verification ID (defaults to Grace Njeri if absent)
-  const targetId = id || 'PR-82941'
+  const targetId = id
 
   // Data states
   const [loading, setLoading] = useState(true)
@@ -275,7 +275,7 @@ export default function ProfessionalCredentialsReviewPage() {
       {/* 1. Header & Actions */}
       <CredentialHeader
         verificationId={data?.verificationId || targetId}
-        providerId={data?.providerId || 'PR-82941'}
+        providerId={data?.providerId || null}
       />
 
       {/* 2. Provider Context & Credential Review Summary */}

@@ -3,11 +3,15 @@ import { logger } from 'firebase-functions/v2'
 import { FieldPath, FieldValue, Timestamp, getFirestore } from 'firebase-admin/firestore'
 import { requireAdmin } from './auth.js'
 import { adminAccess, canAccessMarket } from './accessModel.js'
+import { countryCodeOf, loadUsers, providerTypeOf } from './platformData.js'
 import { recordAudit } from './events.js'
 import {
   ALL_MARKETS,
   ASSIGNMENT_COLLECTION,
+  CONTENT_REQUEST_TYPES,
   DISPUTE_OPEN_STATUS,
+  SAFETY_OPEN_STATUSES,
+  SUPPORT_OPEN_STATUSES,
   SOURCE_LIMIT,
   SUPPORT_OPEN_STATUS,
   VERIFICATION_PENDING_STATUS,
@@ -94,6 +98,20 @@ function buildItem({
   }
 }
 
+// Dispute parties with their account role so the Admin can open the right profile.
+async function disputeParties(db, doc) {
+  const ids = [
+    ['Raised by', doc.get('complainantId') || doc.get('reporterId') || doc.get('clientId')],
+    ['Against', doc.get('againstId') || doc.get('providerId')],
+  ].filter(([, id]) => id && !String(id).includes('/'))
+  if (!ids.length) return []
+  const users = await loadUsers(db, ids.map(([, id]) => id))
+  return ids.map(([label, id]) => {
+    const u = users.get(id) || {}
+    return { label, id, name: u.fullName || u.displayName || null, role: providerTypeOf(u.accountType) ? 'provider' : u.accountType ? 'client' : null }
+  })
+}
+
 async function safeGet(query, label) {
   try {
     return await query.get()
@@ -103,122 +121,123 @@ async function safeGet(query, label) {
   }
 }
 
-function scopedQueries(collection, { statusField, statusValue, statusIn, scope }) {
-  const applyStatus = (query) => {
-    if (statusField && statusIn?.length) return query.where(statusField, 'in', statusIn)
-    if (statusField && statusValue) return query.where(statusField, '==', statusValue)
-    return query
+// Mobile-app records carry no countryCode: each source names the users that
+// own it, and the item's market is the first owner's resolved country.
+const SOURCES = {
+  verification: {
+    query: (db) => db.collection('users').where('professionalVerificationStatus', '==', VERIFICATION_PENDING_STATUS),
+    owners: (d) => [d.id],
+    build: (d, countryCode) => buildItem({
+      sourceType: 'user_verification',
+      sourceId: d.id,
+      category: 'verification',
+      title: 'Provider verification',
+      description: humanize(d.get('accountType')) || 'Pending professional verification',
+      status: d.get('professionalVerificationStatus') || VERIFICATION_PENDING_STATUS,
+      countryCode,
+      actionableAt: d.get('updatedAt') || d.get('createdAt'),
+      actionLabel: 'Review',
+    }),
+  },
+  finance: {
+    query: (db) => db.collection('withdrawal_requests').where('status', 'in', WITHDRAWAL_ACTION_STATUSES),
+    owners: (d) => [d.get('userId'), d.get('providerId')],
+    build: (d, countryCode) => buildItem({
+      sourceType: 'withdrawal_request',
+      sourceId: d.id,
+      category: 'finance',
+      title: 'Withdrawal request',
+      description: humanize(d.get('manualReviewReason') || d.get('status')) || 'Awaiting approval',
+      status: d.get('status'),
+      countryCode,
+      actionableAt: d.get('manualReviewAt') || d.get('createdAt'),
+      actionLabel: 'Review Withdrawal',
+    }),
+  },
+  disputes: {
+    query: (db) => db.collection('disputes').where('status', '==', DISPUTE_OPEN_STATUS),
+    owners: (d) => [d.get('reporterId'), d.get('againstId'), d.get('clientId'), d.get('providerId')],
+    build: (d, countryCode) => buildItem({
+      sourceType: 'dispute',
+      sourceId: d.id,
+      category: 'disputes',
+      title: `Dispute ${d.id}`,
+      description: humanize(d.get('type')) || 'Open case requiring review',
+      status: d.get('status') || DISPUTE_OPEN_STATUS,
+      countryCode,
+      actionableAt: d.get('createdAt'),
+      actionLabel: 'Review Case',
+    }),
+  },
+  safety: {
+    query: (db) => db.collection('safety_reports').where('status', 'in', SAFETY_OPEN_STATUSES),
+    owners: (d) => [d.get('providerId'), d.get('clientId')],
+    build: (d, countryCode) => buildItem({
+      sourceType: 'safety_report',
+      sourceId: d.id,
+      category: 'safety',
+      title: d.get('issueType') || 'Safety report',
+      description: d.get('providerName') ? `Provider: ${d.get('providerName')}` : 'Safety report awaiting review',
+      status: d.get('issueType') || d.get('status'),
+      countryCode,
+      actionableAt: d.get('createdAt'),
+      actionLabel: 'Review Report',
+    }),
+  },
+  content: {
+    query: (db) => db.collection('verification_requests').where('status', '==', 'pending'),
+    filter: (d) => CONTENT_REQUEST_TYPES.includes(String(d.get('requestType') || '')),
+    owners: (d) => [d.get('userId')],
+    build: (d, countryCode) => buildItem({
+      sourceType: 'content_submission',
+      sourceId: d.id,
+      category: 'content',
+      title: humanize(d.get('requestType')) || 'Content submission',
+      description: d.get('businessName') || d.get('docType') || 'Awaiting moderation',
+      status: 'pending',
+      countryCode,
+      actionableAt: d.get('submittedAt') || d.get('createdAt'),
+      actionLabel: 'Moderate',
+    }),
+  },
+  support: {
+    query: (db) => db.collectionGroup('support_tickets').where('status', 'in', SUPPORT_OPEN_STATUSES),
+    owners: (d) => [d.get('userId'), d.get('customerId')],
+    build: (d, countryCode) => buildItem({
+      sourceType: 'support_ticket',
+      sourceId: d.id,
+      category: 'support',
+      title: d.get('subject') || 'Support ticket',
+      description: humanize(d.get('category')) || 'Open ticket requiring a response',
+      status: String(d.get('status') || SUPPORT_OPEN_STATUS).toLowerCase(),
+      countryCode,
+      actionableAt: d.get('updatedAt') || d.get('createdAt'),
+      actionLabel: 'Review',
+    }),
+  },
+}
+
+const OWNERS = {
+  user_verification: (d) => [d.id],
+  withdrawal_request: SOURCES.finance.owners,
+  dispute: SOURCES.disputes.owners,
+  safety_report: SOURCES.safety.owners,
+  content_submission: SOURCES.content.owners,
+  support_ticket: SOURCES.support.owners,
+}
+
+const countryFor = (usersById, uids) => {
+  for (const uid of uids) {
+    const u = uid && usersById.get(uid)
+    const code = u && countryCodeOf(u.countryCode, u.country)
+    if (code) return code
   }
-
-  if (scope.unrestricted) {
-    return [applyStatus(collection).limit(SOURCE_LIMIT)]
-  }
-
-  return scope.markets.map((code) => applyStatus(collection.where('countryCode', '==', code)).limit(SOURCE_LIMIT))
+  return null
 }
 
-async function collectDocs(queries, label) {
-  const snaps = await Promise.all(queries.map((query, index) => safeGet(query, `${label}:${index}`)))
-  return snaps.flatMap((snap) => snap.docs)
-}
-
-async function loadVerificationItems(db, scope) {
-  const queries = scopedQueries(db.collection('users'), {
-    statusField: 'professionalVerificationStatus',
-    statusValue: VERIFICATION_PENDING_STATUS,
-    scope,
-  })
-  const docs = await collectDocs(queries, 'verification')
-  return docs
-    .filter((doc) => isInScope(doc.get('countryCode') || null, scope))
-    .map((doc) => {
-      const accountType = doc.get('accountType')
-      return buildItem({
-        sourceType: 'user_verification',
-        sourceId: doc.id,
-        category: 'verification',
-        title: 'Provider verification',
-        description: humanize(accountType) || 'Pending professional verification',
-        status: doc.get('professionalVerificationStatus') || VERIFICATION_PENDING_STATUS,
-        countryCode: doc.get('countryCode') || null,
-        actionableAt: doc.get('createdAt'),
-        actionLabel: 'Review',
-      })
-    })
-}
-
-async function loadWithdrawalItems(db, scope) {
-  const queries = scopedQueries(db.collection('withdrawal_requests'), {
-    statusField: 'status',
-    statusIn: WITHDRAWAL_ACTION_STATUSES,
-    scope,
-  })
-  const docs = await collectDocs(queries, 'withdrawals')
-  return docs
-    .filter((doc) => isInScope(doc.get('countryCode') || null, scope))
-    .map((doc) =>
-      buildItem({
-        sourceType: 'withdrawal_request',
-        sourceId: doc.id,
-        category: 'finance',
-        title: 'Withdrawal request',
-        description: humanize(doc.get('status')) || 'Awaiting approval',
-        status: doc.get('status'),
-        countryCode: doc.get('countryCode') || null,
-        actionableAt: doc.get('createdAt'),
-        actionLabel: 'Review Withdrawal',
-      }),
-    )
-}
-
-async function loadDisputeItems(db, scope) {
-  const queries = scopedQueries(db.collection('disputes'), {
-    statusField: 'status',
-    statusValue: DISPUTE_OPEN_STATUS,
-    scope,
-  })
-  const docs = await collectDocs(queries, 'disputes')
-  return docs
-    .filter((doc) => isInScope(doc.get('countryCode') || null, scope))
-    .map((doc) =>
-      buildItem({
-        sourceType: 'dispute',
-        sourceId: doc.id,
-        category: 'disputes',
-        title: `Dispute ${doc.id}`,
-        description: 'Open case requiring review',
-        status: doc.get('status') || DISPUTE_OPEN_STATUS,
-        countryCode: doc.get('countryCode') || null,
-        actionableAt: doc.get('createdAt'),
-        actionLabel: 'Review Case',
-      }),
-    )
-}
-
-async function loadSupportItems(db, scope) {
-  const snap = await safeGet(
-    db.collectionGroup('support_tickets').where('status', '==', SUPPORT_OPEN_STATUS).limit(SOURCE_LIMIT),
-    'support',
-  )
-  return snap.docs
-    .filter((doc) => {
-      const countryCode = doc.get('countryCode') || null
-      if (countryCode) return isInScope(countryCode, scope)
-      return scope.unrestricted
-    })
-    .map((doc) =>
-      buildItem({
-        sourceType: 'support_ticket',
-        sourceId: doc.id,
-        category: 'support',
-        title: 'Support ticket',
-        description: 'Open ticket requiring a response',
-        status: doc.get('status') || SUPPORT_OPEN_STATUS,
-        countryCode: doc.get('countryCode') || null,
-        actionableAt: doc.get('createdAt'),
-        actionLabel: 'Review',
-      }),
-    )
+// Resolved market of one record (used by the review/assign handlers).
+async function recordCountry(db, uids) {
+  return countryFor(await loadUsers(db, uids.filter(Boolean)), uids)
 }
 
 export const adminGetNeedsAttention = onCall(async (request) => {
@@ -243,13 +262,16 @@ export const adminGetNeedsAttention = onCall(async (request) => {
 
   const categories = allowedCategories(access.permissions)
   const db = getFirestore()
-  const loaders = []
-  if (categories.verification) loaders.push(loadVerificationItems(db, scope))
-  if (categories.finance) loaders.push(loadWithdrawalItems(db, scope))
-  if (categories.disputes) loaders.push(loadDisputeItems(db, scope))
-  if (categories.support) loaders.push(loadSupportItems(db, scope))
-
-  const groups = await Promise.all(loaders)
+  const active = Object.entries(SOURCES).filter(([category]) => categories[category])
+  const snaps = await Promise.all(active.map(([category, src]) => safeGet(src.query(db).limit(SOURCE_LIMIT * 5), category)))
+  const docsBySource = active.map(([, src], i) => [src, snaps[i].docs.filter((d) => !src.filter || src.filter(d))])
+  const usersById = await loadUsers(db, docsBySource.flatMap(([src, docs]) => docs.flatMap((d) => src.owners(d))))
+  const groups = docsBySource.map(([src, docs]) =>
+    docs
+      .map((d) => ({ d, countryCode: countryFor(usersById, src.owners(d)) }))
+      .filter(({ countryCode }) => isInScope(countryCode, scope))
+      .map(({ d, countryCode }) => src.build(d, countryCode)),
+  )
   const rawItems = dedupeItems(groups.flat())
 
   // Attach assignments if any
@@ -280,16 +302,9 @@ export const adminGetNeedsAttention = onCall(async (request) => {
   let resolvedToday = 0
   try {
     const startOfToday = Timestamp.fromDate(startOfLocalDay())
-    let resolvedQuery = db.collection('users').where('professionalVerifiedAt', '>=', startOfToday)
-    if (!scope.unrestricted) {
-      if (scope.markets.length === 1) {
-        resolvedQuery = resolvedQuery.where('countryCode', '==', scope.markets[0])
-      } else if (scope.markets.length > 1) {
-        resolvedQuery = resolvedQuery.where('countryCode', 'in', scope.markets.slice(0, 10))
-      }
-    }
-    const resolvedSnap = await resolvedQuery.limit(50).get()
-    resolvedToday = resolvedSnap.size
+    const resolvedSnap = await db.collection('users').where('professionalVerifiedAt', '>=', startOfToday).limit(200).get()
+    const resolvedInScope = resolvedSnap.docs.filter((d) => isInScope(countryCodeOf(d.get('countryCode'), d.get('country')), scope))
+    resolvedToday = resolvedInScope.length
   } catch (err) {
     logger.warn('Failed to calculate resolvedToday count:', err.message)
   }
@@ -335,7 +350,7 @@ export const adminGetReviewItem = onCall(async (request) => {
       throw new HttpsError('not-found', 'Provider record not found or has been removed.')
     }
 
-    const countryCode = doc.get('countryCode') || null
+    const countryCode = await recordCountry(db, OWNERS[sourceType](doc))
     if (!canAccessItemScope(access, countryCode)) {
       throw new HttpsError('permission-denied', 'You are not authorized for this market.', {
         reason: 'market-denied',
@@ -379,7 +394,7 @@ export const adminGetReviewItem = onCall(async (request) => {
       throw new HttpsError('not-found', 'Withdrawal request not found.')
     }
 
-    const countryCode = doc.get('countryCode') || null
+    const countryCode = await recordCountry(db, OWNERS[sourceType](doc))
     if (!canAccessItemScope(access, countryCode)) {
       throw new HttpsError('permission-denied', 'You are not authorized for this market.', {
         reason: 'market-denied',
@@ -393,7 +408,7 @@ export const adminGetReviewItem = onCall(async (request) => {
       category: 'finance',
       title: `Withdrawal ${sourceId}`,
       amount: doc.get('amount') || 0,
-      currency: doc.get('currency') || (countryCode === 'KE' ? 'KES' : 'USD'),
+      currency: doc.get('currency') || ({ KE: 'KES', UG: 'UGX', TZ: 'TZS', RW: 'RWF', ZA: 'ZAR' }[countryCode] || 'KES'),
       status: doc.get('status') || 'submitted',
       countryCode,
       marketName: marketLabel(countryCode),
@@ -413,7 +428,7 @@ export const adminGetReviewItem = onCall(async (request) => {
       throw new HttpsError('not-found', 'Dispute case not found.')
     }
 
-    const countryCode = doc.get('countryCode') || null
+    const countryCode = await recordCountry(db, OWNERS[sourceType](doc))
     if (!canAccessItemScope(access, countryCode)) {
       throw new HttpsError('permission-denied', 'You are not authorized for this market.', {
         reason: 'market-denied',
@@ -427,13 +442,16 @@ export const adminGetReviewItem = onCall(async (request) => {
       category: 'disputes',
       title: `Dispute ${sourceId}`,
       bookingId: doc.get('bookingId') || null,
-      complainantId: doc.get('complainantId') || doc.get('clientId') || null,
-      reason: doc.get('reason') || doc.get('disputeReason') || 'Case under investigation',
+      complainantId: doc.get('complainantId') || doc.get('reporterId') || doc.get('clientId') || null,
+      againstId: doc.get('againstId') || null,
+      raisedBy: doc.get('raisedBy') || null,
+      reason: doc.get('reason') || doc.get('disputeReason') || doc.get('notes') || humanize(doc.get('type')) || 'Case under investigation',
       status: doc.get('status') || DISPUTE_OPEN_STATUS,
       countryCode,
       marketName: marketLabel(countryCode),
       escrowAmount: doc.get('escrowAmount') || doc.get('amount') || 0,
       createdAt: toIso(doc.get('createdAt')),
+      parties: await disputeParties(db, doc),
       supportedActions: [],
       unsupportedReason:
         'Dispute financial resolution and escrow release require payment gateway integration. Direct modifications are restricted.',
@@ -453,7 +471,7 @@ export const adminGetReviewItem = onCall(async (request) => {
       throw new HttpsError('not-found', 'Support ticket not found.')
     }
 
-    const countryCode = doc.get('countryCode') || null
+    const countryCode = await recordCountry(db, OWNERS[sourceType](doc))
     if (!canAccessItemScope(access, countryCode)) {
       throw new HttpsError('permission-denied', 'You are not authorized for this market.', {
         reason: 'market-denied',
@@ -475,6 +493,57 @@ export const adminGetReviewItem = onCall(async (request) => {
       messages: doc.get('messages') || [],
       supportedActions: [],
       unsupportedReason: 'Support ticket responses require the concierge messaging service.',
+    }
+  }
+
+  if (sourceType === 'safety_report') {
+    const doc = await db.collection('safety_reports').doc(sourceId).get()
+    if (!doc.exists) throw new HttpsError('not-found', 'Safety report not found.')
+    const countryCode = await recordCountry(db, OWNERS.safety_report(doc))
+    if (!canAccessItemScope(access, countryCode)) {
+      throw new HttpsError('permission-denied', 'You are not authorized for this market.', { reason: 'market-denied', market: countryCode })
+    }
+    return {
+      sourceType,
+      sourceId,
+      category: 'safety',
+      title: doc.get('issueType') || 'Safety report',
+      status: doc.get('status') || 'pending',
+      countryCode,
+      marketName: marketLabel(countryCode),
+      details: doc.get('details') || null,
+      bookingId: doc.get('bookingId') || null,
+      providerId: doc.get('providerId') || null,
+      providerName: doc.get('providerName') || null,
+      clientId: doc.get('clientId') || null,
+      clientName: doc.get('clientName') || null,
+      createdAt: toIso(doc.get('createdAt')),
+      supportedActions: [],
+      unsupportedReason: 'Safety reports are investigated in the Safety workflow (ADM-018 / Safety Investigation).',
+    }
+  }
+
+  if (sourceType === 'content_submission') {
+    const doc = await db.collection('verification_requests').doc(sourceId).get()
+    if (!doc.exists) throw new HttpsError('not-found', 'Content submission not found.')
+    const countryCode = await recordCountry(db, OWNERS.content_submission(doc))
+    if (!canAccessItemScope(access, countryCode)) {
+      throw new HttpsError('permission-denied', 'You are not authorized for this market.', { reason: 'market-denied', market: countryCode })
+    }
+    return {
+      sourceType,
+      sourceId,
+      category: 'content',
+      title: humanize(doc.get('requestType')) || 'Content submission',
+      status: doc.get('status') || 'pending',
+      countryCode,
+      marketName: marketLabel(countryCode),
+      providerId: doc.get('userId') || null,
+      businessName: doc.get('businessName') || null,
+      submittedAt: toIso(doc.get('submittedAt') || doc.get('createdAt')),
+      supportedActions: [],
+      unsupportedReason: 'Content decisions are made in Content Approval (ADM-035).',
+      link: `/content-approval`,
     }
   }
 
@@ -504,7 +573,7 @@ export const adminProcessReviewAction = onCall(async (request) => {
       throw new HttpsError('not-found', 'User record not found or has been removed.')
     }
 
-    const countryCode = userDoc.get('countryCode') || null
+    const countryCode = countryCodeOf(userDoc.get('countryCode'), userDoc.get('country'))
     if (!canAccessItemScope(access, countryCode)) {
       throw new HttpsError('permission-denied', 'You are not authorized for this market.', {
         reason: 'market-denied',
@@ -587,17 +656,17 @@ export const adminAssignQueueItem = onCall(async (request) => {
   if (sourceType === 'user_verification') {
     const doc = await db.collection('users').doc(sourceId).get()
     if (!doc.exists) throw new HttpsError('not-found', 'Provider record not found.')
-    countryCode = doc.get('countryCode') || null
+    countryCode = await recordCountry(db, OWNERS[sourceType](doc))
     isActionable = isActionableStatus(sourceType, doc.get('professionalVerificationStatus') || VERIFICATION_PENDING_STATUS)
   } else if (sourceType === 'withdrawal_request') {
     const doc = await db.collection('withdrawal_requests').doc(sourceId).get()
     if (!doc.exists) throw new HttpsError('not-found', 'Withdrawal request not found.')
-    countryCode = doc.get('countryCode') || null
+    countryCode = await recordCountry(db, OWNERS[sourceType](doc))
     isActionable = isActionableStatus(sourceType, doc.get('status'))
   } else if (sourceType === 'dispute') {
     const doc = await db.collection('disputes').doc(sourceId).get()
     if (!doc.exists) throw new HttpsError('not-found', 'Dispute case not found.')
-    countryCode = doc.get('countryCode') || null
+    countryCode = await recordCountry(db, OWNERS[sourceType](doc))
     isActionable = isActionableStatus(sourceType, doc.get('status') || DISPUTE_OPEN_STATUS)
   } else if (sourceType === 'support_ticket') {
     let doc = await db.collection('support_tickets').doc(sourceId).get()
@@ -606,8 +675,13 @@ export const adminAssignQueueItem = onCall(async (request) => {
       if (!snap.empty) doc = snap.docs[0]
     }
     if (!doc?.exists) throw new HttpsError('not-found', 'Support ticket not found.')
-    countryCode = doc.get('countryCode') || null
-    isActionable = isActionableStatus(sourceType, doc.get('status') || SUPPORT_OPEN_STATUS)
+    countryCode = await recordCountry(db, OWNERS[sourceType](doc))
+    isActionable = isActionableStatus(sourceType, String(doc.get('status') || SUPPORT_OPEN_STATUS).toLowerCase())
+  } else if (sourceType === 'safety_report' || sourceType === 'content_submission') {
+    const doc = await db.collection(sourceType === 'safety_report' ? 'safety_reports' : 'verification_requests').doc(sourceId).get()
+    if (!doc.exists) throw new HttpsError('not-found', 'Record not found.')
+    countryCode = await recordCountry(db, OWNERS[sourceType](doc))
+    isActionable = ['pending', 'open', 'under_investigation', 'escalated'].includes(String(doc.get('status') || '').toLowerCase())
   } else {
     throw new HttpsError('invalid-argument', `Unsupported sourceType: ${sourceType}`)
   }

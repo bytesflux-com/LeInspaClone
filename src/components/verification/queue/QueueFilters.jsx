@@ -28,11 +28,11 @@ export default function QueueFilters({
 
   // Status Tab Items
   const statusTabs = [
-    { id: 'ALL', label: 'All', count: statusCounts.all ?? 428 },
-    { id: 'AWAITING_REVIEW', label: 'New', count: statusCounts.new ?? 196 },
-    { id: 'UNDER_REVIEW', label: 'Under Review', count: statusCounts.underReview ?? 86 },
-    { id: 'RESUBMITTED', label: 'Resubmitted', count: statusCounts.resubmitted ?? 46 },
-    { id: 'CHANGES_REQUESTED', label: 'Changes Requested', count: statusCounts.changesRequested ?? 112 },
+    { id: 'ALL', label: 'All', count: statusCounts.all ?? '—' },
+    { id: 'AWAITING_REVIEW', label: 'New', count: statusCounts.new ?? '—' },
+    { id: 'UNDER_REVIEW', label: 'Under Review', count: statusCounts.underReview ?? '—' },
+    { id: 'RESUBMITTED', label: 'Resubmitted', count: statusCounts.resubmitted ?? '—' },
+    { id: 'CHANGES_REQUESTED', label: 'Changes Requested', count: statusCounts.changesRequested ?? '—' },
     { id: 'ESCALATED', label: 'Escalated', count: statusCounts.escalated ?? 7 },
   ]
 

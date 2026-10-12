@@ -33,7 +33,7 @@ export default function VerificationReviewPage() {
   const navigate = useNavigate()
 
   // Primary verification ID / Provider ID (defaults to Grace Njeri if no param)
-  const targetId = id || 'PR-82941'
+  const targetId = id || '—'
 
   // Data states
   const [loading, setLoading] = useState(true)
@@ -362,7 +362,7 @@ export default function VerificationReviewPage() {
             {/* Avatar with Verified ring */}
             <div className="relative shrink-0">
               <img
-                src={record?.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'}
+                src={record?.avatarUrl || '—'}
                 alt={record?.name || 'Provider'}
                 className="size-16 rounded-2xl border-2 border-purple-200 object-cover shadow-sm"
               />
@@ -375,7 +375,7 @@ export default function VerificationReviewPage() {
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <h2 className="text-lg font-bold text-slate-900">
-                  {record?.name || 'Grace Njeri'}
+                  {record?.name || '—'}
                 </h2>
                 <span className="inline-flex items-center rounded-full border border-purple-200 bg-purple-50 px-2.5 py-0.5 text-[11px] font-semibold text-purple-700">
                   🟣 Under Review
@@ -383,16 +383,16 @@ export default function VerificationReviewPage() {
               </div>
 
               <p className="text-xs font-medium text-slate-500">
-                <span className="font-mono text-purple-700 font-semibold">{record?.providerId || 'PR-82941'}</span>
+                <span className="font-mono text-purple-700 font-semibold">{record?.providerId || '—'}</span>
                 {' • '}
                 <span>{record?.type || 'Massage Therapist'}</span>
                 {' • '}
-                <span>{record?.market?.flag || '🇰🇪'} {record?.market?.name || 'Kenya'}</span>
+                <span>{record?.market?.flag || ''} {record?.market?.name || '—'}</span>
               </p>
 
               <div className="flex items-center gap-2 text-[11px] text-slate-400 pt-0.5">
                 <Clock className="size-3 text-slate-400" />
-                <span>Submitted: {record?.submittedAt || '12 Sep 2026 • 10:42 AM'}</span>
+                <span>Submitted: {record?.submittedAt || '—'}</span>
               </div>
             </div>
           </div>
@@ -400,7 +400,7 @@ export default function VerificationReviewPage() {
           {/* Assigned Reviewer Row */}
           <div className="flex items-center gap-2 pt-2 border-t border-slate-100 text-xs text-slate-600">
             <img
-              src={record?.assignedReviewer?.avatarUrl || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=80'}
+              src={record?.assignedReviewer?.avatarUrl || '—'}
               alt={record?.assignedTo || 'Jane Ochieng'}
               className="size-6 rounded-full border border-purple-200 object-cover"
             />
@@ -470,7 +470,7 @@ export default function VerificationReviewPage() {
           {/* 2. Information Comparison Card */}
           <InformationComparisonTable
             comparisonData={record?.comparisonData || []}
-            providerId={record?.providerId || 'PR-82941'}
+            providerId={record?.providerId || '—'}
           />
 
           {/* 3. Verification Checklist Card */}

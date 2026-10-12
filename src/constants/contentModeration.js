@@ -28,8 +28,9 @@ export const rejectPath = (originModule, originRecordId, { targetId, returnTo } 
 
 // ADM-042 — Verification Decision (shared across provider categories).
 export const VERIFICATION_DECISION_PATH = '/verifications/decision'
-export const verificationDecisionPath = (verificationId = 'PR-82941') =>
-  `/verifications/${encodeURIComponent(verificationId)}/decision`
+// Without a case id the decision screen opens the next open case.
+export const verificationDecisionPath = (verificationId) =>
+  verificationId && verificationId !== '—' ? `/verifications/${encodeURIComponent(verificationId)}/decision` : VERIFICATION_DECISION_PATH
 
 // ADM-043 — Approval History ledger.
 export const APPROVAL_HISTORY_PATH = '/approval-history'

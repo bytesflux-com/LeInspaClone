@@ -219,7 +219,7 @@ function CompletionBlock({ q, tz }) {
           <Row label="Completion"><StatePill map={CONFIRMATION} value={c.clientConfirmed ? 'confirmed' : 'pending'} /></Row>
         </ul>
       </Section>
-      <Section title="Review" action={q.review.id && <Link to="/reviews" className={LINK}>View Review <ArrowRight className="size-3" /></Link>}>
+      <Section title="Review" action={q.review.id && q.provider.id && <Link to={`/providers/${q.provider.id}/reviews?review=${q.review.id}`} className={LINK}>View Review <ArrowRight className="size-3" /></Link>}>
         {q.review.reviewed ? (
           <div className="space-y-0.5 py-1 text-[12px]">
             <p className="flex items-center gap-1 font-semibold text-[#1b1140]"><Star className="size-4 fill-[#d9b26a] text-[#d9b26a]" aria-hidden="true" />{q.review.rating ?? '—'}</p>
@@ -294,7 +294,7 @@ function CancellationBlock({ q, tz }) {
 function RefundBlock({ q, tz }) {
   const r = q.refundInfo
   return (
-    <Section title="Refund Information" action={r.id && <Link to={`/refunds/${r.id}`} className={LINK}>Open Refund <ArrowRight className="size-3" /></Link>}>
+    <Section title="Refund Information" action={r.id && <span className="font-mono text-[11px] text-[#6b6785]">Refund {r.id}</span>}>
       <ul>
         <Row label="Eligibility">{{ eligible: '✓ Eligible', not_eligible: 'Not eligible', partial: 'Partially eligible', per_policy: 'Per policy' }[r.eligibility] || r.eligibility}</Row>
         {r.amount != null && <Row label="Refund amount">{money(r.amount, q.currency)}</Row>}
@@ -465,9 +465,9 @@ function MoreTab({ q, tz, linkState }) {
   )
 }
 
-export default function BookingQuickView({ bookingId, view, fallback, onClose, onOpenFull, linkState }) {
+export default function BookingQuickView({ bookingId, view, fallback, onClose, onOpenFull, linkState, initialTab = 'Overview', fullPage = false }) {
   const { data: q, error, loading, refetch } = useBookingQuickView(bookingId, view)
-  const [tab, setTab] = useState('Overview')
+  const [tab, setTab] = useState(TABS.includes(initialTab) ? initialTab : 'Overview')
   const tz = timeZoneFor((q || fallback)?.countryCode)
   const head = q || fallback
   const clientId = q?.guestInfo ? q.guestInfo.linkedClientId : q?.client.id
@@ -516,9 +516,9 @@ export default function BookingQuickView({ bookingId, view, fallback, onClose, o
       <div className="sticky top-0 z-10 border-b border-[#ebe7f6] bg-white px-4 pt-3.5">
         <div className="flex items-center justify-between">
           <h2 className="text-[15px] font-bold text-[#1b1140]">{view === 'guest' ? 'Guest Booking' : 'Booking Details'}</h2>
-          <button type="button" onClick={onClose} aria-label="Close booking details" className="rounded-lg p-1 text-[#4a4466] hover:bg-[#f4f1fc]">
+          {onClose && <button type="button" onClick={onClose} aria-label="Close booking details" className="rounded-lg p-1 text-[#4a4466] hover:bg-[#f4f1fc]">
             <X className="size-5" />
-          </button>
+          </button>}
         </div>
         <div className="mt-1.5 flex flex-wrap items-center gap-2">
           <span className="text-[18px] font-bold text-[#1b1140]">{head?.reference || bookingId}</span>
@@ -609,11 +609,15 @@ export default function BookingQuickView({ bookingId, view, fallback, onClose, o
       </div>
 
       {q && (
-        <div className="sticky bottom-0 grid grid-cols-[1.3fr_1fr_1fr] gap-2 border-t border-[#ebe7f6] bg-white px-4 py-3">
-          <button type="button" onClick={() => onOpenFull(q.id)} className="flex h-9 items-center justify-center gap-1.5 rounded-lg bg-[#4125d0] text-[12.5px] font-semibold text-white shadow-sm transition hover:bg-[#3519b8]">
+        <div className={cn('sticky bottom-0 grid gap-2 border-t border-[#ebe7f6] bg-white px-4 py-3', onOpenFull ? 'grid-cols-[1.3fr_1fr_1fr]' : 'grid-cols-2')}>
+          {onOpenFull && <button type="button" onClick={() => onOpenFull(q.id)} className="flex h-9 items-center justify-center gap-1.5 rounded-lg bg-[#4125d0] text-[12.5px] font-semibold text-white shadow-sm transition hover:bg-[#3519b8]">
             Open Booking <ArrowRight className="size-4" />
-          </button>
-          <Link to={`/bookings/${q.id}/timeline`} state={linkState} className="flex h-9 items-center justify-center rounded-lg border border-[#ddd7ee] text-[12px] font-semibold text-[#1b1140] hover:bg-[#f4f1fc]">View Timeline</Link>
+          </button>}
+          {fullPage ? (
+            <button type="button" onClick={() => setTab('Timeline')} className="flex h-9 items-center justify-center rounded-lg border border-[#ddd7ee] text-[12px] font-semibold text-[#1b1140] hover:bg-[#f4f1fc]">View Timeline</button>
+          ) : (
+            <Link to={`/bookings/${q.id}/timeline`} state={linkState} className="flex h-9 items-center justify-center rounded-lg border border-[#ddd7ee] text-[12px] font-semibold text-[#1b1140] hover:bg-[#f4f1fc]">View Timeline</Link>
+          )}
           <Dropdown
             align="right"
             menuWidth="w-48"

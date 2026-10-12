@@ -6,11 +6,11 @@ export default function FinanceOperationsQueue({ data }) {
   if (!data) return null
 
   const items = [
-    { label: 'Withdrawals Awaiting Approval', count: data.withdrawalsAwaitingApproval ?? 7, badge: 'bg-amber-100 text-amber-800', dot: 'bg-amber-500' },
-    { label: 'Payments Pending Verification', count: data.paymentsPendingVerification ?? 3, badge: 'bg-purple-100 text-[#5c2dd5]', dot: 'bg-purple-500' },
-    { label: 'Escrow Holds', count: data.escrowHolds ?? 5, badge: 'bg-blue-100 text-blue-800', dot: 'bg-blue-500' },
-    { label: 'Refunds Awaiting Review', count: data.refundsAwaitingReview ?? 2, badge: 'bg-emerald-100 text-emerald-800', dot: 'bg-emerald-500' },
-    { label: 'Reconciliation Exceptions', count: data.reconciliationExceptions ?? 1, badge: 'bg-gray-100 text-gray-700', dot: 'bg-gray-400' },
+    { label: 'Withdrawals Awaiting Approval', count: data.withdrawalsAwaitingApproval ?? null, badge: 'bg-amber-100 text-amber-800', dot: 'bg-amber-500' },
+    { label: 'Payments Pending Verification', count: data.paymentsPendingVerification ?? null, badge: 'bg-purple-100 text-[#5c2dd5]', dot: 'bg-purple-500' },
+    { label: 'Escrow Holds', count: data.escrowHolds ?? null, badge: 'bg-blue-100 text-blue-800', dot: 'bg-blue-500' },
+    { label: 'Refunds Awaiting Review', count: data.refundsAwaitingReview ?? null, badge: 'bg-emerald-100 text-emerald-800', dot: 'bg-emerald-500' },
+    { label: 'Reconciliation Exceptions', count: data.reconciliationExceptions ?? null, badge: 'bg-gray-100 text-gray-700', dot: 'bg-gray-400' },
   ]
 
   return (
@@ -25,7 +25,7 @@ export default function FinanceOperationsQueue({ data }) {
             <h3 className="text-sm font-bold text-gray-900 truncate">Finance Operations</h3>
           </div>
           <Link
-            to="/withdrawals"
+            to="/attention?tab=finance"
             className="inline-flex items-center gap-1 text-[11px] font-bold text-[#5c2dd5] hover:text-[#4922ab] bg-purple-50/60 hover:bg-purple-100/80 px-2 py-0.5 rounded-md transition-colors whitespace-nowrap"
           >
             <span>View Queue</span>

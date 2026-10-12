@@ -1,10 +1,10 @@
+import { useNavigate, useParams } from 'react-router'
 import { useState } from 'react'
 import {
   X,
   CheckCircle2,
   AlertCircle,
   Clock,
-  ExternalLink,
   Calendar,
   Layers,
   Sparkles,
@@ -16,6 +16,7 @@ import {
   Users,
   DoorOpen,
 } from 'lucide-react'
+import { IMAGE_PLACEHOLDER } from '../../../lib/placeholders'
 
 export function ServiceDetailDrawer({
   service,
@@ -25,6 +26,8 @@ export function ServiceDetailDrawer({
   onShowToast,
   providerType = 'individual',
 }) {
+  const navigate = useNavigate()
+  const { providerId: routeProviderId } = useParams()
   const [activeSubTab, setActiveSubTab] = useState('overview') // 'overview', 'pricing', 'availability', 'reviews'
 
   if (!service) return null
@@ -56,7 +59,7 @@ export function ServiceDetailDrawer({
           <img
             src={
               service.image ||
-              'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=200'
+              IMAGE_PLACEHOLDER
             }
             alt={service.name}
             className="size-16 rounded-xl object-cover border-2 border-white shadow-md shrink-0"
@@ -171,8 +174,8 @@ export function ServiceDetailDrawer({
               </div>
 
               <div className="flex items-center justify-between text-[10.5px] text-slate-400 pt-1">
-                <span>Created: {service.createdDate || '12 Jan 2026'}</span>
-                <span>Last Updated: {service.lastUpdated || '10 Sep 2026'}</span>
+                <span>Created: {service.createdDate || '—'}</span>
+                <span>Last Updated: {service.lastUpdated || '—'}</span>
               </div>
             </div>
 
@@ -182,21 +185,10 @@ export function ServiceDetailDrawer({
                 <h4 className="font-bold text-slate-800 text-xs uppercase tracking-wider">
                   Service Images
                 </h4>
-                <button
-                  type="button"
-                  onClick={() => onShowToast?.('Opening Service Media Gallery')}
-                  className="text-[11px] font-semibold text-purple-700 hover:underline"
-                >
-                  View All (4) →
-                </button>
               </div>
 
               <div className="grid grid-cols-4 gap-2 pt-1">
-                {(service.images || [
-                  service.image,
-                  'https://images.unsplash.com/photo-1600334129128-685c5582fd35?w=200',
-                  'https://images.unsplash.com/photo-1519823551278-64ac92734fb1?w=200',
-                ]).slice(0, 3).map((imgUrl, i) => (
+                {(service.images || [service.image].filter(Boolean)).slice(0, 3).map((imgUrl, i) => (
                   <img
                     key={i}
                     src={imgUrl}
@@ -243,13 +235,13 @@ export function ServiceDetailDrawer({
                 <div className="flex justify-between">
                   <span className="text-slate-500">Booking Duration</span>
                   <span className="font-medium text-slate-800">
-                    {service.availabilityConfig?.bookingDuration || '60 minutes'}
+                    {service.availabilityConfig?.bookingDuration || '—'}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500">Buffer Time</span>
                   <span className="font-medium text-slate-800">
-                    {service.availabilityConfig?.bufferTime || '15 minutes'}
+                    {service.availabilityConfig?.bufferTime || '—'}
                   </span>
                 </div>
                 <div className="flex justify-between">
@@ -396,10 +388,7 @@ export function ServiceDetailDrawer({
                 Price Change History
               </span>
               <div className="divide-y divide-slate-100 text-[11px]">
-                {(service.priceHistory || [
-                  { effectiveDate: '10 Sep 2026', previousPrice: 'KES 4,000', newPrice: 'KES 4,500', changedBy: 'Provider' },
-                  { effectiveDate: '01 Jun 2026', previousPrice: 'KES 3,500', newPrice: 'KES 4,000', changedBy: 'Provider' },
-                ]).map((h, i) => (
+                {(service.priceHistory || []).map((h, i) => (
                   <div key={i} className="py-2 flex items-center justify-between">
                     <div>
                       <p className="font-medium text-slate-800">{h.effectiveDate}</p>
@@ -470,18 +459,10 @@ export function ServiceDetailDrawer({
 
       {/* 3. Bottom Action Buttons */}
       <div className="p-3.5 border-t border-slate-200 bg-white flex items-center gap-2">
-        <button
-          type="button"
-          onClick={() => onShowToast?.(`Opening ${service.name} in client mobile app preview`)}
-          className="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl border border-blue-200 bg-blue-50/50 text-blue-700 hover:bg-blue-100 text-xs font-semibold transition"
-        >
-          <span>View on Client App</span>
-          <ExternalLink className="size-3.5" />
-        </button>
 
         <button
           type="button"
-          onClick={() => onShowToast?.(`Opening booking history for ${service.name}`)}
+          onClick={() => navigate(`/providers/${routeProviderId}/bookings`)}
           className="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-purple-700 hover:bg-purple-800 text-white text-xs font-semibold shadow-xs transition"
         >
           <Calendar className="size-3.5" />

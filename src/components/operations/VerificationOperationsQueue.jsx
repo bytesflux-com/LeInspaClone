@@ -6,12 +6,12 @@ export default function VerificationOperationsQueue({ data }) {
   if (!data) return null
 
   const items = [
-    { label: 'Provider Verification', count: data.providerVerification ?? 18, badge: 'bg-rose-100 text-rose-700 font-black', dot: 'bg-rose-500' },
-    { label: 'Profile Photos', count: data.profilePhotos ?? 12, badge: 'bg-purple-100 text-[#5c2dd5]', dot: 'bg-purple-500' },
-    { label: 'Gallery Media', count: data.galleryMedia ?? 8, badge: 'bg-blue-100 text-blue-700', dot: 'bg-blue-500' },
-    { label: 'Profile Changes', count: data.profileChanges ?? 5, badge: 'bg-amber-100 text-amber-700', dot: 'bg-amber-500' },
-    { label: 'Credentials', count: data.credentials ?? 14, badge: 'bg-indigo-100 text-indigo-700', dot: 'bg-indigo-500' },
-    { label: 'Request More Information', count: data.requestMoreInfo ?? 6, badge: 'bg-gray-100 text-gray-700', dot: 'bg-gray-400' },
+    { label: 'Provider Verification', count: data.providerVerification ?? null, badge: 'bg-rose-100 text-rose-700 font-black', dot: 'bg-rose-500' },
+    { label: 'Profile Photos', count: data.profilePhotos ?? null, badge: 'bg-purple-100 text-[#5c2dd5]', dot: 'bg-purple-500' },
+    { label: 'Gallery Media', count: data.galleryMedia ?? null, badge: 'bg-blue-100 text-blue-700', dot: 'bg-blue-500' },
+    { label: 'Profile Changes', count: data.profileChanges ?? null, badge: 'bg-amber-100 text-amber-700', dot: 'bg-amber-500' },
+    { label: 'Credentials', count: data.credentials ?? null, badge: 'bg-indigo-100 text-indigo-700', dot: 'bg-indigo-500' },
+    { label: 'Request More Information', count: data.requestMoreInfo ?? null, badge: 'bg-gray-100 text-gray-700', dot: 'bg-gray-400' },
   ]
 
   return (

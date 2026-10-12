@@ -15,16 +15,11 @@ import {
  */
 export default function BusinessRequirementInfoCard({
   requirementInfo = {
-    mandateTitle: 'Nairobi City County Single Business Permit Mandate',
-    legalReference: 'Nairobi City County Single Business Permit Act (2020) & Lé Inspa Platform Safety Policy',
+    mandateTitle: null,
+    legalReference: null,
     description:
       'All wellness facilities operating physical massage, hydrotherapy, sauna, or aesthetic treatment premises within Nairobi County must maintain an active Single Business Permit (SBP) displaying the designated wellness activity code.',
-    eligibleServices: [
-      'Therapeutic Massage & Body Treatments',
-      'Hydrotherapy & Water Circuit Operations',
-      'Sauna, Steam & Thermal Suites',
-      'Facials, Skin Care & Esthetics',
-    ],
+    eligibleServices: [],
   },
 }) {
   const {

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate, useParams } from 'react-router'
+import { useNavigate, useParams, Navigate } from 'react-router'
 import { providerTrustService } from '../../services/providerTrustService'
 import { useProviderTrustData } from '../../hooks/useProviderTrust'
 import ErrorState from '../../components/ui/ErrorState'
@@ -25,7 +25,13 @@ import { ManageSubscriptionDrawer, ManageVisibilityDrawer, VisibilityRulesDrawer
 // visibility stay separate: Understand → Verify → Trace → Manage.
 export default function ProviderSubscription() {
   const { providerId: routeId } = useParams()
-  const providerId = routeId || 'PR-82941'
+  // Without a provider in the URL, demo mode shows its sample provider; live mode opens the directory.
+  const providerId = routeId || (providerTrustService.isMock ? 'PR-82941' : null)
+  if (!providerId) return <Navigate to="/providers/all" replace />
+  return <ProviderSubscriptionScreen key={providerId} providerId={providerId} />
+}
+
+function ProviderSubscriptionScreen({ providerId }) {
   const navigate = useNavigate()
   const toast = useToast()
   const { ctx, data, error, refetch, fetching } = useProviderTrustData((c) => providerTrustService.getSubscription(providerId, c), providerId)

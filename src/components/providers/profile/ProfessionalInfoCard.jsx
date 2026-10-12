@@ -70,7 +70,7 @@ export function ProfessionalInfoCard({
                 <span>Specialization</span>
               </span>
               <span className="font-semibold text-slate-900">
-                {profile.professionalInfo?.specialization || 'Massage Therapy'}
+                {profile.professionalInfo?.specialization || '—'}
               </span>
             </div>
 
@@ -138,19 +138,19 @@ export function ProfessionalInfoCard({
               </div>
               <div className="bg-slate-50 border border-slate-200 p-2 rounded-lg">
                 <p className="text-base font-bold text-slate-900">
-                  {profile.businessStructure?.staff || 18}
+                  {profile.businessStructure?.staff ?? 0}
                 </p>
                 <p className="text-[10px] text-slate-600 font-medium">Staff</p>
               </div>
               <div className="bg-slate-50 border border-slate-200 p-2 rounded-lg">
                 <p className="text-base font-bold text-slate-900">
-                  {profile.businessStructure?.services || 24}
+                  {profile.businessStructure?.services ?? 0}
                 </p>
                 <p className="text-[10px] text-slate-600 font-medium">Services</p>
               </div>
               <div className="bg-slate-50 border border-slate-200 p-2 rounded-lg">
                 <p className="text-base font-bold text-slate-900">
-                  {profile.businessStructure?.resources || 12}
+                  {profile.businessStructure?.resources ?? 0}
                 </p>
                 <p className="text-[10px] text-slate-600 font-medium">Resources</p>
               </div>
@@ -162,11 +162,7 @@ export function ProfessionalInfoCard({
                 Operating Branches
               </span>
               <div className="space-y-1">
-                {(profile.businessStructure?.branchList || [
-                  { name: 'Nairobi Flagship Hub', location: 'Westlands' },
-                  { name: 'Karen Sanctuary', location: 'Marula Lane' },
-                  { name: 'Gigiri Diplomatic Suite', location: 'UN Avenue' },
-                ]).map((b, i) => (
+                {(profile.businessStructure?.branchList || []).map((b, i) => (
                   <div
                     key={i}
                     className="flex items-center justify-between p-1.5 rounded-md bg-slate-50/80 border border-slate-100 text-[11.5px]"
@@ -176,24 +172,6 @@ export function ProfessionalInfoCard({
                   </div>
                 ))}
               </div>
-            </div>
-
-            {/* Quick Action Pills */}
-            <div className="flex items-center gap-2 pt-1">
-              <button
-                type="button"
-                onClick={() => onShowToast?.('Opening Branches Manager')}
-                className="flex-1 py-1 px-2 text-center text-[11px] font-medium text-slate-700 bg-slate-100 hover:bg-purple-100 hover:text-purple-900 rounded-md transition"
-              >
-                View Branches
-              </button>
-              <button
-                type="button"
-                onClick={() => onShowToast?.('Opening Staff Roster')}
-                className="flex-1 py-1 px-2 text-center text-[11px] font-medium text-slate-700 bg-slate-100 hover:bg-purple-100 hover:text-purple-900 rounded-md transition"
-              >
-                View Staff
-              </button>
             </div>
           </div>
         )}
@@ -217,13 +195,13 @@ export function ProfessionalInfoCard({
               </div>
               <div className="bg-slate-50 border border-slate-200 p-1.5 rounded-lg">
                 <p className="text-sm font-bold text-slate-900">
-                  {profile.wellnessOperations?.wellnessStaff || 32}
+                  {profile.wellnessOperations?.wellnessStaff ?? 0}
                 </p>
                 <p className="text-[9px] text-slate-600 font-medium">Staff</p>
               </div>
               <div className="bg-slate-50 border border-slate-200 p-1.5 rounded-lg">
                 <p className="text-sm font-bold text-slate-900">
-                  {profile.wellnessOperations?.activeServices || 18}
+                  {profile.wellnessOperations?.activeServices ?? 0}
                 </p>
                 <p className="text-[9px] text-slate-600 font-medium">Services</p>
               </div>
@@ -241,11 +219,7 @@ export function ProfessionalInfoCard({
                 Resort Wellness Programs
               </span>
               <div className="space-y-1">
-                {(profile.wellnessOperations?.programs || [
-                  'In-Room Wellness: 24/7 on-demand suite therapies',
-                  'Concierge Wellness: Bespoke rejuvenation itineraries',
-                  'Safari Recovery Ritual: Post-drive muscle recovery',
-                ]).map((prog, idx) => (
+                {(profile.wellnessOperations?.programs || []).map((prog, idx) => (
                   <div
                     key={idx}
                     className="p-1.5 rounded-md bg-slate-50/80 border border-slate-100 text-[11px] text-slate-700 flex items-center gap-1.5"

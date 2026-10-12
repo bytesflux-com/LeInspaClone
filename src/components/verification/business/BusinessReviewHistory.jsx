@@ -17,45 +17,7 @@ import {
 export default function BusinessReviewHistory({
   reviewHistory = [],
 }) {
-  const defaultHistory = [
-    {
-      id: 'brh-1',
-      time: '11 Sep 2026 • 3:45 PM',
-      title: 'Review started by Jane Ochieng',
-      actor: 'Jane Ochieng',
-      type: 'review_started',
-    },
-    {
-      id: 'brh-2',
-      time: '11 Sep 2026 • 3:30 PM',
-      title: 'Assigned to Jane Ochieng by System',
-      actor: 'System',
-      type: 'assignment',
-    },
-    {
-      id: 'brh-3',
-      time: '11 Sep 2026 • 3:18 PM',
-      title: 'Replacement Operating Licence submitted by Serenity Wellness Spa',
-      actor: 'Serenity Wellness Spa',
-      type: 'submission',
-    },
-    {
-      id: 'brh-4',
-      time: '05 Sep 2026 • 2:10 PM',
-      title: 'Changes requested — Licence expired (Jane Ochieng)',
-      actor: 'Jane Ochieng',
-      type: 'changes_requested',
-    },
-    {
-      id: 'brh-5',
-      time: '05 Sep 2026 • 11:20 AM',
-      title: 'Business documents submitted by Serenity Wellness Spa',
-      actor: 'Serenity Wellness Spa',
-      type: 'submission',
-    },
-  ]
-
-  const items = reviewHistory.length > 0 ? reviewHistory : defaultHistory
+  const items = reviewHistory
 
   const getEventIcon = (type) => {
     switch (type) {

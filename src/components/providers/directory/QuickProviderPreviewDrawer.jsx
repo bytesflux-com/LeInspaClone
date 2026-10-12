@@ -174,19 +174,19 @@ export function QuickProviderPreviewDrawer({
               </div>
               <div className="p-2.5 rounded-lg border border-amber-200 bg-amber-50/40 text-center">
                 <div className="text-base font-bold text-amber-900">
-                  {provider.activity?.upcomingBookings || 12}
+                  {provider.activity?.upcomingBookings ?? 0}
                 </div>
                 <div className="text-[10px] text-amber-700 font-medium">Upcoming</div>
               </div>
               <div className="p-2.5 rounded-lg border border-emerald-200 bg-emerald-50/40 text-center">
                 <div className="text-base font-bold text-emerald-900">
-                  {provider.activity?.completionRate || '96%'}
+                  {provider.activity?.completionRate || '—'}
                 </div>
                 <div className="text-[10px] text-emerald-700 font-medium">Completion</div>
               </div>
               <div className="p-2.5 rounded-lg border border-rose-200 bg-rose-50/40 text-center">
                 <div className="text-base font-bold text-rose-900">
-                  {provider.activity?.cancellationRate || '2.1%'}
+                  {provider.activity?.cancellationRate || '—'}
                 </div>
                 <div className="text-[10px] text-rose-700 font-medium">Cancellation</div>
               </div>
@@ -267,7 +267,7 @@ export function QuickProviderPreviewDrawer({
                   }`}
                 />
                 <span className="font-semibold text-slate-900">
-                  {provider.availabilityLabel || 'Available Now'}
+                  {provider.availabilityLabel || '—'}
                 </span>
               </div>
               <div className="text-slate-500 text-[11px]">
@@ -348,10 +348,10 @@ export function QuickProviderPreviewDrawer({
               <div className="flex items-center justify-between">
                 <div>
                   <div className="font-semibold text-slate-900">
-                    {provider.subscriptionPlan || 'Professional Plan'}
+                    {provider.subscriptionPlan || 'No plan'}
                   </div>
                   <div className="text-slate-500 text-[11px]">
-                    Next renewal: {provider.subscriptionRenewal || '12 Oct 2026'}
+                    Next renewal: {provider.subscriptionRenewal || '—'}
                   </div>
                 </div>
                 <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
@@ -408,13 +408,13 @@ export function QuickProviderPreviewDrawer({
                   View Bookings
                 </Link>
                 <Link
-                  to={`/withdrawals?providerId=${provider.id}`}
+                  to={`/providers/${provider.id}/earnings`}
                   className="p-2 text-center rounded-lg border border-slate-200 font-medium text-slate-700 hover:bg-slate-50 transition"
                 >
                   View Earnings
                 </Link>
                 <Link
-                  to={`/support?providerId=${provider.id}`}
+                  to={`/providers/${provider.id}/support`}
                   className="p-2 text-center rounded-lg border border-slate-200 font-medium text-slate-700 hover:bg-slate-50 transition"
                 >
                   View Support & Safety

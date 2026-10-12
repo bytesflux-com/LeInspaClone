@@ -8,30 +8,7 @@ export default function PreviousSubmissionsTable({
   submissions = [],
   onSelectSubmission,
 }) {
-  const defaultSubmissions = [
-    {
-      num: 1,
-      submittedAt: '12 Sep 2026 10:42 AM',
-      fileName: 'Professional_Certificate.pdf',
-      status: 'Current',
-      statusType: 'current',
-      reviewedBy: '—',
-      notes: '—',
-      docId: 'doc-101',
-    },
-    {
-      num: 2,
-      submittedAt: '10 Sep 2026 9:15 AM',
-      fileName: 'Certificate_v1.pdf',
-      status: 'Replaced',
-      statusType: 'replaced',
-      reviewedBy: 'Jane Ochieng',
-      notes: 'Document unclear',
-      docId: 'doc-101-v1',
-    },
-  ]
-
-  const list = submissions.length > 0 ? submissions : defaultSubmissions
+  const list = submissions
 
   return (
     <div className="flex flex-col rounded-2xl border border-slate-200/80 bg-white shadow-sm overflow-hidden h-full">

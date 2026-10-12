@@ -4,40 +4,13 @@ import { usePermissions } from './usePermissions'
 import { PERMISSIONS } from '../constants/permissions'
 import { useAdminSession } from './useAdminSession'
 
-export function useProviderBookings(providerId = 'PR-82941') {
+export function useProviderBookings(providerId) {
   const { can } = usePermissions()
   const { admin } = useAdminSession()
 
   const [provider, setProvider] = useState(null)
   const [bookings, setBookings] = useState([])
-  const [summary, setSummary] = useState({
-    counts: { total: 284, upcoming: 12, ongoing: 3, completed: 268, cancelled: 4, disputed: 2 },
-    financials: {
-      grossServiceValue: 1140000,
-      providerEarnings: 1026500,
-      platformFees: 113500,
-      pendingEscrow: 98200,
-      availableBalance: 342800,
-      paidOut: 586300,
-    },
-    escrowPositions: { held: 98200, released: 870300, disputed: 12000, refunded: 15500 },
-    withdrawalPositions: {
-      availableToWithdraw: 342800,
-      pendingWithdrawal: 45000,
-      processing: 0,
-      completed: 586300,
-      failed: 0,
-      recentRequest: { id: 'WD-82914', amount: 45000, status: 'pending_approval', requestedAt: '12 Sep 2026' },
-    },
-    performance: {
-      completionRate: 96,
-      cancellationRate: 2.1,
-      averageBookingValue: 3950,
-      repeatClientsRate: 38,
-      averageRating: 4.9,
-      bookingGrowth: '+12%',
-    },
-  })
+  const [summary, setSummary] = useState(null)
   const [topServices, setTopServices] = useState([])
   const [recentTransactions, setRecentTransactions] = useState([])
   const [loading, setLoading] = useState(true)
@@ -114,7 +87,7 @@ export function useProviderBookings(providerId = 'PR-82941') {
   const fetchChart = useCallback(async (period) => {
     setChartLoading(true)
     try {
-      const res = await providerService.getProviderEarningsChart(period)
+      const res = await providerService.getProviderEarningsChart(period, providerId)
       if (res && res.points) {
         setChartPoints(res.points)
       }
@@ -123,7 +96,7 @@ export function useProviderBookings(providerId = 'PR-82941') {
     } finally {
       setChartLoading(false)
     }
-  }, [])
+  }, [providerId])
 
   useEffect(() => {
     fetchBookings()

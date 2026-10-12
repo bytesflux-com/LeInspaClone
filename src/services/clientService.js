@@ -2,9 +2,8 @@
 //
 // Every call has the shape a server-side implementation needs: filtering,
 // sorting and pagination happen behind this boundary, so the browser only
-// ever holds one page. While the backend callables below are not deployed the
-// service answers from a deterministic demo dataset. Set
-// VITE_USE_MOCK_CLIENTS=false to call the real admin Cloud Functions instead:
+// ever holds one page. Calls go to the admin Cloud Functions below (live
+// Firestore data); VITE_USE_MOCK_CLIENTS=true runs the local demo dataset:
 //
 //   adminGetClientDashboard, adminGetClientGrowth,
 //   adminListClients, adminGetClientPreview, adminGetClientActivity,
@@ -51,7 +50,7 @@ import { buildClientLoyalty, queryClientReferrals, buildReferralPreview, addMock
 import { buildClientAccount, applyAccountAction } from './mock/clientAccountMock'
 import { queryClientSupport, buildSupportCasePreview, addMockCaseMessage, addMockCaseNote, reassignMockCase, escalateMockCase } from './mock/clientSupportMock'
 
-const USE_MOCK = import.meta.env.VITE_USE_MOCK_CLIENTS !== 'false'
+const USE_MOCK = import.meta.env.VITE_USE_MOCK_CLIENTS === 'true'
 const delay = (ms = 160) => new Promise((r) => setTimeout(r, ms))
 // Mock lifetime values are stored in KES-equivalent; show in the client's market currency.
 const FX = { KE: 1, UG: 28, TZ: 19, RW: 10, ZA: 0.14 }

@@ -40,10 +40,10 @@ export default function BusinessDocumentViewer({
 
   if (!documentData) return null
 
-  const pageCount = documentData.pageCount || 3
+  const pageCount = documentData.pageCount || 1
   const docNumber = isRevealed
-    ? documentData.regNumberPlain || 'NBI/BL/2025/78421'
-    : documentData.regNumberMasked || '•••• •••• 78421'
+    ? documentData.regNumberPlain || '—'
+    : documentData.regNumberMasked || '—'
 
   const handleZoomIn = () => setZoomLevel((prev) => Math.min(prev + 25, 175))
   const handleZoomOut = () => setZoomLevel((prev) => Math.max(prev - 25, 75))
@@ -307,7 +307,7 @@ export default function BusinessDocumentViewer({
 
                     <div className="space-y-0.5">
                       <div className="text-[10px] font-semibold text-slate-400 uppercase">Physical Premises / LR No.</div>
-                      <div className="font-medium text-slate-800">{documentData.plotNumber || 'Plot 209/18420 Chiromo Rd, Westlands'}</div>
+                      <div className="font-medium text-slate-800">{documentData.plotNumber || '—'}</div>
                     </div>
 
                     <div className="space-y-0.5">
@@ -317,12 +317,12 @@ export default function BusinessDocumentViewer({
 
                     <div className="space-y-0.5">
                       <div className="text-[10px] font-semibold text-slate-400 uppercase">Date of Issuance</div>
-                      <div className="font-medium text-slate-800">{documentData.issueDate || '01 Jan 2025'}</div>
+                      <div className="font-medium text-slate-800">{documentData.issueDate || '—'}</div>
                     </div>
 
                     <div className="space-y-0.5">
                       <div className="text-[10px] font-semibold text-slate-400 uppercase">Permit Expiry Date</div>
-                      <div className="font-bold text-emerald-700">{documentData.expiryDate || '31 Dec 2025'}</div>
+                      <div className="font-bold text-emerald-700">{documentData.expiryDate || '—'}</div>
                     </div>
                   </div>
 
@@ -481,7 +481,7 @@ export default function BusinessDocumentViewer({
             {/* Issuer */}
             <div className="space-y-0.5 text-xs">
               <div className="text-[11px] font-medium text-slate-500">Issuing Authority</div>
-              <div className="font-semibold text-slate-900">{documentData.issuer || 'Nairobi City County Government'}</div>
+              <div className="font-semibold text-slate-900">{documentData.issuer || '—'}</div>
               <div className="text-[10px] text-slate-400">Unified Municipal Registry</div>
             </div>
 
@@ -489,11 +489,11 @@ export default function BusinessDocumentViewer({
             <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-slate-200/60">
               <div>
                 <div className="text-[11px] font-medium text-slate-500">Issue Date</div>
-                <div className="font-semibold text-slate-900">{documentData.issueDate || '01 Jan 2025'}</div>
+                <div className="font-semibold text-slate-900">{documentData.issueDate || '—'}</div>
               </div>
               <div>
                 <div className="text-[11px] font-medium text-slate-500">Expiry Date</div>
-                <div className="font-semibold text-emerald-700">{documentData.expiryDate || '31 Dec 2025'}</div>
+                <div className="font-semibold text-emerald-700">{documentData.expiryDate || '—'}</div>
               </div>
             </div>
 
@@ -520,7 +520,7 @@ export default function BusinessDocumentViewer({
               </div>
               <div className="flex justify-between">
                 <span>Uploaded:</span>
-                <span className="font-medium text-slate-700">{documentData.uploadedAt || '11 Sep 2026'}</span>
+                <span className="font-medium text-slate-700">{documentData.uploadedAt || '—'}</span>
               </div>
             </div>
           </div>

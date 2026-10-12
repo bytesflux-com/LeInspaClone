@@ -12,7 +12,7 @@ export function EarningsSummaryCard({
   if (!profile) return null
 
   const earnings = profile.earnings || {}
-  const currency = earnings.currency || 'KES'
+  const currency = earnings.currency || ''
 
   const formatAmount = (num, formatted) => {
     if (!canSeeFinancial) return `${currency} —`
@@ -115,21 +115,21 @@ export function EarningsSummaryCard({
       {/* Footer Navigation Links */}
       <div className="pt-3 border-t border-slate-100 mt-2 flex items-center justify-between text-xs">
         <Link
-          to={`/finance?providerId=${profile.id}`}
+          to={`/providers/${profile.id}/bookings`}
           className="text-purple-700 hover:text-purple-900 font-semibold hover:underline"
         >
           View Earnings
         </Link>
         <span className="text-slate-300">•</span>
         <Link
-          to={`/finance?providerId=${profile.id}&tab=wallet`}
+          to={`/providers/${profile.id}/earnings`}
           className="text-purple-700 hover:text-purple-900 font-semibold hover:underline"
         >
           View Wallet
         </Link>
         <span className="text-slate-300">•</span>
         <Link
-          to={`/withdrawals?providerId=${profile.id}`}
+          to={`/providers/${profile.id}/earnings`}
           className="text-purple-700 hover:text-purple-900 font-semibold hover:underline"
         >
           View Withdrawals

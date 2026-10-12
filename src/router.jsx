@@ -1,4 +1,8 @@
 import { createBrowserRouter, Navigate } from 'react-router'
+import BookingDetails from './pages/bookings/BookingDetails.jsx'
+import PaymentDetails from './pages/payments/PaymentDetails.jsx'
+import CaseDetail from './pages/support/CaseDetail.jsx'
+import VerificationEntry from './pages/VerificationEntry.jsx'
 import ProtectedRoute from './components/layout/ProtectedRoute.jsx'
 import AdminLayout from './components/layout/AdminLayout.jsx'
 import AdminLogin from './pages/auth/AdminLogin.jsx'
@@ -98,6 +102,8 @@ export const router = createBrowserRouter([
           // CONTROL
           { path: 'dashboard', element: <GlobalDashboard /> },
           { path: 'operations', element: <OperationsCenter /> },
+          { path: 'operations/my-tasks', element: <Navigate to="/attention?assigned=me" replace /> },
+          { path: 'operations/queue', element: <Navigate to="/attention" replace /> },
           { path: 'search', element: <GlobalSearchPage /> },
 
           // MANAGEMENT
@@ -126,18 +132,18 @@ export const router = createBrowserRouter([
           { path: 'clients/:clientId/account', element: <ClientAccount />, handle: { fullBleed: true } },
           { path: 'clients/:clientId/:section', element: <ClientProfile />, handle: { fullBleed: true } },
           { path: 'attention', element: <NeedsAttention /> },
-          { path: 'spas', element: <Placeholder title="Spas & Wellness Centers" /> },
-          { path: 'hotels', element: <Placeholder title="Hotels & Resorts" /> },
-          { path: 'payments', element: <Placeholder title="Payments" /> },
-          { path: 'payments/:paymentId', element: <Placeholder title="Payment Details" /> }, // ADM-056
+          { path: 'spas', element: <Navigate to="/providers/all?type=spa" replace /> },
+          { path: 'hotels', element: <Navigate to="/providers/all?type=hotel_resort" replace /> },
+          { path: 'payments', element: <Placeholder title="Payments" spec="ADM-055" alternatives={[{ label: 'Client payments are on each client profile', to: '/clients/all' }, { label: 'Finance items needing action', to: '/attention?tab=finance' }]} /> },
+          { path: 'payments/:paymentId', element: <PaymentDetails />, handle: { fullBleed: true } }, // ADM-056 entry point
           { path: 'content', element: <ContentApprovalCenter />, handle: { fullBleed: true } },
-          { path: 'reports', element: <Placeholder title="Reports" /> },
+          { path: 'reports', element: <Placeholder title="Reports" spec="—" alternatives={[{ label: 'Market dashboard', to: '/markets' }, { label: 'Approval history', to: '/approval-history' }]} /> },
           // ADM-020 — Provider Management Dashboard
           { path: 'providers', element: <ProviderDashboard />, handle: { fullBleed: true } },
           // ADM-021 — Provider Directory (Dynamic Master Search & Filter Directory)
           { path: 'providers/all', element: <ProviderDirectory />, handle: { fullBleed: true } },
           { path: 'providers/directory', element: <ProviderDirectory />, handle: { fullBleed: true } },
-          { path: 'providers/subscriptions', element: <Placeholder title="Provider Subscriptions" /> },
+          { path: 'providers/subscriptions', element: <Navigate to="/providers/all?subscription=active" replace /> },
           // ADM-023 — Provider Services & Pricing (Status: REUSE / ADMIN VIEW)
           { path: 'providers/services', element: <ProviderServices />, handle: { fullBleed: true } },
           { path: 'providers/:providerId/services', element: <ProviderServices />, handle: { fullBleed: true } },
@@ -159,22 +165,22 @@ export const router = createBrowserRouter([
           // ADM-022 — Provider Admin Profile (Dynamic 360° Profile)
           { path: 'providers/:providerId', element: <ProviderProfile />, handle: { fullBleed: true } },
           { path: 'providers/:providerId/:section', element: <ProviderProfile />, handle: { fullBleed: true } },
-          { path: 'services/:serviceId', element: <Placeholder title="Service Details" /> },
+          { path: 'services/:serviceId', element: <Placeholder title="Service Details" spec="ADM-023" alternatives={[{ label: 'Provider directory', to: '/providers/all' }]} /> },
 
           // ADM-029 → ADM-034 — Verification Center
           { path: 'verifications', element: <VerificationCenterPage />, handle: { fullBleed: true } },
           { path: 'verifications/queue', element: <VerificationQueuePage />, handle: { fullBleed: true } },
           { path: 'verifications/identity/:id', element: <IdentityDocumentsReviewPage />, handle: { fullBleed: true } },
-          { path: 'verifications/identity', element: <IdentityDocumentsReviewPage />, handle: { fullBleed: true } },
+          { path: 'verifications/identity', element: <VerificationEntry kind="identity" />, handle: { fullBleed: true } },
           { path: 'verifications/review/:id/identity', element: <IdentityDocumentsReviewPage />, handle: { fullBleed: true } },
           { path: 'verifications/credentials/:id', element: <ProfessionalCredentialsReviewPage />, handle: { fullBleed: true } },
-          { path: 'verifications/credentials', element: <ProfessionalCredentialsReviewPage />, handle: { fullBleed: true } },
+          { path: 'verifications/credentials', element: <VerificationEntry kind="credentials" />, handle: { fullBleed: true } },
           { path: 'verifications/review/:id/credentials', element: <ProfessionalCredentialsReviewPage />, handle: { fullBleed: true } },
           { path: 'verifications/business/:id', element: <BusinessDocumentsReviewPage />, handle: { fullBleed: true } },
-          { path: 'verifications/business', element: <BusinessDocumentsReviewPage />, handle: { fullBleed: true } },
+          { path: 'verifications/business', element: <VerificationEntry kind="business" />, handle: { fullBleed: true } },
           { path: 'verifications/review/:id/business', element: <BusinessDocumentsReviewPage />, handle: { fullBleed: true } },
           { path: 'verifications/review/:id', element: <VerificationReviewPage />, handle: { fullBleed: true } },
-          { path: 'verifications/review', element: <VerificationReviewPage />, handle: { fullBleed: true } },
+          { path: 'verifications/review', element: <VerificationEntry kind="review" />, handle: { fullBleed: true } },
 
           // ADM-042 — Verification Decision (before verifications/:id catch-all)
           { path: 'verifications/decision', element: <VerificationDecision />, handle: { fullBleed: true } },
@@ -207,44 +213,43 @@ export const router = createBrowserRouter([
           { path: 'bookings/ongoing', element: <OngoingBookings />, handle: { fullBleed: true } },
           { path: 'bookings/completed', element: <CompletedBookings />, handle: { fullBleed: true } },
           { path: 'bookings/cancelled', element: <CancelledBookings />, handle: { fullBleed: true } },
-          { path: 'bookings/:bookingId', element: <Placeholder title="Booking Details" /> }, // ADM-051
-          { path: 'bookings/:bookingId/timeline', element: <Placeholder title="Booking Timeline" /> }, // ADM-052
-          { path: 'refunds', element: <Placeholder title="Refund Management" /> }, // ADM-066
-          { path: 'refunds/:refundId', element: <Placeholder title="Refund Details" /> }, // ADM-067
-          { path: 'reviews', element: <Placeholder title="Review Moderation" /> }, // ADM-110
+          { path: 'bookings/:bookingId', element: <BookingDetails />, handle: { fullBleed: true } }, // ADM-051 entry point
+          { path: 'bookings/:bookingId/timeline', element: <BookingDetails initialTab="Timeline" />, handle: { fullBleed: true } }, // ADM-052 entry point
+          { path: 'refunds/:refundId', element: <Placeholder title="Refund Details" spec="ADM-067" alternatives={[{ label: 'Cancelled bookings', to: '/bookings/cancelled' }]} /> },
+          { path: 'refunds', element: <Placeholder title="Refund Management" spec="ADM-066" alternatives={[{ label: 'Cancelled bookings', to: '/bookings/cancelled' }, { label: 'Finance items needing action', to: '/attention?tab=finance' }]} /> },
+          { path: 'reviews', element: <Placeholder title="Review Moderation" spec="ADM-110" alternatives={[{ label: 'Provider reviews are on each provider profile', to: '/providers/all' }]} /> },
 
           // FINANCE
-          { path: 'finance', element: <Placeholder title="Finance & Wallets" /> },
-          { path: 'escrow', element: <Placeholder title="Escrow Custody" /> },
-          { path: 'escrow/:escrowId', element: <Placeholder title="Escrow Details" /> },
-          { path: 'refunds/:refundId', element: <Placeholder title="Refund Details" /> },
-          { path: 'withdrawals', element: <Placeholder title="Withdrawal Authorizations" /> },
+          { path: 'finance', element: <Placeholder title="Finance & Wallets" spec="ADM-054" alternatives={[{ label: 'Finance items needing action', to: '/attention?tab=finance' }, { label: 'Global dashboard financial position', to: '/dashboard' }]} /> },
+          { path: 'escrow', element: <Placeholder title="Escrow Custody" spec="ADM-057" alternatives={[{ label: 'Active bookings (escrow held)', to: '/bookings/active' }]} /> },
+          { path: 'escrow/:escrowId', element: <Placeholder title="Escrow Details" spec="ADM-058" alternatives={[{ label: 'Active bookings (escrow held)', to: '/bookings/active' }]} /> },
+          { path: 'withdrawals', element: <Navigate to="/attention?tab=finance" replace /> },
           { path: 'withdrawals/:id', element: <WithdrawalDetail /> },
 
           // TRUST & SAFETY
-          { path: 'disputes', element: <Placeholder title="Disputes & Holds" /> },
-          { path: 'disputes/:disputeId', element: <Placeholder title="Dispute Details" /> },
-          { path: 'safety', element: <Placeholder title="Safety Incidents" /> },
-          { path: 'safety/:caseId', element: <Placeholder title="Safety Investigation" /> },
-          { path: 'reports/:reportId', element: <Placeholder title="Report Details" /> },
-          { path: 'support', element: <Placeholder title="Support Concierge" /> },
+          { path: 'disputes', element: <Navigate to="/attention?tab=disputes" replace /> },
+          { path: 'disputes/:id', element: <CaseDetail kind="dispute" /> },
+          { path: 'safety', element: <Navigate to="/attention?tab=safety" replace /> },
+          { path: 'safety/:id', element: <CaseDetail kind="safety" /> },
+          { path: 'reports/:reportId', element: <Placeholder title="Report Details" spec="—" alternatives={[{ label: 'Safety items needing action', to: '/attention?tab=safety' }]} /> },
+          { path: 'support', element: <Navigate to="/attention?tab=support" replace /> },
           { path: 'support/:id', element: <SupportTicketDetail /> },
 
           // GROWTH
-          { path: 'memberships', element: <Placeholder title="Memberships" /> },
-          { path: 'loyalty', element: <Placeholder title="Referrals & Loyalty" /> },
-          { path: 'promotions', element: <Placeholder title="Promotions & Campaigns" /> },
-          { path: 'campaigns', element: <Placeholder title="Marketing Campaigns" /> },
+          { path: 'memberships', element: <Placeholder title="Membership Management" spec="ADM-074" alternatives={[{ label: 'Client membership distribution', to: '/clients' }]} /> },
+          { path: 'loyalty', element: <Placeholder title="Referrals & Loyalty" spec="ADM-080" alternatives={[{ label: 'Client directory', to: '/clients/all' }]} /> },
+          { path: 'promotions', element: <Placeholder title="Promotions Dashboard" spec="ADM-087" alternatives={[]} /> },
+          { path: 'campaigns', element: <Placeholder title="Promo Campaigns" spec="ADM-088" alternatives={[]} /> },
 
           // INTELLIGENCE
-          { path: 'analytics', element: <Placeholder title="Cross-Market Analytics" /> },
+          { path: 'analytics', element: <Placeholder title="Cross-Market Analytics" spec="—" alternatives={[{ label: 'Market dashboard', to: '/markets' }]} /> },
           { path: 'markets', element: <MarketDashboard /> },
 
           // PLATFORM
-          { path: 'settings', element: <Placeholder title="Platform Settings" /> },
-          { path: 'team', element: <Placeholder title="Admin Team & Roles" /> },
-          { path: 'audit-logs', element: <Placeholder title="Security Audit Logs" /> },
-          { path: 'system-health', element: <Placeholder title="System Telemetry" /> },
+          { path: 'settings', element: <Placeholder title="Platform Settings" spec="—" alternatives={[]} /> },
+          { path: 'team', element: <Placeholder title="Admin Team & Roles" spec="—" alternatives={[]} /> },
+          { path: 'audit-logs', element: <Placeholder title="Security Audit Logs" spec="ADM-144" alternatives={[{ label: 'Approval history (decision ledger)', to: '/approval-history' }]} /> },
+          { path: 'system-health', element: <Navigate to="/operations" replace /> },
         ],
       },
     ],

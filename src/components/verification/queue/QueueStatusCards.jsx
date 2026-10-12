@@ -20,7 +20,7 @@ export default function QueueStatusCards({
     {
       id: 'ALL',
       label: 'All',
-      count: counts.all ?? 428,
+      count: counts.all ?? '—',
       subtext: 'Total submissions',
       icon: FileText,
       iconBg: 'bg-purple-50 text-purple-600 border border-purple-100',
@@ -29,7 +29,7 @@ export default function QueueStatusCards({
     {
       id: 'AWAITING_REVIEW',
       label: 'New',
-      count: counts.new ?? 196,
+      count: counts.new ?? '—',
       subtext: 'Awaiting initial review',
       icon: UserPlus,
       iconBg: 'bg-emerald-50 text-emerald-600 border border-emerald-100',
@@ -38,7 +38,7 @@ export default function QueueStatusCards({
     {
       id: 'UNDER_REVIEW',
       label: 'Under Review',
-      count: counts.underReview ?? 86,
+      count: counts.underReview ?? '—',
       subtext: 'Being reviewed',
       icon: Clock,
       iconBg: 'bg-indigo-50 text-indigo-600 border border-indigo-100',
@@ -47,7 +47,7 @@ export default function QueueStatusCards({
     {
       id: 'RESUBMITTED',
       label: 'Resubmitted',
-      count: counts.resubmitted ?? 46,
+      count: counts.resubmitted ?? '—',
       subtext: 'Provider resubmitted',
       icon: RefreshCw,
       iconBg: 'bg-amber-50 text-amber-600 border border-amber-100',
@@ -56,7 +56,7 @@ export default function QueueStatusCards({
     {
       id: 'CHANGES_REQUESTED',
       label: 'Changes Requested',
-      count: counts.changesRequested ?? 112,
+      count: counts.changesRequested ?? '—',
       subtext: 'Waiting for provider',
       icon: FileEdit,
       iconBg: 'bg-orange-50 text-orange-600 border border-orange-100',

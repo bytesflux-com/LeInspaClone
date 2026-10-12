@@ -31,14 +31,7 @@ export default function VerificationQueuePage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [queue, setQueue] = useState([])
-  const [statusCounts, setStatusCounts] = useState({
-    all: 428,
-    new: 196,
-    underReview: 86,
-    resubmitted: 46,
-    changesRequested: 112,
-    escalated: 7,
-  })
+  const [statusCounts, setStatusCounts] = useState({})
 
   // Filtering & Sorting State
   const [activeStatus, setActiveStatus] = useState('ALL')
@@ -184,6 +177,9 @@ export default function VerificationQueuePage() {
 
   return (
     <div className="min-h-screen bg-slate-50 p-6 space-y-6 text-slate-900">
+      {error && (
+        <p role="alert" className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm text-rose-700">{error}</p>
+      )}
       {/* Toast Notification */}
       {toast && (
         <div
@@ -240,7 +236,7 @@ export default function VerificationQueuePage() {
             </div>
             <div>
               <div className="text-sm font-bold text-slate-900 leading-tight">
-                {statusCounts.all || 428} Pending Reviews
+                {statusCounts.all ?? '—'} Pending Reviews
               </div>
               <div className="text-[11px] text-slate-400 leading-tight mt-0.5">
                 Last updated just now

@@ -63,10 +63,12 @@ export default function ReferralProgramCard({ referral, currency, canSeeFinancia
           <h2 className="text-[17px] leading-tight font-bold tracking-tight">Referral Program</h2>
           <p className="mt-0.5 text-[13px] leading-tight text-white/90">Referral Code</p>
           <p className="mt-0.5 flex items-center gap-2 text-[30px] leading-none font-extrabold tracking-tight">
-            {program.code}
-            <button type="button" onClick={() => onCopy(program.code)} aria-label="Copy referral code" className="rounded p-0.5 text-white transition hover:bg-white/15">
-              <Copy className="size-[19px]" />
-            </button>
+            {program.code || <span className="text-[16px] font-semibold text-white/80">No code issued</span>}
+            {program.code && (
+              <button type="button" onClick={() => onCopy(program.code)} aria-label="Copy referral code" className="rounded p-0.5 text-white transition hover:bg-white/15">
+                <Copy className="size-[19px]" />
+              </button>
+            )}
           </p>
         </div>
 
