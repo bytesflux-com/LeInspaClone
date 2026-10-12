@@ -8,6 +8,8 @@ import {
   Star,
   LifeBuoy,
   History,
+  Gauge,
+  UserCog,
 } from 'lucide-react'
 
 export const PROFILE_TABS = [
@@ -16,9 +18,11 @@ export const PROFILE_TABS = [
   { id: 'services', label: 'Services', icon: Sparkles },
   { id: 'bookings', label: 'Bookings', icon: CalendarCheck },
   { id: 'earnings', label: 'Earnings', icon: Wallet },
-  { id: 'subscription', label: 'Subscription', icon: CreditCard },
+  { id: 'subscription', label: 'Subscription & Visibility', icon: CreditCard },
   { id: 'reviews', label: 'Reviews', icon: Star },
+  { id: 'risk', label: 'Quality & Risk', icon: Gauge },
   { id: 'support', label: 'Support & Safety', icon: LifeBuoy },
+  { id: 'account', label: 'Account Actions', icon: UserCog },
   { id: 'activity', label: 'Activity', icon: History },
 ]
 

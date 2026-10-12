@@ -3,12 +3,15 @@ export const PERMISSIONS = {
   DASHBOARD_VIEW: 'dashboard.view',
   USERS_VIEW: 'users.view',
   USERS_SUSPEND: 'users.suspend',
+  USERS_DEACTIVATE: 'users.deactivate', // ADM-028 — deactivate / indefinite restriction
   USERS_EXPORT: 'users.export',
   USERS_REVEAL_PII: 'users.reveal_pii', // ADM-012 — unmask client email / phone (audited)
   MEMBERSHIPS_MANAGE: 'memberships.manage', // ADM-016 — change / extend / reactivate a client's membership (audited)
   PROVIDERS_VIEW: 'providers.view',
   PROVIDERS_VERIFY: 'providers.verify',
-  CONTENT_MODERATE: 'content.moderate', // ADM-035 → ADM-037
+  CONTENT_MODERATE: 'content.moderate', // ADM-035 → ADM-037, ADM-025 review moderation
+  SUBSCRIPTIONS_MANAGE: 'subscriptions.manage', // ADM-026
+  VISIBILITY_MANAGE: 'visibility.manage', // ADM-026
   BOOKINGS_VIEW: 'bookings.view',
   BOOKINGS_MANAGE: 'bookings.manage',
   FINANCE_VIEW: 'payments.view',

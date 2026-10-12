@@ -33,7 +33,6 @@ import {
 
 import { AddAdminNoteModal } from '../../components/providers/profile/AddAdminNoteModal'
 import { ContentModerationModal } from '../../components/providers/profile/ContentModerationModal'
-import { AccountActionsModal } from '../../components/providers/profile/AccountActionsModal'
 import { FullInfoModal } from '../../components/providers/profile/FullInfoModal'
 
 export default function ProviderProfile() {
@@ -56,14 +55,12 @@ export default function ProviderProfile() {
     addInternalNote,
     moderateContent,
     updateVerification,
-    updateAccountStatus,
     refetch,
   } = useProviderProfile(providerId, initialTab)
 
   // Modals state
   const [isAddNoteOpen, setIsAddNoteOpen] = useState(false)
   const [isContentReviewOpen, setIsContentReviewOpen] = useState(false)
-  const [isAccountActionsOpen, setIsAccountActionsOpen] = useState(false)
   const [isFullInfoOpen, setIsFullInfoOpen] = useState(false)
 
   // Toast notifications
@@ -140,7 +137,7 @@ export default function ProviderProfile() {
         profile={profile}
         onCopyId={(id) => showToast(`Provider ID ${id} copied to clipboard`)}
         onOpenAddNote={() => setIsAddNoteOpen(true)}
-        onOpenAccountActions={() => setIsAccountActionsOpen(true)}
+        onOpenAccountActions={() => navigate(`/providers/${providerId}/account`)}
         onShowToast={showToast}
       />
 
@@ -243,8 +240,8 @@ export default function ProviderProfile() {
 
                 <AccountManagementCard
                   profile={profile}
-                  onOpenAccountActions={() => setIsAccountActionsOpen(true)}
-                  onOpenRestrictions={() => setIsAccountActionsOpen(true)}
+                  onOpenAccountActions={() => navigate(`/providers/${providerId}/account`)}
+                  onOpenRestrictions={() => navigate(`/providers/${providerId}/account`)}
                   onViewAccountHistory={() => handleTabChange('activity')}
                 />
               </div>
@@ -318,14 +315,6 @@ export default function ProviderProfile() {
         profile={profile}
         onClose={() => setIsContentReviewOpen(false)}
         onSubmitModeration={moderateContent}
-        onShowToast={showToast}
-      />
-
-      <AccountActionsModal
-        isOpen={isAccountActionsOpen}
-        profile={profile}
-        onClose={() => setIsAccountActionsOpen(false)}
-        onSubmitStatus={updateAccountStatus}
         onShowToast={showToast}
       />
 

@@ -35,6 +35,10 @@ import ProviderDirectory from './pages/providers/ProviderDirectory.jsx'
 import ProviderProfile from './pages/providers/ProviderProfile.jsx'
 import ProviderServices from './pages/providers/ProviderServices.jsx'
 import ProviderBookings from './pages/providers/ProviderBookings.jsx'
+import ProviderReviews from './pages/providers/ProviderReviews.jsx'
+import ProviderSubscription from './pages/providers/ProviderSubscription.jsx'
+import ProviderQualityRisk from './pages/providers/ProviderQualityRisk.jsx'
+import ProviderAccountActions from './pages/providers/ProviderAccountActions.jsx'
 import BookingManagement from './pages/bookings/BookingManagement.jsx'
 import ActiveBookings from './pages/bookings/ActiveBookings.jsx'
 import UpcomingBookings from './pages/bookings/UpcomingBookings.jsx'
@@ -140,6 +144,18 @@ export const router = createBrowserRouter([
           // ADM-024 — Provider Bookings & Earnings (Status: REUSE / ADMIN VIEW)
           { path: 'providers/bookings', element: <ProviderBookings />, handle: { fullBleed: true } },
           { path: 'providers/:providerId/bookings', element: <ProviderBookings />, handle: { fullBleed: true } },
+          // ADM-025 — Provider Reviews (Status: REUSE / ADMIN VIEW over the shared review system)
+          { path: 'providers/reviews', element: <ProviderReviews />, handle: { fullBleed: true } },
+          { path: 'providers/:providerId/reviews', element: <ProviderReviews />, handle: { fullBleed: true } },
+          // ADM-026 — Provider Subscription & Visibility (Admin layer over the shared subscription engine)
+          { path: 'providers/subscription', element: <ProviderSubscription />, handle: { fullBleed: true } },
+          { path: 'providers/:providerId/subscription', element: <ProviderSubscription />, handle: { fullBleed: true } },
+          // ADM-027 — Provider Quality & Risk Review
+          { path: 'providers/risk', element: <ProviderQualityRisk />, handle: { fullBleed: true } },
+          { path: 'providers/:providerId/risk', element: <ProviderQualityRisk />, handle: { fullBleed: true } },
+          // ADM-028 — Provider Account Actions / Suspension
+          { path: 'providers/account', element: <ProviderAccountActions />, handle: { fullBleed: true } },
+          { path: 'providers/:providerId/account', element: <ProviderAccountActions />, handle: { fullBleed: true } },
           // ADM-022 — Provider Admin Profile (Dynamic 360° Profile)
           { path: 'providers/:providerId', element: <ProviderProfile />, handle: { fullBleed: true } },
           { path: 'providers/:providerId/:section', element: <ProviderProfile />, handle: { fullBleed: true } },
@@ -196,7 +212,6 @@ export const router = createBrowserRouter([
           { path: 'refunds', element: <Placeholder title="Refund Management" /> }, // ADM-066
           { path: 'refunds/:refundId', element: <Placeholder title="Refund Details" /> }, // ADM-067
           { path: 'reviews', element: <Placeholder title="Review Moderation" /> }, // ADM-110
-          { path: 'providers/:providerId/risk', element: <Placeholder title="Provider Quality & Risk Review" /> }, // ADM-027
 
           // FINANCE
           { path: 'finance', element: <Placeholder title="Finance & Wallets" /> },

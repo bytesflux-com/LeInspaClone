@@ -57,6 +57,19 @@ export {
   adminGetProviderEarningsOverview,
   adminGetProviderEarningsChart,
 } from './providerBookings.js'
+// ADM-025 → ADM-028 — Provider reviews, subscription & visibility, quality & risk, account actions
+export { adminGetProviderReviews, adminGetProviderReviewDetail, adminModerateProviderReview } from './providerReviews.js'
+export {
+  adminGetProviderSubscription,
+  adminManageProviderSubscription,
+  adminManageProviderVisibility,
+} from './providerSubscription.js'
+export { adminGetProviderQualityRisk, adminUpdateProviderRiskAssessment } from './providerRisk.js'
+export {
+  adminGetProviderAccountActions,
+  adminApplyProviderAccountAction,
+  adminAddProviderAccountNote,
+} from './providerAccount.js'
 
 export {
   adminGetVerificationQueue,

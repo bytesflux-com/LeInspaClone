@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, NavLink, matchPath, useLocation } from 'react-router'
-import { CalendarCheck, ChevronRight, Crown, Gift, ShieldAlert, Sparkles, User, Wallet, WalletCards } from 'lucide-react'
+import { CalendarCheck, ChevronRight, CreditCard, Crown, Gift, ShieldAlert, ShieldCheck, Sparkles, Star, User, UserCog, Wallet, WalletCards } from 'lucide-react'
 
 
 import { usePermissions } from '../../hooks/usePermissions'
@@ -27,6 +27,17 @@ const CLIENT_SUB_TABS = [
   ['loyalty', 'Client Referrals & Loyalty', Gift],
   ['support', 'Support & Safety History', ShieldAlert],
 ]
+
+// Per-provider screens (ADM-023 → ADM-028), shown for the provider in context.
+const PROVIDER_SUB_LINKS = [
+  ['services', 'Provider Services & Pricing', Sparkles],
+  ['bookings', 'Provider Bookings & Earnings', CalendarCheck],
+  ['reviews', 'Provider Reviews', Star],
+  ['subscription', 'Provider Subscription & Visibility', CreditCard],
+  ['risk', 'Provider Quality & Risk Review', ShieldCheck],
+  ['account', 'Provider Account Actions', UserCog],
+]
+const PROVIDER_SECTIONS = PROVIDER_SUB_LINKS.map(([key]) => key)
 
 export default function NavigationMenu({ onNavigate }) {
   const { can } = usePermissions()
@@ -140,23 +151,17 @@ function GroupChildren({ item, onNavigate }) {
       : null
 
 
-  // Provider context resolution (ADM-022 -> ADM-024)
-  const providerServicesMatch = item.path === '/providers' ? matchPath({ path: '/providers/:providerId/services' }, pathname) : null
-  const onProviderServices = Boolean(
-    providerServicesMatch || (item.path === '/providers' && pathname === '/providers/services')
-  )
+  // Provider context resolution (ADM-022 -> ADM-028)
+  const providerSectionMatch = item.path === '/providers' ? matchPath({ path: '/providers/:providerId/:section' }, pathname) : null
+  const providerDefaultMatch = item.path === '/providers' ? matchPath({ path: '/providers/:section' }, pathname) : null
+  const activeProviderSection =
+    (PROVIDER_SECTIONS.includes(providerSectionMatch?.params?.section) && providerSectionMatch.params.section) ||
+    (PROVIDER_SECTIONS.includes(providerDefaultMatch?.params?.section) && providerDefaultMatch.params.section) ||
+    null
 
-  const providerBookingsMatch = item.path === '/providers' ? matchPath({ path: '/providers/:providerId/bookings' }, pathname) : null
-  const onProviderBookings = Boolean(
-    providerBookingsMatch || (item.path === '/providers' && pathname === '/providers/bookings')
-  )
+  const matchedProviderId = providerSectionMatch?.params?.providerId || matchPath({ path: '/providers/:providerId/*' }, pathname)?.params?.providerId
 
-  const matchedProviderId =
-    providerBookingsMatch?.params?.providerId ||
-    providerServicesMatch?.params?.providerId ||
-    matchPath({ path: '/providers/:providerId/*' }, pathname)?.params?.providerId
-
-  const reservedProviderPaths = ['all', 'directory', 'subscriptions', 'services', 'bookings']
+  const reservedProviderPaths = ['all', 'directory', 'subscriptions', ...PROVIDER_SECTIONS]
   const currentProviderId =
     matchedProviderId && !reservedProviderPaths.includes(matchedProviderId)
       ? matchedProviderId
@@ -166,8 +171,7 @@ function GroupChildren({ item, onNavigate }) {
     item.path === '/providers' &&
     matchedProviderId &&
     !reservedProviderPaths.includes(matchedProviderId) &&
-    !onProviderServices &&
-    !onProviderBookings
+    !activeProviderSection
   )
 
   const activeCls = 'bg-[#5c2dd5] font-semibold text-white shadow-md'
@@ -235,25 +239,18 @@ function GroupChildren({ item, onNavigate }) {
                   <span className="truncate">Provider Profile</span>
                 </Link>
 
-                <Link
-                  to={`/providers/${currentProviderId}/services`}
-                  onClick={onNavigate}
-                  aria-current={onProviderServices ? 'page' : undefined}
-                  className={cn(CHILD, 'gap-2', onProviderServices ? activeCls : idleCls)}
-                >
-                  <Sparkles className="size-3.5 shrink-0 opacity-80" aria-hidden="true" />
-                  <span className="truncate">Provider Services & Pricing</span>
-                </Link>
-
-                <Link
-                  to={`/providers/${currentProviderId}/bookings`}
-                  onClick={onNavigate}
-                  aria-current={onProviderBookings ? 'page' : undefined}
-                  className={cn(CHILD, 'gap-2', onProviderBookings ? activeCls : idleCls)}
-                >
-                  <CalendarCheck className="size-3.5 shrink-0 opacity-80" aria-hidden="true" />
-                  <span className="truncate">Provider Bookings & Earnings</span>
-                </Link>
+                {PROVIDER_SUB_LINKS.map(([key, label, RowIcon]) => (
+                  <Link
+                    key={key}
+                    to={`/providers/${currentProviderId}/${key}`}
+                    onClick={onNavigate}
+                    aria-current={activeProviderSection === key ? 'page' : undefined}
+                    className={cn(CHILD, 'gap-2', activeProviderSection === key ? activeCls : idleCls)}
+                  >
+                    <RowIcon className="size-3.5 shrink-0 opacity-80" aria-hidden="true" />
+                    <span className="truncate">{label}</span>
+                  </Link>
+                ))}
               </>
             )}
           </div>

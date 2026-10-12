@@ -8,12 +8,13 @@ import { newSessionData, sessionPolicy } from './session.js'
 //   admin_sessions/{uid_authTime}     each sign-in that passed 2FA (see session.js)
 // Bump CATALOG_VERSION when permissions or roles change; the next admin login
 // writes the new catalog.
-export const CATALOG_VERSION = 2
+export const CATALOG_VERSION = 3
 
 export const PERMISSIONS = {
   'dashboard.view': { name: 'View dashboard', category: 'Overview', sensitive: false },
   'users.view': { name: 'View users', category: 'Users', sensitive: false },
   'users.suspend': { name: 'Suspend or reactivate users', category: 'Users', sensitive: true },
+  'users.deactivate': { name: 'Deactivate accounts or apply indefinite restrictions', category: 'Users', sensitive: true },
   'providers.view': { name: 'View providers, spas and hotels', category: 'Providers', sensitive: false },
   'providers.verify': { name: 'Approve or reject provider verification', category: 'Providers', sensitive: true },
   'identity.reveal_sensitive': { name: 'Reveal sensitive identity information', category: 'Identity', sensitive: true },
@@ -24,6 +25,8 @@ export const PERMISSIONS = {
   'escrow.release': { name: 'Release escrow', category: 'Finance', sensitive: true },
   'refunds.issue': { name: 'Issue refunds', category: 'Finance', sensitive: true },
   'content.moderate': { name: 'Moderate provider content before publication', category: 'Providers', sensitive: true },
+  'subscriptions.manage': { name: 'Change provider subscriptions (plan, extension, renewal)', category: 'Providers', sensitive: true },
+  'visibility.manage': { name: 'Manage provider marketplace visibility and featured placement', category: 'Providers', sensitive: true },
   'support.view': { name: 'View support tickets', category: 'Support', sensitive: false },
   'support.respond': { name: 'Reply to support tickets', category: 'Support', sensitive: false },
   'safety.manage': { name: 'Handle safety reports', category: 'Safety', sensitive: true },
@@ -55,6 +58,8 @@ export const ROLES = {
       'support.view',
       'support.respond',
       'safety.manage',
+      'subscriptions.manage',
+      'visibility.manage',
     ],
   },
   finance_admin: {
@@ -67,6 +72,7 @@ export const ROLES = {
       'withdrawals.approve',
       'escrow.release',
       'refunds.issue',
+      'subscriptions.manage',
       'audit.view',
     ],
   },
